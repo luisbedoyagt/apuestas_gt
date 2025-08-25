@@ -36,158 +36,176 @@
 </style>
 </head>
 <body>
-  <header>
-    <h1>Calculadora BTTS & Over/Under • Modelo Poisson sencillo</h1>
-    <p>Introduce promedios de goles y cuotas. Calculamos probabilidades, valor esperado y Kelly en tiempo real. Guarda/Comparte con el botón “Compartir”.</p>
-  </header>
+<header>
+  <h1>Calculadora BTTS & Over/Under • Modelo Poisson sencillo</h1>
+  <p>Introduce promedios de goles y cuotas. Calculamos probabilidades, valor esperado y Kelly en tiempo real. Guarda/Comparte con el botón “Compartir”.</p>
+</header>
 
-  <main>
-    <section aria-labelledby="in1">
-      <h2 id="in1">Datos del partido</h2>
-      <div class="grid">
-        <div><label>Equipo A (casa) • GF</label><input id="gfA" type="number" step="0.01" min="0" value="1.6"></div>
-        <div><label>Equipo A • GC</label><input id="gaA" type="number" step="0.01" min="0" value="1.1"></div>
-        <div><label>Equipo B (visita) • GF</label><input id="gfB" type="number" step="0.01" min="0" value="1.4"></div>
-        <div><label>Equipo B • GC</label><input id="gaB" type="number" step="0.01" min="0" value="1.2"></div>
-        <div><label>Media liga</label><input id="leagueAvg" type="number" step="0.01" min="0.1" value="1.35"></div>
-        <div><label>Ventaja casa</label><input id="homeAdv" type="number" step="0.01" min="0.5" value="1.05"></div>
-        <div><label>λA esperado</label><input id="lambdaA" type="number" step="0.01" min="0" value="1.55"></div>
-        <div><label>λB esperado</label><input id="lambdaB" type="number" step="0.01" min="0" value="1.30"></div>
-      </div>
-      <p class="muted">λA y λB son goles esperados; se calculan automáticamente pero puedes editarlos.</p>
-      <div class="row">
-        <button class="btn" id="recalc">Recalcular λ</button>
-        <button class="btn" id="reset">Reset</button>
-      </div>
-    </section>
+<main>
+  <section aria-labelledby="in1">
+    <h2 id="in1">Datos del partido</h2>
+    <div class="grid">
+      <div><label>Equipo A (casa) • GF</label><input id="gfA" type="number" step="0.01" min="0" value="1.6"></div>
+      <div><label>Equipo A • GC</label><input id="gaA" type="number" step="0.01" min="0" value="1.1"></div>
+      <div><label>Equipo B (visita) • GF</label><input id="gfB" type="number" step="0.01" min="0" value="1.4"></div>
+      <div><label>Equipo B • GC</label><input id="gaB" type="number" step="0.01" min="0" value="1.2"></div>
+      <div><label>Media liga</label><input id="leagueAvg" type="number" step="0.01" min="0.1" value="1.35"></div>
+      <div><label>λA esperado</label><input id="lambdaA" type="number" step="0.01" min="0" value="1.55"></div>
+      <div><label>λB esperado</label><input id="lambdaB" type="number" step="0.01" min="0" value="1.30"></div>
+    </div>
+    <p class="muted">λA y λB son goles esperados; se calculan automáticamente. La ventaja de local se determina automáticamente usando GF local y media liga.</p>
+    <div class="row">
+      <button class="btn" id="recalc">Recalcular λ</button>
+      <button class="btn" id="reset">Reset</button>
+    </div>
+  </section>
 
-    <section aria-labelledby="in2">
-      <h2 id="in2">Cuotas y banca</h2>
-      <div class="grid">
-        <div><label>Formato de cuotas</label><select id="oddsFmt"><option value="decimal" selected>Decimal</option><option value="american">Americano</option></select></div>
-        <div><label>Banca disponible</label><input id="bankroll" type="number" step="1" min="0" value="1000"></div>
-        <div><label>BTTS Sí • Cuota</label><input id="oddsBTTS" type="number" step="0.01" min="1.01" value="1.90"></div>
-        <div><label>Over 2.5 • Cuota</label><input id="oddsOver25" type="number" step="0.01" min="1.01" value="2.00"></div>
-      </div>
-      <p class="muted">Si usas cuotas americanas, escribe -120 o +150.</p>
-    </section>
+  <section aria-labelledby="in2">
+    <h2 id="in2">Cuotas y banca</h2>
+    <div class="grid">
+      <div><label>Formato de cuotas</label><select id="oddsFmt"><option value="decimal" selected>Decimal</option><option value="american">Americano</option></select></div>
+      <div><label>Banca disponible</label><input id="bankroll" type="number" step="1" min="0" value="1000"></div>
+      <div><label>BTTS Sí • Cuota</label><input id="oddsBTTS" type="number" step="0.01" min="1.01" value="1.90"></div>
+      <div><label>Over 2.5 • Cuota</label><input id="oddsOver25" type="number" step="0.01" min="1.01" value="2.00"></div>
+    </div>
+    <p class="muted">Si usas cuotas americanas, escribe -120 o +150.</p>
+  </section>
 
-    <section aria-labelledby="out">
-      <h2 id="out">Resultados del modelo</h2>
-      <div class="kpi">
-        <div class="tile"><h3 id="pBTTS">—</h3><p>Prob. BTTS Sí</p></div>
-        <div class="tile"><h3 id="pO25">—</h3><p>Prob. Over 2.5</p></div>
-        <div class="tile"><h3 id="evBTTS">—</h3><p>Valor esperado BTTS</p></div>
-        <div class="tile"><h3 id="evO25">—</h3><p>Valor esperado Over 2.5</p></div>
-        <div class="tile"><h3 id="kellyBTTS">—</h3><p>Kelly sugerido BTTS</p></div>
-        <div class="tile"><h3 id="kellyO25">—</h3><p>Kelly sugerido Over 2.5</p></div>
+  <section aria-labelledby="out">
+    <h2 id="out">Resultados del modelo</h2>
+    <div class="kpi">
+      <div class="tile"><h3 id="pBTTS">—</h3><p>Prob. BTTS Sí</p></div>
+      <div class="tile"><h3 id="pO25">—</h3><p>Prob. Over 2.5</p></div>
+      <div class="tile"><h3 id="evBTTS">—</h3><p>Valor esperado BTTS</p></div>
+      <div class="tile"><h3 id="evO25">—</h3><p>Valor esperado Over 2.5</p></div>
+      <div class="tile"><h3 id="kellyBTTS">—</h3><p>Kelly sugerido BTTS</p></div>
+      <div class="tile"><h3 id="kellyO25">—</h3><p>Kelly sugerido Over 2.5</p></div>
+    </div>
+    <div class="sep"></div>
+    <div class="grid">
+      <div class="card">
+        <h2>Detalle del cálculo</h2>
+        <p class="muted">BTTS = 1 - e⁻λA - e⁻λB + e⁻(λA+λB)<br>
+        Over 2.5 = 1 - P(0) - P(1) - P(2) con Poisson(λA+λB)</p>
+        <p class="muted">EV = p·(cuota-1) - (1-p). Kelly = (b·p - q)/b</p>
       </div>
-      <div class="sep"></div>
-      <div class="grid">
-        <div class="card">
-          <h2>Detalle del cálculo</h2>
-          <p class="muted">BTTS = 1 - e⁻λA - e⁻λB + e⁻(λA+λB)<br>
-          Over 2.5 = 1 - P(0) - P(1) - P(2) con Poisson(λA+λB)</p>
-          <p class="muted">EV = p·(cuota-1) - (1-p). Kelly = (b·p - q)/b</p>
-        </div>
-        <div class="card">
-          <h2>Compartir</h2>
-          <p>Genera un enlace con los parámetros actuales.</p>
-          <button class="btn" id="shareBtn">Compartir</button>
-          <p id="shareLink" class="muted"></p>
-        </div>
+      <div class="card">
+        <h2>Compartir</h2>
+        <p>Genera un enlace con los parámetros actuales.</p>
+        <button class="btn" id="shareBtn">Compartir</button>
+        <p id="shareLink" class="muted"></p>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
 
-  <div class="footer">
-    <p>Este es un modelo didáctico. No garantiza resultados ni es un consejo financiero. Verifica datos y respeta gestión de riesgo.</p>
-  </div>
+<div class="footer">
+  <p>Este es un modelo didáctico. No garantiza resultados ni es un consejo financiero. Verifica datos y respeta gestión de riesgo.</p>
+</div>
 
 <script>
-// --- UTILIDADES ---
+// UTILIDADES
 const $ = id => document.getElementById(id);
 const formatPct = x => (100*x).toFixed(1)+'%';
 const formatMoney = x => 'Q '+x.toFixed(2);
-const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 
-// --- CONVERTIR CUOTAS ---
 function toDecimalOdds(value, fmt){
   if(fmt==='decimal') return Math.max(parseFloat(value||0),1.000001);
-  const a=parseFloat(value||0);
-  if(isNaN(a)) return 1;
-  return a>0?1+a/100:1+100/Math.abs(a);
+  const a=parseFloat(value||0); if(isNaN(a)) return 1.0;
+  return a>0 ? 1+a/100 : 1+100/Math.abs(a);
 }
 
-// --- POISSON ---
+function poissonPMF(k, lambda){
+  if(lambda<=0) return k===0 ? 1:0;
+  let logP=-lambda + k*Math.log(lambda) - logFactorial(k);
+  return Math.exp(logP);
+}
 const factCache=[0,0];
-function logFactorial(n){ if(n<2) return 0; if(factCache[n]) return factCache[n]; let sum=0; for(let i=2;i<=n;i++) sum+=Math.log(i); factCache[n]=sum; return sum; }
-function poissonPMF(k,lambda){ return lambda<=0?(k===0?1:0):Math.exp(-lambda + k*Math.log(lambda)-logFactorial(k)); }
-
-// --- CÁLCULOS ---
-function computeProbabilities(lambdaA,lambdaB){
-  const pNoA=Math.exp(-lambdaA);
-  const pNoB=Math.exp(-lambdaB);
-  const pNoBoth=Math.exp(-(lambdaA+lambdaB));
-  const pBTTS=1-pNoA-pNoB+pNoBoth;
-  const lambdaT=lambdaA+lambdaB;
-  const pOver25=1-(poissonPMF(0,lambdaT)+poissonPMF(1,lambdaT)+poissonPMF(2,lambdaT));
-  return {pBTTS,pOver25};
+function logFactorial(n){
+  if(n<2) return 0;
+  if(factCache[n]) return factCache[n];
+  let sum=0; for(let i=2;i<=n;i++) sum+=Math.log(i);
+  factCache[n]=sum; return sum;
 }
-function computeEV(p,odds){ const ev=p*(odds-1)-(1-p); const kelly=clamp(( (odds-1)*p-(1-p) )/(odds-1),0,1); return {ev, kelly}; }
-function updateUI(prob,evKelly,bank){ $('pBTTS').textContent=formatPct(prob.pBTTS); $('pO25').textContent=formatPct(prob.pOver25);
-  $('evBTTS').textContent=(evKelly.evBTTS>=0?'+':'')+evKelly.evBTTS.toFixed(3)+' por unidad';
-  $('evO25').textContent=(evKelly.evO25>=0?'+':'')+evKelly.evO25.toFixed(3)+' por unidad';
-  $('kellyBTTS').textContent=(evKelly.kBTTS*100).toFixed(1)+'% ('+formatMoney(bank*evKelly.kBTTS)+')';
-  $('kellyO25').textContent=(evKelly.kO25*100).toFixed(1)+'% ('+formatMoney(bank*evKelly.kO25)+')';
-}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
 
-// --- PRINCIPAL ---
+// CALCULO PRINCIPAL
 function recompute(){
   const fmt=$('oddsFmt').value;
-  const oddsBTTS=toDecimalOdds($('oddsBTTS').value,fmt);
-  const oddsO25=toDecimalOdds($('oddsOver25').value,fmt);
-  let lambdaA=parseFloat($('lambdaA').value)||0;
-  let lambdaB=parseFloat($('lambdaB').value)||0;
-  lambdaA=Math.max(0,lambdaA); lambdaB=Math.max(0,lambdaB);
-  const prob=computeProbabilities(lambdaA,lambdaB);
-  const evKellyBTTS=computeEV(prob.pBTTS,oddsBTTS);
-  const evKellyO25=computeEV(prob.pOver25,oddsO25);
-  const bank=parseFloat($('bankroll').value)||0;
-  updateUI(prob,{evBTTS:evKellyBTTS.ev,kBTTS:evKellyBTTS.kelly,evO25:evKellyO25.ev,kO25:evKellyO25.kelly},bank);
+  const oddsBTTS=toDecimalOdds($('oddsBTTS').value, fmt);
+  const oddsO25=toDecimalOdds($('oddsOver25').value, fmt);
+  let lA=parseFloat($('lambdaA').value||0), lB=parseFloat($('lambdaB').value||0);
+  lA=Math.max(0,lA); lB=Math.max(0,lB);
+
+  const pNoA=Math.exp(-lA), pNoB=Math.exp(-lB), pNoBoth=Math.exp(-(lA+lB));
+  const pBTTS=1-pNoA-pNoB+pNoBoth;
+
+  const lT=lA+lB;
+  const p0=poissonPMF(0,lT), p1=poissonPMF(1,lT), p2=poissonPMF(2,lT);
+  const pOver25=1-(p0+p1+p2);
+
+  const evBTTS=pBTTS*(oddsBTTS-1)-(1-pBTTS);
+  const evO25=pOver25*(oddsO25-1)-(1-pOver25);
+  function kelly(p,odds){const b=odds-1;const q=1-p;return clamp((b*p-q)/b,0,1);}
+  const kBTTS=kelly(pBTTS, oddsBTTS);
+  const kO25=kelly(pOver25, oddsO25);
+  const bank=parseFloat($('bankroll').value||0);
+  const stakeBTTS=bank*kBTTS;
+  const stakeO25=bank*kO25;
+
+  $('pBTTS').textContent=formatPct(pBTTS);
+  $('pO25').textContent=formatPct(pOver25);
+  $('evBTTS').textContent=(evBTTS>=0?'+':'')+evBTTS.toFixed(3)+' por unidad';
+  $('evO25').textContent=(evO25>=0?'+':'')+evO25.toFixed(3)+' por unidad';
+  $('kellyBTTS').innerHTML=(kBTTS*100).toFixed(1)+'% ('+formatMoney(stakeBTTS)+')';
+  $('kellyO25').innerHTML=(kO25*100).toFixed(1)+'% ('+formatMoney(stakeO25)+')';
+
+  ['evBTTS','evO25'].forEach(id=>{
+    const el=$(id);
+    el.classList.remove('good','bad','neutral');
+    const val=id==='evBTTS'?evBTTS:evO25;
+    el.classList.add(val>0?'good':val<0?'bad':'neutral');
+  });
 }
 
-// --- RECALCULO LAMBDA ---
+// RECALCULO λ AUTOMATICO CON VENTAJA CASA
 function recalcLambda(){
   const gfA=parseFloat($('gfA').value), gaA=parseFloat($('gaA').value);
   const gfB=parseFloat($('gfB').value), gaB=parseFloat($('gaB').value);
-  const L=parseFloat($('leagueAvg').value), h=parseFloat($('homeAdv').value);
+  const L=Math.max(0.01, parseFloat($('leagueAvg').value||1.35));
+
+  // Ventaja casa automática
+  const h=Math.max(0.5, gfA/L);
+
   const lambdaA=Math.max(0,(gfA*gaB/L)*h);
   const lambdaB=Math.max(0,(gfB*gaA/L));
   $('lambdaA').value=lambdaA.toFixed(2);
   $('lambdaB').value=lambdaB.toFixed(2);
+
   recompute();
 }
 
-// --- EVENTOS ---
-document.addEventListener('input',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') recompute(); });
-$('recalc').addEventListener('click',recalcLambda);
-$('reset').addEventListener('click',()=>{ document.querySelectorAll('input').forEach(i=>i.value=i.defaultValue); $('oddsFmt').value='decimal'; recompute(); });
-$('shareBtn').addEventListener('click',()=>{
-  const params={
-    gfA:$('gfA').value, gaA:$('gaA').value, gfB:$('gfB').value, gaB:$('gaB').value,
-    L:$('leagueAvg').value, h:$('homeAdv').value,
-    lA:$('lambdaA').value, lB:$('lambdaB').value,
-    fmt:$('oddsFmt').value, bk:$('bankroll').value,
-    oBTTS:$('oddsBTTS').value, oO25:$('oddsOver25').value
-  };
-  const url=location.origin+location.pathname+'?'+new URLSearchParams(params).toString();
-  navigator.clipboard.writeText(url).catch(()=>{});
-  $('shareLink').textContent=url+' (copiado al portapapeles)';
-});
+// RESET Y SERIALIZAR
+function resetAll(){document.querySelectorAll('input').forEach(i=>i.value=i.defaultValue);$('oddsFmt').value='decimal';recompute();}
+function serialize(){
+  const params={gfA:$('gfA').value,gaA:$('gaA').value,gfB:$('gfB').value,gaB:$('gaB').value,L:$('leagueAvg').value,lA:$('lambdaA').value,lB:$('lambdaB').value,fmt:$('oddsFmt').value,bk:$('bankroll').value,oBTTS:$('oddsBTTS').value,oO25:$('oddsOver25').value};
+  const q=new URLSearchParams(params).toString();
+  return location.origin+location.pathname+'?'+q;
+}
+function hydrateFromURL(){
+  const sp=new URLSearchParams(location.search); if(sp.size===0) return;
+  const map={gfA:'gfA',gaA:'gaA',gfB:'gfB',gaB:'gaB',L:'leagueAvg',lA:'lambdaA',lB:'lambdaB',fmt:'oddsFmt',bk:'bankroll',oBTTS:'oddsBTTS',oO25:'oddsOver25'};
+  for(const [k,v] of sp.entries()){const id=map[k];if(!id) continue; const el=$(id); if(!el) continue; el.value=v;}
+}
 
-// --- INICIALIZACIÓN ---
-recalcLambda();
+// EVENTOS
+document.addEventListener('input', e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') recompute();});
+$('recalc').addEventListener('click', recalcLambda);
+$('reset').addEventListener('click', resetAll);
+$('shareBtn').addEventListener('click', ()=>{$('shareLink').textContent=serialize()+' (copiado al portapapeles)';navigator.clipboard.writeText(serialize()).catch(()=>{});});
+
+hydrateFromURL();
+recompute();
 </script>
 </body>
 </html>

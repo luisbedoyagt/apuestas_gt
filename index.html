@@ -1,107 +1,171 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Calculadora Poisson + Kelly Reactiva</title>
-<style>
-body{font-family:sans-serif;background:#111;color:#eee;padding:20px;}
-input{width:80px;margin:4px;}
-.result{margin-top:12px;padding:10px;border:1px solid #444;}
-.best{color:#6ee7a1;font-weight:bold;}
-</style>
-</head>
-<body>
-
-<h2>Calculadora de apuestas reactiva</h2>
-
-<div>
-  <label>GF local:</label><input class="inp" id="gfHome" value="1.6">
-  <label>GC local:</label><input class="inp" id="gaHome" value="1.1"><br>
-  <label>GF visitante:</label><input class="inp" id="gfAway" value="1.4">
-  <label>GC visitante:</label><input class="inp" id="gaAway" value="1.2"><br>
-  <label>Media liga:</label><input class="inp" id="leagueAvg" value="1.35">
-  <label>Max goles:</label><input class="inp" id="maxGoals" value="8"><br>
-  <label>Cuota Local:</label><input class="inp" id="oddsHome" value="2.1">
-  <label>Cuota Empate:</label><input class="inp" id="oddsDraw" value="3.4">
-  <label>Cuota Visitante:</label><input class="inp" id="oddsAway" value="3.8"><br>
-  <label>Cuota BTTS:</label><input class="inp" id="oddsBTTS" value="1.9">
-  <label>Cuota Over2.5:</label><input class="inp" id="oddsOver25" value="2.0">
-</div>
-
-<div id="result" class="result"></div>
-
 <script>
 const $ = id => document.getElementById(id);
-const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
-const poissonPMF = (k,lambda)=> Math.exp(-lambda + k*Math.log(lambda) - (k<2?0:Array.from({length:k-1},(_,i)=>i+2).reduce((s,n)=>s+Math.log(n),0)));
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const formatPct = x => (100 * x).toFixed(1) + '%';
+const formatMoney = x => 'Q ' + x.toFixed(2);
+const MAX_GOALS_DEFAULT = 8;
+function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
 
-// EV & Kelly
-const expectedValue = (p,odds)=>p*(odds-1)-(1-p);
-const kellyFraction = (p,odds)=>clamp(((odds-1)*p-(1-p))/(odds-1),0,1);
+// --- Poisson ---
+const factCache = [0,0];
+function logFactorial(n){ if(n<2) return 0; if(factCache[n]) return factCache[n]; let s=0; for(let i=2;i<=n;i++) s+=Math.log(i); factCache[n]=s; return s; }
+function poissonPMF(k,lambda){ return lambda<=0 ? (k===0?1:0) : Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k)); }
 
-function computeLambdas(gfHome,gaHome,gfAway,gaAway,leagueAvg){
-  let lambdaHome = (gfHome*gaAway/leagueAvg) * clamp(gfHome/leagueAvg,0.5,1.4);
-  let lambdaAway = (gfAway*gaHome/leagueAvg);
-  return {lambdaHome: clamp(lambdaHome,0,6), lambdaAway: clamp(lambdaAway,0,6)};
+// --- Lambdas ---
+function computeLambdas({gfHome, gaHome, gfAway, gaAway, leagueAvg, posHome, posAway, formHome, formAway}){
+  const h_adv = clamp(gfHome/leagueAvg,0.5,1.4);
+  let lambdaHome = Math.max(0,(gfHome*gaAway/leagueAvg)*h_adv);
+  let lambdaAway = Math.max(0,(gfAway*gaHome/leagueAvg));
+  const posFactor = clamp(1 + ((posAway - posHome)/40),0.9,1.12);
+  lambdaHome *= posFactor; lambdaAway /= posFactor;
+  lambdaHome *= clamp(1 + ((formHome-2.5)/25),0.85,1.12);
+  lambdaAway *= clamp(1 + ((formAway-2.5)/25),0.85,1.12);
+  return {lambdaHome: clamp(lambdaHome,0,6), lambdaAway: clamp(lambdaAway,0,6), h_adv, posFactor};
 }
 
-function compute1X2(lambdaHome,lambdaAway,maxGoals){
-  const pH=[],pA=[];
-  for(let i=0;i<=maxGoals;i++){ pH[i]=poissonPMF(i,lambdaHome); pA[i]=poissonPMF(i,lambdaAway);}
-  const tailH=1-pH.reduce((a,b)=>a+b,0), tailA=1-pA.reduce((a,b)=>a+b,0);
-  pH[maxGoals]+=tailH; pA[maxGoals]+=tailA;
-  let winH=0,draw=0,winA=0;
-  for(let i=0;i<=maxGoals;i++) for(let j=0;j<=maxGoals;j++){
-    const p=pH[i]*pA[j];
-    if(i>j) winH+=p; else if(i===j) draw+=p; else winA+=p;
+// --- 1X2 ---
+function compute1X2(lambdaHome, lambdaAway, maxGoals){
+  const pHomeGoals=[], pAwayGoals=[];
+  for(let i=0;i<=maxGoals;i++){pHomeGoals[i]=poissonPMF(i,lambdaHome); pAwayGoals[i]=poissonPMF(i,lambdaAway);}
+  const tailHome = 1 - pHomeGoals.reduce((a,b)=>a+b,0);
+  const tailAway = 1 - pAwayGoals.reduce((a,b)=>a+b,0);
+  pHomeGoals[maxGoals]+=tailHome; pAwayGoals[maxGoals]+=tailAway;
+  let pHomeWin=0,pDraw=0,pAwayWin=0;
+  for(let i=0;i<=maxGoals;i++)for(let j=0;j<=maxGoals;j++){
+    const p=pHomeGoals[i]*pAwayGoals[j];
+    if(i>j)pHomeWin+=p;
+    else if(i===j)pDraw+=p;
+    else pAwayWin+=p;
   }
-  return {pHome:winH,pDraw:draw,pAway:winA};
+  const total=pHomeWin+pDraw+pAwayWin;
+  return {pHomeWin:pHomeWin/total,pDraw:pDraw/total,pAwayWin:pAwayWin/total};
 }
 
-function computeBTTS(lambdaHome,lambdaAway){
-  const pNoH=Math.exp(-lambdaHome), pNoA=Math.exp(-lambdaAway);
-  const pBTTS=1 - pNoH - pNoA + pNoH*pNoA;
+// --- BTTS & Over2.5 ---
+function computeBTTS(lambdaHome, lambdaAway){
+  const pNoHome=Math.exp(-lambdaHome);
+  const pNoAway=Math.exp(-lambdaAway);
+  const pBTTS=1 - pNoHome - pNoAway + pNoHome*pNoAway;
   const lT=lambdaHome+lambdaAway;
-  const p0=poissonPMF(0,lT), p1=poissonPMF(1,lT), p2=poissonPMF(2,lT);
-  const pOver25=1-(p0+p1+p2);
+  const pOver25=1-(poissonPMF(0,lT)+poissonPMF(1,lT)+poissonPMF(2,lT));
   return {pBTTS,pOver25};
 }
 
-function runCalc(){
-  const gfH=parseFloat($('gfHome').value), gaH=parseFloat($('gaHome').value),
-        gfA=parseFloat($('gfAway').value), gaA=parseFloat($('gaAway').value),
-        leagueAvg=parseFloat($('leagueAvg').value), maxG=parseInt($('maxGoals').value),
-        oddsH=parseFloat($('oddsHome').value), oddsD=parseFloat($('oddsDraw').value),
-        oddsA=parseFloat($('oddsAway').value), oddsBT=parseFloat($('oddsBTTS').value),
-        oddsO=parseFloat($('oddsOver25').value);
+// --- EV & Kelly ---
+function expectedValue(p,odds){ return p*(odds-1)-(1-p); }
+function kellyFraction(p,odds){ const b=odds-1; const q=1-p; const f=(b*p-q)/b; return clamp(f,0,1); }
 
-  const {lambdaHome,lambdaAway}=computeLambdas(gfH,gaH,gfA,gaA,leagueAvg);
-  const {pHome,pDraw,pAway}=compute1X2(lambdaHome,lambdaAway,maxG);
-  const {pBTTS,pOver25}=computeBTTS(lambdaHome,lambdaAway);
-
-  const markets = [
-    {name:'1', p:pHome, odds:oddsH},
-    {name:'X', p:pDraw, odds:oddsD},
-    {name:'2', p:pAway, odds:oddsA},
-    {name:'BTTS', p:pBTTS, odds:oddsBT},
-    {name:'Over2.5', p:pOver25, odds:oddsO}
-  ];
-
-  markets.forEach(m=>{ m.ev=expectedValue(m.p,m.odds); m.kelly=kellyFraction(m.p,m.odds); });
-
-  const best = markets.reduce((a,b)=>b.ev>a.ev?b:a,markets[0]);
-
-  $('result').innerHTML = markets.map(m=>{
-    const cls = (m===best)?'best':'';
-    return `<div class="${cls}">${m.name}: ${(m.p*100).toFixed(1)}% | EV: ${m.ev.toFixed(2)} | Kelly: ${(m.kelly*100).toFixed(1)}%</div>`;
-  }).join('');
+// --- Storage banca ---
+function getBankrollFromStorage(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('calc_bankroll_v1')||'null');
+    if(!saved) return null;
+    const now=new Date();
+    if(saved.month!==now.getMonth()||saved.year!==now.getFullYear()) return null;
+    return saved.value;
+  }catch(e){return null;}
+}
+function saveBankrollToStorage(value){
+  try{
+    const now=new Date();
+    localStorage.setItem('calc_bankroll_v1', JSON.stringify({value:Number(value),month:now.getMonth(),year:now.getFullYear()}));
+  }catch(e){}
 }
 
-// Recalcular automáticamente al cambiar cualquier input
-document.querySelectorAll('.inp').forEach(el=>el.addEventListener('input', runCalc));
+// --- Inputs ---
+function gatherInputs(){
+  return {
+    teamHome:$('teamHome').value||'Local',
+    teamAway:$('teamAway').value||'Visitante',
+    posHome:Number($('posHome').value)||10,
+    posAway:Number($('posAway').value)||10,
+    gfHome:Number($('gfHome').value)||1.0,
+    gaHome:Number($('gaHome').value)||1.0,
+    gfAway:Number($('gfAway').value)||1.0,
+    gaAway:Number($('gaAway').value)||1.0,
+    formHome:Number($('formHome').value)||2,
+    formAway:Number($('formAway').value)||2,
+    leagueAvg:Number($('leagueAvg').value)||1.35,
+    maxGoals:Math.max(4,Number($('maxGoals').value)||MAX_GOALS_DEFAULT),
+    oddsHome:toDecimalOdds($('oddsHome').value),
+    oddsDraw:toDecimalOdds($('oddsDraw').value),
+    oddsAway:toDecimalOdds($('oddsAway').value),
+    oddsBTTS:toDecimalOdds($('oddsBTTS').value),
+    oddsOver25:toDecimalOdds($('oddsOver25').value),
+    bankroll:Number($('bankroll').value)||0
+  };
+}
 
-// Calcular al cargar la página
-runCalc();
+// --- Render ---
+function renderRecommendations(result){
+  const details=$('details'); details.innerHTML='';
+  const info=document.createElement('div'); info.className='small';
+  info.innerHTML=`<strong>Lambdas:</strong> λA=${result.lambdaHome.toFixed(2)} λB=${result.lambdaAway.toFixed(2)}<br/>
+  <strong>Ventaja casa (h):</strong> ${result.h_adv.toFixed(2)} • <strong>posFactor:</strong> ${result.posFactor.toFixed(3)}`;
+  details.appendChild(info);
+
+  const markets=result.markets.slice().sort((a,b)=>b.ev-a.ev);
+  markets.forEach(m=>{
+    const el=document.createElement('div');
+    el.style.padding='8px'; el.style.border='1px solid #2a2e4a'; el.style.borderRadius='8px'; el.style.marginBottom='6px';
+    el.innerHTML=`<strong>${m.name}</strong> — Prob: ${formatPct(m.p)} • Cuota: ${m.odds.toFixed(2)} • EV: ${(m.ev>=0?'+':'')+m.ev.toFixed(3)} • Kelly: ${(m.kelly*100).toFixed(2)}% • Stake: ${formatMoney(m.stake)} ${m.ev>0?'<span class="good">▶ sugerido</span>':''}`;
+    details.appendChild(el);
+  });
+
+  const best=markets.find(m=>m.ev>0);
+  $('expectedBest').textContent=best?best.name:'Ninguno (EV negativo)';
+}
+
+// --- Run calc ---
+function runCalculation(){
+  const inps=gatherInputs();
+  const lamb=computeLambdas(inps);
+  const mx=compute1X2(lamb.lambdaHome,lamb.lambdaAway,inps.maxGoals);
+  const {pBTTS,pOver25}=computeBTTS(lamb.lambdaHome,lamb.lambdaAway);
+
+  $('pHome').textContent=formatPct(mx.pHomeWin);
+  $('pDraw').textContent=formatPct(mx.pDraw);
+  $('pAway').textContent=formatPct(mx.pAwayWin);
+  $('pBTTS').textContent=formatPct(pBTTS);
+  $('pO25').textContent=formatPct(pOver25);
+
+  const bank=inps.bankroll||0;
+  const markets=[];
+  function pushMarket(name,p,odds){
+    const ev=expectedValue(p,odds);
+    const k=kellyFraction(p,odds);
+    const stake=bank*k*0.5;
+    markets.push({name,p,odds,ev,kelly:k,stake});
+  }
+  pushMarket(`1 (Local)`,mx.pHomeWin,inps.oddsHome);
+  pushMarket(`X (Empate)`,mx.pDraw,inps.oddsDraw);
+  pushMarket(`2 (Visitante)`,mx.pAwayWin,inps.oddsAway);
+  pushMarket(`BTTS Sí`,pBTTS,inps.oddsBTTS);
+  pushMarket(`Over 2.5`,pOver25,inps.oddsOver25);
+
+  renderRecommendations({...lamb,markets});
+}
+
+// --- Events ---
+const allInputs=document.querySelectorAll('input');
+allInputs.forEach(i=>i.addEventListener('input',runCalculation));
+$('reset').addEventListener('click',()=>{
+  $('posHome').value=5; $('posAway').value=12;
+  $('gfHome').value=1.6; $('gaHome').value=1.1;
+  $('gfAway').value=1.4; $('gaAway').value=1.2;
+  $('formHome').value=3; $('formAway').value=1;
+  $('oddsHome').value=2.10; $('oddsDraw').value=3.40; $('oddsAway').value=3.80;
+  $('oddsBTTS').value=1.90; $('oddsOver25').value=2.00;
+  runCalculation();
+});
+$('saveBank').addEventListener('click',()=>{
+  const val=Number($('bankroll').value)||0;
+  saveBankrollToStorage(val);
+  alert('Banca guardada para este mes: Q '+val.toFixed(2));
+});
+window.addEventListener('load',()=>{
+  const saved=getBankrollFromStorage();
+  if(saved!==null) $('bankroll').value=saved;
+  runCalculation();
+});
 </script>
-</body>
-</html>

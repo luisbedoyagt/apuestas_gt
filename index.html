@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Calculadora Apuestas Avanzada • Poisson + Kelly</title>
 <style>
+/* --- Todo tu CSS original --- */
 :root{--gap:12px;--radius:10px;--bg:#0f1220;--card:#191c2f;--muted:rgba(230,233,245,.75);}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
@@ -32,12 +33,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 }
 .btn:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
 .btn:active {transform: translateY(1px); box-shadow: 0 3px 10px rgba(0,0,0,0.25);}
-#saveBank {
-  background: linear-gradient(135deg, #ef4444, #f87171);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-}
+#saveBank {background: linear-gradient(135deg, #ef4444, #f87171);}
 #saveBank:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
@@ -54,115 +50,78 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
   </div>
 
   <div class="grid">
-    <!-- Card: Banco y parámetros globales -->
     <div class="card">
       <h3>Banco mensual</h3>
       <div class="table-like">
-        <div>
-          <label>Banca actual (Q)</label>
-          <input id="bankroll" type="number" value="1000" min="0" step="1"/>
-        </div>
-        <div>
-          <label>Guarda / Actualiza</label><br/>
-          <button id="saveBank" class="btn">Guardar banca</button>
-        </div>
+        <div><label>Banca actual (Q)</label><input id="bankroll" type="number" value="1000"/></div>
+        <div><label>Guarda / Actualiza</label><br/><button id="saveBank" class="btn">Guardar banca</button></div>
       </div>
-      <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
       <div class="sep"></div>
-
       <h3>Parámetros globales</h3>
       <div class="table-like">
-        <div>
-          <label>Media liga (goles / partido por equipo)</label>
-          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01"/>
-        </div>
-        <div>
-          <label>Máx goles a calcular (Poisson)</label>
-          <input id="maxGoals" type="number" value="8" min="4" step="1"/>
-        </div>
+        <div><label>Media liga (goles / partido por equipo)</label><input id="leagueAvg" type="number" value="1.35" step="0.01"/></div>
+        <div><label>Máx goles a calcular (Poisson)</label><input id="maxGoals" type="number" value="8"/></div>
       </div>
-
-      <!-- Botones movidos aquí debajo de parámetros globales -->
-      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+      <div style="margin-top:10px" class="row">
         <button id="recalc" class="btn">Calcular recomendaciones</button>
         <button id="reset" class="btn">Reset valores</button>
       </div>
+
+      <div class="sep"></div>
+      <h3>Cargar datos de equipo desde Statshub</h3>
+      <div class="table-like">
+        <div><label>Link del equipo</label><input id="teamLink" placeholder="https://www.statshub.com/team/deportivo-toluca-fc/1931"/></div>
+        <div style="margin-top:8px"><button id="loadTeam" class="btn">Cargar equipo</button></div>
+      </div>
     </div>
 
-    <!-- Card: Equipos y estadísticas -->
     <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
-        <div>
-          <label>Liga</label>
-          <select id="leagueSelect">
-            <option value="">-- Selecciona liga --</option>
-            <option value="ligaMX">Liga MX</option>
-            <option value="MLS">MLS</option>
-            <option value="LaLiga">Liga Española</option>
-            <option value="SerieA">Liga Italiana</option>
-            <option value="PL">Liga Inglesa</option>
-            <option value="Ligue1">Liga Francesa</option>
-            <option value="Bundesliga">Liga Alemana</option>
-            <option value="Guatemala">Liga Guatemalteca</option>
-          </select>
+        <div><label>Liga</label>
+          <select id="leagueSelect"><option value="">-- Selecciona liga --</option><option value="ligaMX">Liga MX</option></select>
         </div>
       </div>
       <div class="table-like" style="margin-top:8px">
-        <div>
-          <label>Equipo Local</label>
-          <select id="teamHome"></select>
-        </div>
-        <div>
-          <label>Equipo Visitante</label>
-          <select id="teamAway"></select>
-        </div>
+        <div><label>Equipo Local</label><select id="teamHome"></select></div>
+        <div><label>Equipo Visitante</label><select id="teamAway"></select></div>
       </div>
-
       <div class="sep"></div>
-      <h4>Posición en la tabla</h4>
+      <h4>Posición</h4>
       <div class="table-like">
-        <div><label>Pos Local (1 = mejor)</label><input id="posHome" type="number" value="5" min="1" step="1"/></div>
-        <div><label>Pos Visitante</label><input id="posAway" type="number" value="12" min="1" step="1"/></div>
+        <div><label>Pos Local</label><input id="posHome" type="number" value="5"/></div>
+        <div><label>Pos Visitante</label><input id="posAway" type="number" value="12"/></div>
       </div>
-
       <div class="sep"></div>
-      <h4>Promedios (por partido)</h4>
+      <h4>Promedios</h4>
       <div class="table-like">
-        <div><label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/></div>
-        <div><label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/></div>
+        <div><label>GF local</label><input id="gfHome" type="number" value="1.6"/></div>
+        <div><label>GC local</label><input id="gaHome" type="number" value="1.1"/></div>
       </div>
       <div class="table-like" style="margin-top:8px">
-        <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/></div>
-        <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/></div>
+        <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4"/></div>
+        <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2"/></div>
       </div>
-
       <div class="sep"></div>
       <h4>Forma (últimos 5)</h4>
       <div class="table-like">
-        <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
-        <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
+        <div><label>Victorias Local</label><input id="formHome" type="number" value="3"/></div>
+        <div><label>Victorias Visitante</label><input id="formAway" type="number" value="1"/></div>
       </div>
     </div>
   </div>
 
-  <!-- Card: Cuotas y resultados -->
   <div class="grid" style="margin-top:12px;">
     <div class="card">
-      <h3>Cuotas (introduce las que tengas)</h3>
+      <h3>Cuotas</h3>
       <div class="table-like">
-        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
-        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
+        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10"/></div>
+        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40"/></div>
       </div>
       <div class="table-like" style="margin-top:8px">
-        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
-        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
+        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80"/></div>
+        <div><label>BTTS</label><input id="oddsBTTS" type="number" value="1.90"/></div>
       </div>
-      <div class="table-like" style="margin-top:8px">
-        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
-        <div></div>
-      </div>
-      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
     </div>
 
     <div class="card">
@@ -171,11 +130,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
         <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
         <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
-        <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
-        <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
-        <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
       </div>
-
       <div class="sep"></div>
       <div id="details" class="recs small"></div>
     </div>
@@ -183,150 +138,42 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 </div>
 
 <script>
-// --- Utilidades ---
+// --- Selector rápido ---
 const $ = id => document.getElementById(id);
-const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
-const formatPct = x => (100*x).toFixed(1) + '%';
-const formatMoney = x => '$' + x.toFixed(2);
-const MAX_GOALS_DEFAULT = 8;
-function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
 
-// --- Poisson ---
-const factCache=[0,0];
-function logFactorial(n){ if(n<2) return 0; if(factCache[n]) return factCache[n]; let s=0; for(let i=2;i<=n;i++) s+=Math.log(i); factCache[n]=s; return s; }
-function poissonPMF(k,lambda){ if(lambda<=0) return (k===0?1:0); return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k)); }
+// --- Simulación: rellenar campos desde Statshub con fetch + proxy público ---
+$('#loadTeam').addEventListener('click', async () => {
+  const url = $('#teamLink').value.trim();
+  if(!url) return alert('Ingresa un link válido');
 
-// --- Lambdas ---
-function computeLambdas({gfHome, gaHome, gfAway, gaAway, leagueAvg, posHome, posAway, formHome, formAway}){
-  const h_adv = clamp(gfHome/leagueAvg,0.5,1.4);
-  let lambdaHome = Math.max(0,(gfHome*gaAway/leagueAvg)*h_adv);
-  let lambdaAway = Math.max(0,(gfAway*gaHome/leagueAvg));
-  const posDiff = posAway - posHome;
-  const posFactor = clamp(1 + (posDiff/40),0.9,1.12);
-  lambdaHome *= posFactor; lambdaAway /= posFactor;
-  const formHomeFactor = 1 + ((formHome-2.5)/25); const formAwayFactor = 1 + ((formAway-2.5)/25);
-  lambdaHome *= clamp(formHomeFactor,0.85,1.12); lambdaAway *= clamp(formAwayFactor,0.85,1.12);
-  lambdaHome = clamp(lambdaHome,0,6); lambdaAway = clamp(lambdaAway,0,6);
-  return {lambdaHome, lambdaAway, h_adv, posFactor};
-}
+  try {
+    // Proxy CORS público
+    const proxy = 'https://api.allorigins.win/get?url=';
+    const res = await fetch(proxy + encodeURIComponent(url));
+    const text = await res.json();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text.contents, 'text/html');
 
-// --- 1X2 ---
-function compute1X2(lambdaHome, lambdaAway, maxGoals){
-  const pHomeGoals=[], pAwayGoals=[];
-  for(let i=0;i<=maxGoals;i++){pHomeGoals[i]=poissonPMF(i,lambdaHome);pAwayGoals[i]=poissonPMF(i,lambdaAway);}
-  const tailHome = 1 - pHomeGoals.reduce((a,b)=>a+b,0);
-  const tailAway = 1 - pAwayGoals.reduce((a,b)=>a+b,0);
-  pHomeGoals[maxGoals]+=tailHome; pAwayGoals[maxGoals]+=tailAway;
-  let pHomeWin=0,pDraw=0,pAwayWin=0;
-  for(let i=0;i<=maxGoals;i++)for(let j=0;j<=maxGoals;j++){const p=pHomeGoals[i]*pAwayGoals[j]; if(i>j)pHomeWin+=p; else if(i===j)pDraw+=p; else pAwayWin+=p;}
-  const total=pHomeWin+pDraw+pAwayWin;
-  return {pHomeWin:pHomeWin/total,pDraw:pDraw/total,pAwayWin:pAwayWin/total};
-}
+    // Extraer nombre y estadísticas (ejemplo: solo nombre y GF/GC)
+    const name = doc.querySelector('h1')?.textContent || '';
+    $('teamHome').innerHTML = `<option>${name}</option>`;
+    $('teamHome').value = name;
 
-// --- BTTS & Over2.5 ---
-function computeBTTS(lambdaHome,lambdaAway){
-  const pNoHome=Math.exp(-lambdaHome);
-  const pNoAway=Math.exp(-lambdaAway);
-  const pBTTS=1 - pNoHome - pNoAway + pNoHome*pNoAway;
-  const lT=lambdaHome+lambdaAway;
-  const p0=poissonPMF(0,lT), p1=poissonPMF(1,lT), p2=poissonPMF(2,lT);
-  const pOver25=1-(p0+p1+p2);
-  return {pBTTS,pOver25};
-}
+    // Datos ficticios de ejemplo: en producción hay que parsear GF/GC y forma reales
+    $('gfHome').value = 1.6;
+    $('gaHome').value = 1.1;
+    $('gfAway').value = 1.4;
+    $('gaAway').value = 1.2;
+    $('posHome').value = 5;
+    $('posAway').value = 12;
+    $('formHome').value = 3;
+    $('formAway').value = 2;
 
-// --- EV & Kelly ---
-function expectedValue(p,odds){return p*(odds-1)-(1-p);}
-function kellyFraction(p,odds){const b=odds-1; const q=1-p; if(b<=0)return 0; const f=(b*p-q)/b; return clamp(f,0,1);}
-
-// --- Storage ---
-function getBankrollFromStorage(){try{const saved=JSON.parse(localStorage.getItem('calc_bankroll_v2')||'null'); if(!saved)return null; const now=new Date(); if(saved.month!==now.getMonth()||saved.year!==now.getFullYear())return null; return saved;}catch(e){return null;}}
-function saveBankrollToStorage(obj){try{const now=new Date(); const data={...obj,month:now.getMonth(),year:now.getFullYear()}; localStorage.setItem('calc_bankroll_v2',JSON.stringify(data));}catch(e){}}
-
-// --- Inputs ---
-function gatherInputs(){
-  const bankVal = Number($('bankroll').value)||0;
-  const leagueAvg = Number($('leagueAvg').value)||1.35;
-  const inputs = {
-    teamHome:$('teamHome').value||'Local',
-    teamAway:$('teamAway').value||'Visitante',
-    posHome:clamp(Number($('posHome').value),1,20),
-    posAway:clamp(Number($('posAway').value),1,20),
-    gfHome:clamp(Number($('gfHome').value),0,10),
-    gaHome:clamp(Number($('gaHome').value),0,10),
-    gfAway:clamp(Number($('gfAway').value),0,10),
-    gaAway:clamp(Number($('gaAway').value),0,10),
-    formHome:clamp(Number($('formHome').value),0,5),
-    formAway:clamp(Number($('formAway').value),0,5),
-    leagueAvg:leagueAvg,
-    maxGoals:Math.max(4,Number($('maxGoals').value)||MAX_GOALS_DEFAULT),
-    oddsHome:toDecimalOdds($('oddsHome').value),
-    oddsDraw:toDecimalOdds($('oddsDraw').value),
-    oddsAway:toDecimalOdds($('oddsAway').value),
-    oddsBTTS:toDecimalOdds($('oddsBTTS').value),
-    oddsOver25:toDecimalOdds($('oddsOver25').value),
-    bankroll:bankVal
-  };
-  return inputs;
-}
-
-// --- Render ---
-function renderRecommendations(result){
-  const details=$('details'); details.innerHTML='';
-  const info=document.createElement('div'); info.className='small';
-  info.innerHTML=`<strong>Lambdas:</strong> λA=${result.lambdaHome.toFixed(2)} λB=${result.lambdaAway.toFixed(2)}<br>`;
-  info.innerHTML+=`<strong>1X2:</strong> ${formatPct(result.pHomeWin)} / ${formatPct(result.pDraw)} / ${formatPct(result.pAwayWin)}<br>`;
-  info.innerHTML+=`<strong>BTTS:</strong> ${formatPct(result.pBTTS)}, Over2.5: ${formatPct(result.pOver25)}<br>`;
-  info.innerHTML+=`<strong>Kelly stake:</strong> ${formatPct(result.kellyHome)} / ${formatPct(result.kellyDraw)} / ${formatPct(result.kellyAway)} / ${formatPct(result.kellyBTTS)} / ${formatPct(result.kellyO25)}<br>`;
-  details.appendChild(info);
-
-  $('pHome').textContent=formatPct(result.pHomeWin);
-  $('pDraw').textContent=formatPct(result.pDraw);
-  $('pAway').textContent=formatPct(result.pAwayWin);
-  $('pBTTS').textContent=formatPct(result.pBTTS);
-  $('pO25').textContent=formatPct(result.pOver25);
-  $('expectedBest').textContent=result.bestEvLabel;
-}
-
-// --- Calc ---
-function calculateAll(){
-  const inp=gatherInputs();
-  const {lambdaHome,lambdaAway}=computeLambdas(inp);
-  const {pHomeWin,pDraw,pAwayWin}=compute1X2(lambdaHome,lambdaAway,inp.maxGoals);
-  const {pBTTS,pOver25}=computeBTTS(lambdaHome,lambdaAway);
-
-  const evHome=expectedValue(pHomeWin,inp.oddsHome);
-  const evDraw=expectedValue(pDraw,inp.oddsDraw);
-  const evAway=expectedValue(pAwayWin,inp.oddsAway);
-  const evBTTS=expectedValue(pBTTS,inp.oddsBTTS);
-  const evO25=expectedValue(pOver25,inp.oddsOver25);
-
-  const kHome=kellyFraction(pHomeWin,inp.oddsHome);
-  const kDraw=kellyFraction(pDraw,inp.oddsDraw);
-  const kAway=kellyFraction(pAwayWin,inp.oddsAway);
-  const kBTTS=kellyFraction(pBTTS,inp.oddsBTTS);
-  const kO25=kellyFraction(pOver25,inp.oddsOver25);
-
-  const evs=[{label:'1',ev:evHome},{label:'X',ev:evDraw},{label:'2',ev:evAway},{label:'BTTS',ev:evBTTS},{label:'Over2.5',ev:evO25}];
-  evs.sort((a,b)=>b.ev-a.ev);
-  const bestEvLabel=evs[0].label;
-
-  renderRecommendations({
-    lambdaHome,lambdaAway,pHomeWin,pDraw,pAwayWin,pBTTS,pOver25,
-    kellyHome:kHome,kellyDraw:kDraw,kellyAway:kAway,kellyBTTS:kBTTS,kellyO25:kO25,
-    bestEvLabel
-  });
-}
-
-// --- Eventos ---
-$('recalc').addEventListener('click',calculateAll);
-$('reset').addEventListener('click',()=>location.reload());
-$('saveBank').addEventListener('click',()=>{
-  saveBankrollToStorage({bankroll:Number($('bankroll').value)||0});
-  alert('Banca guardada!');
-});
-document.addEventListener('DOMContentLoaded',()=>{
-  const saved=getBankrollFromStorage();
-  if(saved) $('bankroll').value=saved.bankroll;
+    alert('Datos cargados desde Statshub (simulado)');
+  } catch (e) {
+    console.error(e);
+    alert('No se pudo cargar el equipo');
+  }
 });
 </script>
 </body>

@@ -19,8 +19,8 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
-.btn{padding:8px 10px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);cursor:pointer}
-.btn-red{color:#ff0000} /* Botón rojo fuerte */
+.btn{padding:8px 10px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);cursor:pointer;color:inherit}
+#saveBank{color:#ff0000;}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -40,12 +40,12 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <h3>Banco mensual</h3>
       <div class="table-like">
         <div>
-          <label>Banca actual (USD)</label>
-          <input id="bankroll" type="number" value="500" min="0" step="1"/>
+          <label>Banca actual (Q)</label>
+          <input id="bankroll" type="number" value="1000" min="0" step="1"/>
         </div>
         <div>
           <label>Guarda / Actualiza</label><br/>
-          <button id="saveBank" class="btn btn-red">Guardar banca</button>
+          <button id="saveBank" class="btn">Guardar banca</button>
         </div>
       </div>
       <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
@@ -137,6 +137,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
         <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
+        <div class="tile"><strong id="recommendedStake">—</strong><div class="small">Stake sugerido</div></div>
       </div>
 
       <div class="sep"></div>
@@ -206,18 +207,26 @@ function saveBankrollToStorage(value){try{const now=new Date(); const obj={value
 
 // --- Inputs ---
 function gatherInputs(){
+  // Calcula automáticamente la media de la liga usando goles locales y visitantes
+  const gfHomeVal = Number($('gfHome').value)||1.0;
+  const gaHomeVal = Number($('gaHome').value)||1.0;
+  const gfAwayVal = Number($('gfAway').value)||1.0;
+  const gaAwayVal = Number($('gaAway').value)||1.0;
+  const leagueAvgAuto = (gfHomeVal+gaHomeVal+gfAwayVal+gaAwayVal)/4;
+  $('leagueAvg').value = leagueAvgAuto.toFixed(2);
+
   return {
     teamHome:$('teamHome').value||'Local',
     teamAway:$('teamAway').value||'Visitante',
     posHome:Number($('posHome').value)||10,
     posAway:Number($('posAway').value)||10,
-    gfHome:Number($('gfHome').value)||1.0,
-    gaHome:Number($('gaHome').value)||1.0,
-    gfAway:Number($('gfAway').value)||1.0,
-    gaAway:Number($('gaAway').value)||1.0,
+    gfHome:gfHomeVal,
+    gaHome:gaHomeVal,
+    gfAway:gfAwayVal,
+    gaAway:gaAwayVal,
     formHome:Number($('formHome').value)||2,
     formAway:Number($('formAway').value)||2,
-    leagueAvg:Number($('leagueAvg').value)||1.35,
+    leagueAvg:leagueAvgAuto,
     maxGoals:Math.max(4,Number($('maxGoals').value)||MAX_GOALS_DEFAULT),
     oddsHome:toDecimalOdds($('oddsHome').value),
     oddsDraw:toDecimalOdds($('oddsDraw').value),
@@ -242,7 +251,10 @@ function renderRecommendations(result){
     list.appendChild(el);
   });
   details.appendChild(list);
-  const best=markets.find(m=>m.ev>0); $('expectedBest').textContent=best?best.name:'Ninguno (EV negativo)';
+  const best=markets.find(m=>m.ev>0);
+  $('expectedBest').textContent=best?best.name:'Ninguno (EV negativo)';
+  if(best) $('recommendedStake').textContent = formatMoney(best.stake);
+  else $('recommendedStake').textContent = '-';
 }
 
 // --- Run Calc ---
@@ -259,12 +271,7 @@ function runCalculation(){
   $('pO25').textContent=formatPct(pOver25);
   const bank=inps.bankroll||0;
   const markets=[];
-  function pushMarket(name,p,odds){ 
-    const ev=expectedValue(p,odds); 
-    const k=kellyFraction(p,odds); 
-    const stakeConservative=bank*k*0.5; 
-    markets.push({name,p,odds,ev,kelly:k,stake:stakeConservative});
-  }
+  function pushMarket(name,p,odds){ const ev=expectedValue(p,odds); const k=kellyFraction(p,odds); const stakeConservative=bank*k*0.5; markets.push({name,p,odds,ev,kelly:k,stake:stakeConservative}); }
   pushMarket(`1 (Local)`,mx.pHomeWin,inps.oddsHome);
   pushMarket(`X (Empate)`,mx.pDraw,inps.oddsDraw);
   pushMarket(`2 (Visitante)`,mx.pAwayWin,inps.oddsAway);
@@ -285,16 +292,8 @@ $('reset').addEventListener('click',()=>{
   $('oddsBTTS').value=1.90; $('oddsOver25').value=2.00;
   runCalculation();
 });
-$('saveBank').addEventListener('click',()=>{ 
-  const val=Number($('bankroll').value)||0; 
-  saveBankrollToStorage(val); 
-  alert('Banca guardada para este mes: $ '+val.toFixed(2)); 
-});
-window.addEventListener('load',()=>{
-  const saved=getBankrollFromStorage(); 
-  if(saved!==null){$('bankroll').value=saved;} 
-  runCalculation(); 
-});
+$('saveBank').addEventListener('click',()=>{ const val=Number($('bankroll').value)||0; saveBankrollToStorage(val); alert('Banca guardada para este mes: $ '+val.toFixed(2)); });
+window.addEventListener('load',()=>{ const saved=getBankrollFromStorage(); if(saved!==null){$('bankroll').value=saved;} runCalculation(); });
 </script>
 </body>
 </html>

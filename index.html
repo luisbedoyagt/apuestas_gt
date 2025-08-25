@@ -5,40 +5,58 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Calculadora Apuestas Avanzada • Poisson + Kelly</title>
 <style>
-:root{--gap:12px;--radius:10px;--bg:#0f1220;--card:#191c2f;--muted:rgba(230,233,245,.75);}
+:root{
+  --gap:12px;
+  --radius:12px;
+  --bg:#0f1220;
+  --card:#191c2f;
+  --muted:rgba(230,233,245,.75);
+  --btn-blue:linear-gradient(135deg,#3b82f6,#2563eb);
+  --btn-red:linear-gradient(135deg,#ef4444,#f87171);
+}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
 .container{max-width:1100px;margin:24px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
 .header{text-align:center;padding:12px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.card{background:var(--card);border:1px solid #2a2e4a;padding:14px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.card{background:var(--card);border:1px solid #2a2e4a;padding:16px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
 label{font-size:13px;opacity:.95}
 input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);color:inherit}
 .row{display:flex;gap:10px}
 .row > *{flex:1}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
 .btn {
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  padding:10px 16px;
+  border-radius:14px;
+  border:none;
+  background:var(--btn-blue);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s ease-in-out;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+  display:flex; justify-content:center; align-items:center; gap:6px;
+  position:relative;
+  overflow:hidden;
 }
-.btn:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
-.btn:active {transform: translateY(1px); box-shadow: 0 3px 10px rgba(0,0,0,0.25);}
+.btn::after {
+  content:"";
+  position:absolute;
+  top:0; left:-100%;
+  width:100%;
+  height:100%;
+  background:rgba(255,255,255,0.15);
+  transform:skewX(-20deg);
+  transition:all 0.5s ease;
+}
+.btn:hover::after {left:200%;}
+.btn:hover {transform: translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,0.35);}
+.btn:active {transform: translateY(1px); box-shadow:0 3px 10px rgba(0,0,0,0.25);}
 #saveBank {
-  background: linear-gradient(135deg, #ef4444, #f87171);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  background: var(--btn-red);
 }
-#saveBank:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -63,7 +81,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         </div>
         <div>
           <label>Guarda / Actualiza</label><br/>
-          <button id="saveBank" class="btn">Guardar banca</button>
+          <button id="saveBank" class="btn">💾 Guardar banca</button>
         </div>
       </div>
       <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
@@ -155,8 +173,8 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       </div>
 
       <div style="margin-top:10px" class="row">
-        <button id="recalc" class="btn">Calcular recomendaciones</button>
-        <button id="reset" class="btn">Reset valores</button>
+        <button id="recalc" class="btn">⚡ Calcular recomendaciones</button>
+        <button id="reset" class="btn">🔄 Reset valores</button>
       </div>
       <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
     </div>
@@ -167,7 +185,6 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
         <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
         <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
-
         <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
         <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
@@ -220,7 +237,7 @@ function compute1X2(lambdaHome, lambdaAway, maxGoals){
   return {pHomeWin:pHomeWin/total,pDraw:pDraw/total,pAwayWin:pAwayWin/total};
 }
 
-// --- BTTS & Over2.5 automático ---
+// --- BTTS & Over2.5 ---
 function computeBTTS(lambdaHome,lambdaAway){
   const pNoHome=Math.exp(-lambdaHome);
   const pNoAway=Math.exp(-lambdaAway);
@@ -333,6 +350,7 @@ $('saveBank').addEventListener('click',()=>{const v=Number($('bankroll').value)|
 // --- Load banca ---
 const savedBank=getBankrollFromStorage();
 if(savedBank!==null) $('bankroll').value=savedBank;
+
 </script>
 </body>
 </html>

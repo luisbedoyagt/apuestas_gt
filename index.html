@@ -65,35 +65,36 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
     </div>
 
     <div class="card">
-      <h3>Equipos y estadísticas</h3>
+  <h3>Equipos y estadísticas</h3>
 
-      <div class="table-like">
-        <div>
-          <label>Ligas</label>
-          <select id="leagueSelect">
-            <option value="">-- Selecciona liga --</option>
-            <option value="ligaMX">Liga MX</option>
-            <option value="MLS">MLS</option>
-            <option value="LaLiga">Liga Española</option>
-            <option value="SerieA">Liga Italiana</option>
-            <option value="PL">Liga Inglesa</option>
-            <option value="Ligue1">Liga Francesa</option>
-            <option value="Bundesliga">Liga Alemana</option>
-            <option value="Guatemala">Liga Guatemalteca</option>
-          </select>
-        </div>
-        <div>
-          <label>Equipo Local</label>
-          <select id="teamHome"></select>
-        </div>
-      </div>
+  <div class="table-like" style="grid-template-columns:1fr;">
+    <div>
+      <label>Liga</label>
+      <select id="leagueSelect">
+        <option value="">-- Selecciona liga --</option>
+        <option value="ligaMX">Liga MX</option>
+        <option value="MLS">MLS</option>
+        <option value="LaLiga">Liga Española</option>
+        <option value="SerieA">Liga Italiana</option>
+        <option value="PL">Liga Inglesa</option>
+        <option value="Ligue1">Liga Francesa</option>
+        <option value="Bundesliga">Liga Alemana</option>
+        <option value="Guatemala">Liga Guatemalteca</option>
+      </select>
+    </div>
 
-      <div class="table-like" style="margin-top:8px">
-        <div>
-          <label>Equipo Visitante</label>
-          <select id="teamAway"></select>
-        </div>
-      </div>
+    <div style="margin-top:8px">
+      <label>Equipo Local</label>
+      <select id="teamHome"></select>
+    </div>
+
+    <div style="margin-top:8px">
+      <label>Equipo Visitante</label>
+      <select id="teamAway"></select>
+    </div>
+  </div>
+</div>
+
 
       <div class="sep"></div>
       <h4>Posición en la tabla</h4>

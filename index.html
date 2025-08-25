@@ -19,8 +19,8 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
-.btn{padding:8px 10px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);cursor:pointer;color:inherit}
-#saveBank{color:red;} /* Botón guarda/actualiza en rojo fuerte */
+.btn{padding:8px 10px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);cursor:pointer}
+#saveBank{color:red;font-weight:bold;} /* Botón rojo */
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -66,14 +66,32 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 
     <div class="card">
       <h3>Equipos y estadísticas</h3>
+
       <div class="table-like">
         <div>
-          <label>Equipo Local</label>
-          <select id="teamHomeSelect"></select>
+          <label>Liga</label>
+          <select id="leagueSelect">
+            <option value="">-- Selecciona liga --</option>
+            <option value="ligaMX">Liga MX</option>
+            <option value="MLS">MLS</option>
+            <option value="LaLiga">Liga Española</option>
+            <option value="SerieA">Liga Italiana</option>
+            <option value="PL">Liga Inglesa</option>
+            <option value="Ligue1">Liga Francesa</option>
+            <option value="Bundesliga">Liga Alemana</option>
+            <option value="Guatemala">Liga Guatemalteca</option>
+          </select>
         </div>
         <div>
+          <label>Equipo Local</label>
+          <select id="teamHome"></select>
+        </div>
+      </div>
+
+      <div class="table-like" style="margin-top:8px">
+        <div>
           <label>Equipo Visitante</label>
-          <select id="teamAwaySelect"></select>
+          <select id="teamAway"></select>
         </div>
       </div>
 
@@ -99,7 +117,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <h4>Forma (últimos 5)</h4>
       <div class="table-like">
         <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
-        <div><label>Victorias últimas 5 (Visitante)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
+        <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
       </div>
     </div>
   </div>
@@ -113,10 +131,10 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       </div>
       <div class="table-like" style="margin-top:8px">
         <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01"/></div>
-        <div><label>BTTS Sí (cuota)</label><input id="oddsBTTS" type="number" value="1.90" step="0.01"/></div>
+        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01"/></div>
       </div>
       <div class="table-like" style="margin-top:8px">
-        <div><label>Over 2.5 (cuota)</label><input id="oddsOver25" type="number" value="2.00" step="0.01"/></div>
+        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01"/></div>
         <div></div>
       </div>
 
@@ -133,6 +151,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
         <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
         <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
+
         <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
         <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
@@ -145,10 +164,11 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 </div>
 
 <script>
+// --- Utilidades ---
 const $ = id => document.getElementById(id);
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 const formatPct = x => (100*x).toFixed(1) + '%';
-const formatMoney = x => 'Q ' + x.toFixed(2);
+const formatMoney = x => '$' + x.toFixed(2);
 const MAX_GOALS_DEFAULT = 8;
 function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
 
@@ -206,8 +226,8 @@ function saveBankrollToStorage(value){try{const now=new Date(); const obj={value
 // --- Inputs ---
 function gatherInputs(){
   return {
-    teamHome:$('teamHomeSelect').value||'Local',
-    teamAway:$('teamAwaySelect').value||'Visitante',
+    teamHome:$('teamHome').value||'Local',
+    teamAway:$('teamAway').value||'Visitante',
     posHome:Number($('posHome').value)||10,
     posAway:Number($('posAway').value)||10,
     gfHome:Number($('gfHome').value)||1.0,
@@ -248,41 +268,56 @@ function renderRecommendations(result){
 function runCalculation(){
   const inps=gatherInputs();
   const lamb=computeLambdas({gfHome:inps.gfHome,gaHome:inps.gaHome,gfAway:inps.gfAway,gaAway:inps.gaAway,leagueAvg:inps.leagueAvg,posHome:inps.posHome,posAway:inps.posAway,formHome:inps.formHome,formAway:inps.formAway});
-  const lambdaHome=lamb.lambdaHome, lambdaAway=lamb.lambdaAway;
-  const mx=compute1X2(lambdaHome,lambdaAway,inps.maxGoals);
-  const {pBTTS,pOver25}=computeBTTS(lambdaHome,lambdaAway);
-  $('pHome').textContent=formatPct(mx.pHomeWin);
-  $('pDraw').textContent=formatPct(mx.pDraw);
-  $('pAway').textContent=formatPct(mx.pAwayWin);
-  $('pBTTS').textContent=formatPct(pBTTS);
-  $('pO25').textContent=formatPct(pOver25);
-  const bank=inps.bankroll||0;
-  const markets=[];
-  function pushMarket(name,p,odds){ const ev=expectedValue(p,odds); const k=kellyFraction(p,odds); const stake=bank*k; markets.push({name,p,odds,ev,kelly:k,stake});}
-  pushMarket('Local',mx.pHomeWin,inps.oddsHome);
-  pushMarket('Empate',mx.pDraw,inps.oddsDraw);
-  pushMarket('Visitante',mx.pAwayWin,inps.oddsAway);
-  pushMarket('BTTS',pBTTS,inps.oddsBTTS);
-  pushMarket('Over 2.5',pOver25,inps.oddsOver25);
+  const res1x2=compute1X2(lamb.lambdaHome,lamb.lambdaAway,inps.maxGoals);
+  const resBtts=computeBTTS(lamb.lambdaHome,lamb.lambdaAway);
+  $('pHome').textContent=formatPct(res1x2.pHomeWin); $('pDraw').textContent=formatPct(res1x2.pDraw); $('pAway').textContent=formatPct(res1x2.pAwayWin);
+  $('pBTTS').textContent=formatPct(resBtts.pBTTS); $('pO25').textContent=formatPct(resBtts.pOver25);
+  const markets=[
+    {name:'1X2 Local',p:res1x2.pHomeWin,odds:inps.oddsHome},
+    {name:'1X2 Empate',p:res1x2.pDraw,odds:inps.oddsDraw},
+    {name:'1X2 Visitante',p:res1x2.pAwayWin,odds:inps.oddsAway},
+    {name:'BTTS Sí',p:resBtts.pBTTS,odds:inps.oddsBTTS},
+    {name:'Over 2.5',p:resBtts.pOver25,odds:inps.oddsOver25}
+  ];
+  markets.forEach(m=>{m.ev=expectedValue(m.p,m.odds); m.kelly=kellyFraction(m.p,m.odds); m.stake=inps.bankroll*m.kelly;});
   renderRecommendations({...lamb,markets});
 }
 
-// --- Init ---
-function initTeams(){
-  const teams=["Manchester City","Liverpool","Chelsea","Arsenal","Real Madrid","Barcelona","Bayern Munich","Dortmund","Juventus","Inter Milan"];
-  const home=$('teamHomeSelect'); const away=$('teamAwaySelect');
-  teams.forEach(t=>{const o1=document.createElement('option'); o1.value=o1.textContent=t; home.appendChild(o1); const o2=document.createElement('option'); o2.value=o2.textContent=t; away.appendChild(o2);});
-}
-function initBankroll(){
-  const saved=getBankrollFromStorage();
-  if(saved!==null) $('bankroll').value=saved;
-}
-initTeams(); initBankroll();
+// --- Liga / Equipo ---
+const teamsByLeague = {
+  ligaMX:["América","Atlas","Atlético San Luis","Bravos","Cruz Azul","FC Juárez","León","Mazatlán","Monterrey","Necaxa","Puebla","Santos Laguna","Tigres UANL","Toluca","Tijuana","Pachuca","Querétaro","San Luis","Chivas","Atlante","Pumas UNAM"],
+  MLS:["Atlanta United","Austin FC","Charlotte FC","Chicago Fire","Colorado Rapids","Columbus Crew","D.C. United","FC Cincinnati","FC Dallas","Houston Dynamo","Inter Miami CF","LA Galaxy","LAFC","Minnesota United","Montreal Impact","Nashville SC","New England Revolution","New York City FC","New York Red Bulls","Orlando City SC","Philadelphia Union","Portland Timbers","Real Salt Lake","San Jose Earthquakes","Seattle Sounders FC","St. Louis City SC","Toronto FC","Vancouver Whitecaps FC","San Diego Loyal","Sacramento Republic FC"],
+  LaLiga:["Atlético de Madrid","Getafe","Rayo Vallecano","Real Madrid","Barcelona","Espanyol","Girona","Real Betis","Sevilla","Villarreal","Valencia","Elche","Levante","Real Oviedo","Alavés","Athletic Club","Real Sociedad","Celta de Vigo","Mallorca","Osasuna"],
+  SerieA:["Atalanta","Bolonia","Cagliari","Cremonense","Empoli","Fiorentina","Genoa","Inter de Milán","Juventus","Lazio","Lecce","Milan","Monza","Napoli","Roma","Salernitana","Sampdoria","Sassuolo","Spezia","Torino"],
+  PL:["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton & Hove Albion","Chelsea","Crystal Palace","Everton","Fulham","Leeds United","Liverpool","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sheffield United","Tottenham Hotspur","West Ham United","Wolverhampton Wanderers"],
+  Ligue1:["Paris Saint-Germain","Olympique de Marsella","AS Monaco","Olympique de Lyon","Lille OSC","OGC Niza","RC Lens","Stade Rennais","FC Nantes","FC Lorient","Angers SCO","AS Saint-Étienne","Clermont Foot","Troyes AC","Reims","Montpellier HSC","Brest","Ajaccio"],
+  Bundesliga:["Bayer Leverkusen","Bayern Múnich","Borussia Dortmund","Borussia Mönchengladbach","Colonia","Eintracht Frankfurt","Freiburgo","Hoffenheim","Mainz 05","RB Leipzig","Bayer 04 Leverkusen","VfB Stuttgart","Wolfsburgo","Augsburgo","Heidenheim","Hannover 96","Schalke 04","Werder Bremen"],
+  Guatemala:["Antigua GFC","Cobán Imperial","Xelajú MC","Municipal","Comunicaciones","Malacateco","Guastatoya","Sanarate","Achuapa","Santa Lucía Cotzumalguapa","Sololá","Mixco"]
+};
 
-// --- Events ---
-$('saveBank').addEventListener('click',()=>{saveBankrollToStorage(Number($('bankroll').value)); alert('Banca guardada.');});
-$('recalc').addEventListener('click',()=>runCalculation());
-$('reset').addEventListener('click',()=>{document.querySelectorAll('input').forEach(i=>i.value=i.defaultValue); $('details').innerHTML=''; $('pHome').textContent='—';$('pDraw').textContent='—';$('pAway').textContent='—';$('pBTTS').textContent='—';$('pO25').textContent='—';$('expectedBest').textContent='—';});
+const leagueSelect = $('leagueSelect');
+const teamHome = $('teamHome');
+const teamAway = $('teamAway');
+leagueSelect.addEventListener('change',()=>{
+  const l=leagueSelect.value;
+  teamHome.innerHTML='<option value="">-- Selecciona equipo --</option>';
+  teamAway.innerHTML='<option value="">-- Selecciona equipo --</option>';
+  if(!l || !teamsByLeague[l]) return;
+  teamsByLeague[l].forEach(t=>{
+    const opt1=document.createElement('option'); opt1.value=t; opt1.textContent=t; teamHome.appendChild(opt1);
+    const opt2=document.createElement('option'); opt2.value=t; opt2.textContent=t; teamAway.appendChild(opt2);
+  });
+});
+
+// --- Botones ---
+$('recalc').addEventListener('click', runCalculation);
+$('reset').addEventListener('click',()=>{document.querySelectorAll('input').forEach(i=>i.value=i.defaultValue); runCalculation();});
+$('saveBank').addEventListener('click',()=>{const v=Number($('bankroll').value)||0; saveBankrollToStorage(v); alert('Banca guardada');});
+
+// --- Load banca ---
+const savedBank=getBankrollFromStorage();
+if(savedBank!==null) $('bankroll').value=savedBank;
+
 </script>
 </body>
 </html>

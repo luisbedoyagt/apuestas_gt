@@ -20,10 +20,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
 .btn{padding:8px 10px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);cursor:pointer}
-
-/* Botón Guardar banca en rojo fuerte */
-#saveBank { color: #ffffff; }
-
+.btn-red{color:#ff0000} /* Botón rojo fuerte */
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -43,12 +40,12 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <h3>Banco mensual</h3>
       <div class="table-like">
         <div>
-          <label>Banca actual (Q)</label>
-          <input id="bankroll" type="number" value="1000" min="0" step="1"/>
+          <label>Banca actual (USD)</label>
+          <input id="bankroll" type="number" value="500" min="0" step="1"/>
         </div>
         <div>
           <label>Guarda / Actualiza</label><br/>
-          <button id="saveBank" class="btn">Guardar Bank</button>
+          <button id="saveBank" class="btn btn-red">Guardar banca</button>
         </div>
       </div>
       <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
@@ -149,11 +146,10 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 </div>
 
 <script>
-// --- Helper ---
 const $ = id => document.getElementById(id);
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 const formatPct = x => (100*x).toFixed(1) + '%';
-const formatMoney = x => 'Q ' + x.toFixed(2);
+const formatMoney = x => '$ ' + x.toFixed(2);
 const MAX_GOALS_DEFAULT = 8;
 function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
 
@@ -263,7 +259,12 @@ function runCalculation(){
   $('pO25').textContent=formatPct(pOver25);
   const bank=inps.bankroll||0;
   const markets=[];
-  function pushMarket(name,p,odds){ const ev=expectedValue(p,odds); const k=kellyFraction(p,odds); const stakeConservative=bank*k*0.5; markets.push({name,p,odds,ev,kelly:k,stake:stakeConservative}); }
+  function pushMarket(name,p,odds){ 
+    const ev=expectedValue(p,odds); 
+    const k=kellyFraction(p,odds); 
+    const stakeConservative=bank*k*0.5; 
+    markets.push({name,p,odds,ev,kelly:k,stake:stakeConservative});
+  }
   pushMarket(`1 (Local)`,mx.pHomeWin,inps.oddsHome);
   pushMarket(`X (Empate)`,mx.pDraw,inps.oddsDraw);
   pushMarket(`2 (Visitante)`,mx.pAwayWin,inps.oddsAway);
@@ -284,8 +285,16 @@ $('reset').addEventListener('click',()=>{
   $('oddsBTTS').value=1.90; $('oddsOver25').value=2.00;
   runCalculation();
 });
-$('saveBank').addEventListener('click',()=>{ const val=Number($('bankroll').value)||0; saveBankrollToStorage(val); alert('Banca guardada para este mes: Q '+val.toFixed(2)); });
-window.addEventListener('load',()=>{ const saved=getBankrollFromStorage(); if(saved!==null){$('bankroll').value=saved;} runCalculation(); });
+$('saveBank').addEventListener('click',()=>{ 
+  const val=Number($('bankroll').value)||0; 
+  saveBankrollToStorage(val); 
+  alert('Banca guardada para este mes: $ '+val.toFixed(2)); 
+});
+window.addEventListener('load',()=>{
+  const saved=getBankrollFromStorage(); 
+  if(saved!==null){$('bankroll').value=saved;} 
+  runCalculation(); 
+});
 </script>
 </body>
 </html>

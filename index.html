@@ -39,7 +39,6 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
   </div>
 
   <div class="grid">
-    <!-- Card: Banco y parámetros globales -->
     <div class="card">
       <h3>Banco mensual</h3>
       <div class="table-like">
@@ -74,7 +73,6 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       </div>
     </div>
 
-    <!-- Card: Equipos y estadísticas -->
     <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
@@ -123,7 +121,6 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
     </div>
   </div>
 
-  <!-- Card: Cuotas y resultados -->
   <div class="grid" style="margin-top:12px;">
     <div class="card">
       <h3>Cuotas (introduce las que tengas)</h3>
@@ -160,20 +157,18 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 </div>
 
 <script>
-// ----------------- Utilidades / Poisson / EV / Kelly (igual que tu código previo) -----------------
+// ----------------- Utilidades -----------------
 const $ = id => document.getElementById(id);
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 const formatPct = x => (100*x).toFixed(1) + '%';
 function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
 function parseNumberString(val){ return parseFloat(String(val||'').replace(/,/g,'.'))||0; }
 
-// Aquí se mantienen tus funciones: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations, etc.
-// ----------------- FIN: Utilidades -----------------
-
-// ----------------- Acoplar a Web App -----------------
+// ----------------- Web App / Autollenado -----------------
 const leagueSelect = $('leagueSelect');
 const teamHome = $('teamHome');
 const teamAway = $('teamAway');
+let teamsByLeague = {};
 
 async function cargarEquiposDesdeWebApp() {
   const url = "https://script.google.com/macros/s/AKfycbygCgQhk5YS2QyRLuVFsjlnrbq7Sw5SZCbWq12J614URhIg9jcgKoHVHSLlsyFpkmnQzQ/exec";
@@ -187,16 +182,12 @@ async function cargarEquiposDesdeWebApp() {
   }
 }
 
-let teamsByLeague = {};
-
 document.addEventListener('DOMContentLoaded', async () => {
   teamsByLeague = await cargarEquiposDesdeWebApp();
-
-  // llenar select de ligas
   Object.keys(teamsByLeague).forEach(codigo => {
     const opt = document.createElement('option');
     opt.value = codigo;
-    opt.textContent = codigo; // o nombre completo si quieres
+    opt.textContent = codigo;
     leagueSelect.appendChild(opt);
   });
 
@@ -206,22 +197,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
     if (!l || !teamsByLeague[l]) return;
     teamsByLeague[l].forEach(t => {
-      const opt1 = document.createElement('option'); opt1.value = t; opt1.textContent = t; teamHome.appendChild(opt1);
-      const opt2 = document.createElement('option'); opt2.value = t; opt2.textContent = t; teamAway.appendChild(opt2);
+      const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; teamHome.appendChild(opt1);
+      const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; teamAway.appendChild(opt2);
     });
+  });
+
+  function fillTeamData(teamName, leagueCode, type) {
+    if (!teamsByLeague[leagueCode]) return;
+    const teamData = teamsByLeague[leagueCode].find(t => t.name === teamName);
+    if (!teamData) return;
+
+    if (type === 'Home') {
+      $('posHome').value = teamData.pos;
+      $('gfHome').value = teamData.gf;
+      $('gaHome').value = teamData.ga;
+      $('formHome').value = teamData.form;
+    } else if (type === 'Away') {
+      $('posAway').value = teamData.pos;
+      $('gfAway').value = teamData.gf;
+      $('gaAway').value = teamData.ga;
+      $('formAway').value = teamData.form;
+    }
+
+    calculateAll();
+  }
+
+  teamHome.addEventListener('change', () => {
+    fillTeamData(teamHome.value, leagueSelect.value, 'Home');
+  });
+
+  teamAway.addEventListener('change', () => {
+    fillTeamData(teamAway.value, leagueSelect.value, 'Away');
+  });
+
+  $('recalc').addEventListener('click', () => calculateAll());
+  $('reset').addEventListener('click', ()=>location.reload());
+  $('clearAll').addEventListener('click', () => {
+    document.querySelectorAll('input').forEach(i=>i.value='');
+    document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+    ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
   });
 });
 
-// ----------------- Botones / storage -----------------
-$('recalc').addEventListener('click', () => {
-  calculateAll();
-});
-$('reset').addEventListener('click', ()=>location.reload());
-$('clearAll').addEventListener('click', () => {
-  document.querySelectorAll('input').forEach(i=>i.value='');
-  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
-  ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
-});
+// ----------------- Aquí van tus funciones de cálculo: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations -----------------
 </script>
 </body>
 </html>

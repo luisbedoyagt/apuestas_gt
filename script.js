@@ -16,10 +16,10 @@ function toDecimalOdds(v) {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
-  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga / Alemania", 
-  "DED": "Eredivisie / Paises Bajos", "BSA": "Campeonato Brasileiro / Brasil", "PD": "La Liga / Liga Española", 
-  "FL1": "Ligue 1 / Francia", "ELC": "Championship / Inglaterra", "PPL": "Primeira Liga / Portugal", 
-  "EC": "European Championship", "SA": "Serie A / Italia", "PL": "Premier League / Inglaterra" 
+  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
+  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
+  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
+  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
 };
 
 function normalizeTeam(raw) {
@@ -303,6 +303,8 @@ function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
 }
 
 function suggestBet(probObj, odds, bankroll) {
+  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
+  const maxEV = 0.5; // Umbral máximo de EV (50%)
   let bestBet = null;
   let maxEV = -Infinity;
   let bestStake = 0;
@@ -319,7 +321,7 @@ function suggestBet(probObj, odds, bankroll) {
   
   bets.forEach(bet => {
     const ev = bet.prob * bet.odds - 1;
-    if (ev > maxEV) {
+    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
       maxEV = ev;
       bestBet = bet.name;
       bestOdds = bet.odds;
@@ -343,7 +345,7 @@ function calculateAll() {
   const lambdaAway = parseNumberString($('gfAway').value);
   const bankroll = parseNumberString($('bankroll').value);
 
-  if (lambdaHome <= -1 || lambdaAway <= -1 || bankroll <= -1) {
+  if (lambdaHome <= 0 || lambdaAway <= 0 || bankroll <= 0) {
     alert('Por favor, ingrese valores válidos para goles y banca.');
     return;
   }
@@ -381,7 +383,7 @@ function calculateAll() {
   
   $('suggestion').textContent = suggestion.bestBet 
     ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuesta con valor esperado positivo.';
+    : 'No hay apuestas con valor esperado confiable.';
   $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;

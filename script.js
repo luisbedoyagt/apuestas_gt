@@ -41,12 +41,20 @@ function normalizeTeam(raw) {
 async function fetchTeams() {
   try {
     const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error('fetch falló ' + res.status);
+    if (!res.ok) throw new Error(`Fetch falló: ${res.status} ${res.statusText}`);
     const data = await res.json();
+    console.log('Datos recibidos de la API:', data); // Depuración
+    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+      throw new Error('Datos de la API vacíos o inválidos');
+    }
     const normalized = {};
     for (const key in data) { 
       const arr = data[key] || []; 
-      normalized[key] = arr.map(x => normalizeTeam(x)); 
+      normalized[key] = arr.map(x => normalizeTeam(x)).filter(t => t && t.name); 
+      console.log(`Liga ${key}:`, normalized[key]); // Depuración
+    }
+    if (Object.keys(normalized).length === 0) {
+      throw new Error('No se encontraron ligas válidas en los datos');
     }
     return normalized;
   } catch (err) { 
@@ -65,6 +73,11 @@ async function init() {
   try {
     teamsByLeague = await fetchTeams();
     const leagueCodes = Object.keys(teamsByLeague);
+    console.log('Códigos de ligas:', leagueCodes); // Depuración
+    if (leagueCodes.length === 0) {
+      alert('No se encontraron ligas para mostrar en el selector.');
+      return;
+    }
     leagueCodes.forEach(code => { 
       const opt = document.createElement('option'); 
       opt.value = code; 
@@ -95,13 +108,24 @@ document.addEventListener('DOMContentLoaded', init);
 
 function onLeagueChange() {
   const code = $('leagueSelect').value;
+  console.log('Liga seleccionada:', code); // Depuración
   $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
   $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!teamsByLeague[code]) return;
+  if (!code || !teamsByLeague[code]) {
+    console.warn(`No se encontraron equipos para la liga ${code}`);
+    return;
+  }
   teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
+    const opt1 = document.createElement('option'); 
+    opt1.value = t.name; 
+    opt1.textContent = t.name; 
+    $('teamHome').appendChild(opt1);
+    const opt2 = document.createElement('option'); 
+    opt2.value = t.name; 
+    opt2.textContent = t.name; 
+    $('teamAway').appendChild(opt2);
   });
+  console.log(`Equipos cargados para ${code}:`, teamsByLeague[code]); // Depuración
 }
 
 function findTeam(leagueCode, teamName) {

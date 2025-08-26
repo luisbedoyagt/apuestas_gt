@@ -1,13 +1,13 @@
 :root {
-  --main-bg: #ffffff;
-  --text: #222222;
-  --card-bg: #f4f4f4;
-  --card-border: #e0e0e0;
-  --shadow: rgba(0,0,0,0.1);
-  --accent: #007bff;
-  --accent-hover: #0056b3;
-  --error: #dc3545;
-  --small-text: #666666;
+  --main-bg: #1a1a1a;
+  --text: #e0e0e0;
+  --card-bg: #2c2c2c;
+  --card-border: #444;
+  --shadow: rgba(0,0,0,0.3);
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --error: #e74c3c;
+  --small-text: #a0a0a0;
 }
 
 * {
@@ -75,6 +75,12 @@ h4 {
   gap: 8px;
 }
 
+.button-group {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+
 label {
   display: block;
   font-size: 0.9rem;
@@ -87,6 +93,8 @@ input, select {
   border: 1px solid var(--card-border);
   border-radius: 4px;
   font-size: 0.9rem;
+  background: #333;
+  color: var(--text);
 }
 
 input[type="number"] {
@@ -102,16 +110,17 @@ input::-webkit-inner-spin-button {
 .btn {
   background: var(--accent);
   color: white;
-  border: none;
-  padding: 8px 16px;
+  border: 1px solid transparent;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.2s;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .btn:hover {
   background: var(--accent-hover);
+  border-color: #5aa0f2;
 }
 
 .sep {
@@ -128,7 +137,7 @@ input::-webkit-inner-spin-button {
 .tile {
   text-align: center;
   padding: 8px;
-  background: white;
+  background: #333;
   border-radius: 4px;
   box-shadow: 0 1px 2px var(--shadow);
 }
@@ -157,10 +166,11 @@ input::-webkit-inner-spin-button {
 .correction-factor .value {
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--text);
 }
 
 .stat-card {
-  background: white;
+  background: #333;
   border-radius: 4px;
   padding: 8px;
   box-shadow: 0 1px 2px var(--shadow);
@@ -183,9 +193,10 @@ input::-webkit-inner-spin-button {
 .suggest {
   margin-top: 12px;
   padding: 8px;
-  background: #e8f0fe;
+  background: #2a4b7c;
   border-radius: 4px;
   font-weight: 500;
+  color: var(--text);
 }
 
 .abbrev {
@@ -214,5 +225,9 @@ input::-webkit-inner-spin-button {
   
   .table-like {
     grid-template-columns: 1fr;
+  }
+  
+  .button-group {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }

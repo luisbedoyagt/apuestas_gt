@@ -170,8 +170,23 @@ const teamHome = $('teamHome');
 const teamAway = $('teamAway');
 let teamsByLeague = {};
 
+const leagueNames = {
+  "WC": "FIFA World Cup",
+  "CL": "UEFA Champions League",
+  "BL1": "Bundesliga",
+  "DED": "Eredivisie",
+  "BSA": "Campeonato Brasileiro Série A",
+  "PD": "Liga Española",
+  "FL1": "Ligue 1",
+  "ELC": "Championship",
+  "PPL": "Primeira Liga / Portugal",
+  "EC": "European Championship",
+  "SA": "Serie A",
+  "PL": "Premier League"
+};
+
 async function cargarEquiposDesdeWebApp() {
-  const url = "https://script.google.com/macros/s/AKfycbx3c4ndScwFNfOTIh-ciB08iiaG6QLGrDkzBMQrSsrmy9X7snKPUSM1QatSksb8PfvSFw/exec";
+  const url = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
   try {
     const resp = await fetch(url);
     const data = await resp.json();
@@ -187,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   Object.keys(teamsByLeague).forEach(codigo => {
     const opt = document.createElement('option');
     opt.value = codigo;
-    opt.textContent = codigo;
+    opt.textContent = leagueNames[codigo] || codigo; // muestra nombre completo
     leagueSelect.appendChild(opt);
   });
 

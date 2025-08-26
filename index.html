@@ -39,6 +39,12 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 #saveBank:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
+#clearAll {
+  background: linear-gradient(135deg, #ef6f6f, #fb8b8b);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -86,6 +92,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
         <button id="recalc" class="btn">Calcular recomendaciones</button>
         <button id="reset" class="btn">Reset valores</button>
+        <button id="clearAll" class="btn">Resetear todo</button>
       </div>
     </div>
 
@@ -189,7 +196,7 @@ const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 const formatPct = x => (100*x).toFixed(1) + '%';
 const formatMoney = x => '$' + x.toFixed(2);
 const MAX_GOALS_DEFAULT = 8;
-function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
+function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
 
 // --- Poisson ---
 const factCache=[0,0];
@@ -242,23 +249,30 @@ function kellyFraction(p,odds){const b=odds-1; const q=1-p; if(b<=0)return 0; co
 function getBankrollFromStorage(){try{const saved=JSON.parse(localStorage.getItem('calc_bankroll_v2')||'null'); if(!saved)return null; const now=new Date(); if(saved.month!==now.getMonth()||saved.year!==now.getFullYear())return null; return saved;}catch(e){return null;}}
 function saveBankrollToStorage(obj){try{const now=new Date(); const data={...obj,month:now.getMonth(),year:now.getFullYear()}; localStorage.setItem('calc_bankroll_v2',JSON.stringify(data));}catch(e){}}
 
+// --- Helper para parsear números y normalizar comas a puntos ---
+function parseNumberString(val){
+  const s = String(val===undefined||val===null?'':val).trim().replace(/,/g,'.');
+  const n = Number(s);
+  return isNaN(n)?0:n;
+}
+
 // --- Inputs ---
 function gatherInputs(){
-  const bankVal = Number($('bankroll').value)||0;
-  const leagueAvg = Number($('leagueAvg').value)||1.35;
+  const bankVal = parseNumberString($('bankroll').value);
+  const leagueAvg = parseNumberString($('leagueAvg').value) || 1.35;
   const inputs = {
     teamHome:$('teamHome').value||'Local',
     teamAway:$('teamAway').value||'Visitante',
-    posHome:clamp(Number($('posHome').value),1,20),
-    posAway:clamp(Number($('posAway').value),1,20),
-    gfHome:clamp(Number($('gfHome').value),0,10),
-    gaHome:clamp(Number($('gaHome').value),0,10),
-    gfAway:clamp(Number($('gfAway').value),0,10),
-    gaAway:clamp(Number($('gaAway').value),0,10),
-    formHome:clamp(Number($('formHome').value),0,5),
-    formAway:clamp(Number($('formAway').value),0,5),
+    posHome:clamp(parseNumberString($('posHome').value),1,20),
+    posAway:clamp(parseNumberString($('posAway').value),1,20),
+    gfHome:clamp(parseNumberString($('gfHome').value),0,10),
+    gaHome:clamp(parseNumberString($('gaHome').value),0,10),
+    gfAway:clamp(parseNumberString($('gfAway').value),0,10),
+    gaAway:clamp(parseNumberString($('gaAway').value),0,10),
+    formHome:clamp(parseNumberString($('formHome').value),0,5),
+    formAway:clamp(parseNumberString($('formAway').value),0,5),
     leagueAvg:leagueAvg,
-    maxGoals:Math.max(4,Number($('maxGoals').value)||MAX_GOALS_DEFAULT),
+    maxGoals:Math.max(4,parseNumberString($('maxGoals').value)||MAX_GOALS_DEFAULT),
     oddsHome:toDecimalOdds($('oddsHome').value),
     oddsDraw:toDecimalOdds($('oddsDraw').value),
     oddsAway:toDecimalOdds($('oddsAway').value),
@@ -315,19 +329,113 @@ function calculateAll(){
     kellyHome:kHome,kellyDraw:kDraw,kellyAway:kAway,kellyBTTS:kBTTS,kellyO25:kO25,
     bestEvLabel
   });
+
+  // Auto actualizar leagueAvg con punto decimal
+  const newAvg=(inp.gfHome+inp.gfAway+inp.gaHome+inp.gaAway)/4;
+  $('leagueAvg').value=newAvg.toFixed(2);
 }
 
-// --- Eventos ---
-$('recalc').addEventListener('click',calculateAll);
+// --- Normalizar comas a puntos en inputs (escribe o pega) ---
+function attachCommaNormalization(){
+  const inputs = document.querySelectorAll('input[type="number"], input[type="text"], input:not([type])');
+  inputs.forEach(inp=>{
+    // input event: reemplaza comas por puntos
+    inp.addEventListener('input', e=>{
+      const v = e.target.value;
+      if(v && v.includes(',')){
+        // reemplaza todas las comas por puntos
+        e.target.value = v.replace(/,/g,'.');
+      }
+    });
+    // paste: pegar y convertir comas
+    inp.addEventListener('paste', e=>{
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/,/g,'.');
+      // insertar texto en la posición caret
+      const start = inp.selectionStart || 0;
+      const end = inp.selectionEnd || 0;
+      const current = inp.value || '';
+      const updated = current.slice(0,start) + text + current.slice(end);
+      inp.value = updated;
+      // disparar input manualmente para que otros listeners reaccionen
+      inp.dispatchEvent(new Event('input', {bubbles:true}));
+    });
+  });
+}
+
+// --- Liga / Equipo ---
+const teamsByLeague = {
+  ligaMX:["América","Atlas","Atlético San Luis","Bravos","Cruz Azul","FC Juárez","León","Mazatlán","Monterrey","Necaxa","Puebla","Santos Laguna","Tigres UANL","Toluca","Tijuana","Pachuca","Querétaro","San Luis","Chivas","Atlante","Pumas UNAM"],
+  MLS:["Atlanta United","Austin FC","Charlotte FC","Chicago Fire","Colorado Rapids","Columbus Crew","D.C. United","FC Cincinnati","FC Dallas","Houston Dynamo","Inter Miami CF","LA Galaxy","LAFC","Minnesota United","Montreal Impact","Nashville SC","New England Revolution","New York City FC","New York Red Bulls","Orlando City SC","Philadelphia Union","Portland Timbers","Real Salt Lake","San Jose Earthquakes","Seattle Sounders FC","St. Louis City SC","Toronto FC","Vancouver Whitecaps FC","San Diego Loyal","Sacramento Republic FC"],
+  LaLiga:["Atlético de Madrid","Getafe","Rayo Vallecano","Real Madrid","Barcelona","Espanyol","Girona","Real Betis","Sevilla","Villarreal","Valencia","Elche","Levante","Real Oviedo","Alavés","Athletic Club","Real Sociedad","Celta de Vigo","Mallorca","Osasuna"],
+  SerieA:["Atalanta","Bolonia","Cagliari","Cremonense","Empoli","Fiorentina","Genoa","Inter de Milán","Juventus","Lazio","Lecce","Milan","Monza","Napoli","Roma","Salernitana","Sampdoria","Sassuolo","Spezia","Torino"],
+  PL:["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton & Hove Albion","Chelsea","Crystal Palace","Everton","Fulham","Leeds United","Liverpool","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sheffield United","Tottenham Hotspur","West Ham United","Wolverhampton Wanderers"],
+  Ligue1:["Paris Saint-Germain","Olympique de Marsella","AS Monaco","Olympique de Lyon","Lille OSC","OGC Niza","RC Lens","Stade Rennais","FC Nantes","FC Lorient","Angers SCO","AS Saint-Étienne","Clermont Foot","Troyes AC","Reims","Montpellier HSC","Brest","Ajaccio"],
+  Bundesliga:["Bayer Leverkusen","Bayern Múnich","Borussia Dortmund","Borussia Mönchengladbach","Colonia","Eintracht Frankfurt","Freiburgo","Hoffenheim","Mainz 05","RB Leipzig","Bayer 04 Leverkusen","VfB Stuttgart","Wolfsburgo","Augsburgo","Heidenheim","Hannover 96","Schalke 04","Werder Bremen"],
+  Guatemala:["Antigua GFC","Cobán Imperial","Xelajú MC","Municipal","Comunicaciones","Malacateco","Guastatoya","Aurora","Achuapa","Marquense","Mictlan","Mixco"]
+};
+
+const leagueSelect = $('leagueSelect');
+const teamHome = $('teamHome');
+const teamAway = $('teamAway');
+leagueSelect.addEventListener('change',()=>{
+  const l=leagueSelect.value;
+  teamHome.innerHTML='<option value="">-- Selecciona equipo --</option>';
+  teamAway.innerHTML='<option value="">-- Selecciona equipo --</option>';
+  if(!l || !teamsByLeague[l]) return;
+  teamsByLeague[l].forEach(t=>{
+    const opt1=document.createElement('option'); opt1.value=t; opt1.textContent=t; teamHome.appendChild(opt1);
+    const opt2=document.createElement('option'); opt2.value=t; opt2.textContent=t; teamAway.appendChild(opt2);
+  });
+  const saved=getBankrollFromStorage();
+  if(saved?.lastTeams?.league===l){
+    teamHome.value=saved.lastTeams.home;
+    teamAway.value=saved.lastTeams.away;
+  }
+});
+
+// --- Botones ---
+$('recalc').addEventListener('click',()=>{
+  calculateAll();
+  const saved=getBankrollFromStorage()||{};
+  saveBankrollToStorage({...saved,lastTeams:{league:leagueSelect.value,home:teamHome.value,away:teamAway.value}});
+});
 $('reset').addEventListener('click',()=>location.reload());
 $('saveBank').addEventListener('click',()=>{
-  saveBankrollToStorage({bankroll:Number($('bankroll').value)||0});
+  saveBankrollToStorage({bankroll:parseNumberString($('bankroll').value)||0});
   alert('Banca guardada!');
 });
+
+// --- Nuevo: Resetear todo (vacía la página) ---
+function clearAll(){
+  // vacía inputs
+  document.querySelectorAll('input').forEach(i=>{
+    i.value = '';
+  });
+  // vuelve selects a opción inicial
+  document.querySelectorAll('select').forEach(s=>{
+    s.selectedIndex = 0;
+  });
+  // limpia resultados
+  $('pHome').textContent='—';
+  $('pDraw').textContent='—';
+  $('pAway').textContent='—';
+  $('pBTTS').textContent='—';
+  $('pO25').textContent='—';
+  $('expectedBest').textContent='—';
+  $('details').innerHTML='';
+}
+$('clearAll').addEventListener('click', clearAll);
+
+// --- Load banca y normalización ---
 document.addEventListener('DOMContentLoaded',()=>{
+  attachCommaNormalization();
   const saved=getBankrollFromStorage();
   if(saved) $('bankroll').value=saved.bankroll;
 });
+
+// --- Auto recalc si cambian goles (sirve con la normalización) ---
+['gfHome','gaHome','gfAway','gaAway'].forEach(id=>{$(id).addEventListener('input',calculateAll);});
 </script>
 </body>
 </html>

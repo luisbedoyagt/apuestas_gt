@@ -53,8 +53,8 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
     <p class="small">Introduce estadísticas por equipo (pos., GF/GC local/visitante, forma). La herramienta recomienda mercados y stake según EV + Kelly.</p>
   </div>
 
-  <!-- Banco y parámetros globales -->
   <div class="grid">
+    <!-- Card: Banco y parámetros globales -->
     <div class="card">
       <h3>Banco mensual</h3>
       <div class="table-like">
@@ -82,41 +82,40 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         </div>
       </div>
 
-      <!-- Botones de calcular y reset -->
-      <div style="margin-top:12px" class="row">
+      <!-- Botones movidos aquí debajo de parámetros globales -->
+      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
         <button id="recalc" class="btn">Calcular recomendaciones</button>
         <button id="reset" class="btn">Reset valores</button>
       </div>
     </div>
 
-    <!-- Cargar partido desde Statshub -->
-    <div class="card">
-      <h3>Cargar partido desde Statshub</h3>
-      <div class="table-like">
-        <div>
-          <label>Link del partido</label>
-          <input id="matchLink" type="text" placeholder="https://www.statshub.com/team/deportivo-toluca-fc/1931"/>
-        </div>
-        <div>
-          <label>&nbsp;</label><br/>
-          <button id="loadMatch" class="btn">Cargar datos del partido</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Equipos y estadísticas -->
-  <div class="grid" style="margin-top:12px;">
+    <!-- Card: Equipos y estadísticas -->
     <div class="card">
       <h3>Equipos y estadísticas</h3>
+      <div class="table-like">
+        <div>
+          <label>Liga</label>
+          <select id="leagueSelect">
+            <option value="">-- Selecciona liga --</option>
+            <option value="ligaMX">Liga MX</option>
+            <option value="MLS">MLS</option>
+            <option value="LaLiga">Liga Española</option>
+            <option value="SerieA">Liga Italiana</option>
+            <option value="PL">Liga Inglesa</option>
+            <option value="Ligue1">Liga Francesa</option>
+            <option value="Bundesliga">Liga Alemana</option>
+            <option value="Guatemala">Liga Guatemalteca</option>
+          </select>
+        </div>
+      </div>
       <div class="table-like" style="margin-top:8px">
         <div>
           <label>Equipo Local</label>
-          <input id="teamHome" type="text" placeholder="Local"/>
+          <select id="teamHome"></select>
         </div>
         <div>
           <label>Equipo Visitante</label>
-          <input id="teamAway" type="text" placeholder="Visitante"/>
+          <select id="teamAway"></select>
         </div>
       </div>
 
@@ -142,11 +141,13 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <h4>Forma (últimos 5)</h4>
       <div class="table-like">
         <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
-        <div><label>Victorias últimas 5 (Visitante)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
+        <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
       </div>
     </div>
+  </div>
 
-    <!-- Cuotas y resultados -->
+  <!-- Card: Cuotas y resultados -->
+  <div class="grid" style="margin-top:12px;">
     <div class="card">
       <h3>Cuotas (introduce las que tengas)</h3>
       <div class="table-like">
@@ -161,8 +162,10 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
         <div></div>
       </div>
+      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
+    </div>
 
-      <div class="sep"></div>
+    <div class="card">
       <h3>Resultados & Recomendaciones</h3>
       <div class="kpis">
         <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
@@ -270,71 +273,60 @@ function gatherInputs(){
 function renderRecommendations(result){
   const details=$('details'); details.innerHTML='';
   const info=document.createElement('div'); info.className='small';
-  info.innerHTML=`<strong>Lambdas:</strong> λA=${result.lambdaHome.toFixed(2)} λB=${result.lambdaAway.toFixed(2)}<br/><strong>Ventaja casa (h):</strong> ${result.h_adv.toFixed(2)} • <strong>posFactor:</strong> ${result.posFactor.toFixed(3)}`;
+  info.innerHTML=`<strong>Lambdas:</strong> λA=${result.lambdaHome.toFixed(2)} λB=${result.lambdaAway.toFixed(2)}<br>`;
+  info.innerHTML+=`<strong>1X2:</strong> ${formatPct(result.pHomeWin)} / ${formatPct(result.pDraw)} / ${formatPct(result.pAwayWin)}<br>`;
+  info.innerHTML+=`<strong>BTTS:</strong> ${formatPct(result.pBTTS)}, Over2.5: ${formatPct(result.pOver25)}<br>`;
+  info.innerHTML+=`<strong>Kelly stake:</strong> ${formatPct(result.kellyHome)} / ${formatPct(result.kellyDraw)} / ${formatPct(result.kellyAway)} / ${formatPct(result.kellyBTTS)} / ${formatPct(result.kellyO25)}<br>`;
   details.appendChild(info);
-  const markets=result.markets.slice().sort((a,b)=>b.ev-a.ev);
-  const list=document.createElement('div'); list.style.marginTop='8px';
-  markets.forEach(m=>{
-    const el=document.createElement('div'); el.innerHTML=`${m.name}: EV=${(m.ev*100).toFixed(1)}% • Kelly=${(m.kelly*100).toFixed(1)}%`; list.appendChild(el);
+
+  $('pHome').textContent=formatPct(result.pHomeWin);
+  $('pDraw').textContent=formatPct(result.pDraw);
+  $('pAway').textContent=formatPct(result.pAwayWin);
+  $('pBTTS').textContent=formatPct(result.pBTTS);
+  $('pO25').textContent=formatPct(result.pOver25);
+  $('expectedBest').textContent=result.bestEvLabel;
+}
+
+// --- Calc ---
+function calculateAll(){
+  const inp=gatherInputs();
+  const {lambdaHome,lambdaAway}=computeLambdas(inp);
+  const {pHomeWin,pDraw,pAwayWin}=compute1X2(lambdaHome,lambdaAway,inp.maxGoals);
+  const {pBTTS,pOver25}=computeBTTS(lambdaHome,lambdaAway);
+
+  const evHome=expectedValue(pHomeWin,inp.oddsHome);
+  const evDraw=expectedValue(pDraw,inp.oddsDraw);
+  const evAway=expectedValue(pAwayWin,inp.oddsAway);
+  const evBTTS=expectedValue(pBTTS,inp.oddsBTTS);
+  const evO25=expectedValue(pOver25,inp.oddsOver25);
+
+  const kHome=kellyFraction(pHomeWin,inp.oddsHome);
+  const kDraw=kellyFraction(pDraw,inp.oddsDraw);
+  const kAway=kellyFraction(pAwayWin,inp.oddsAway);
+  const kBTTS=kellyFraction(pBTTS,inp.oddsBTTS);
+  const kO25=kellyFraction(pOver25,inp.oddsOver25);
+
+  const evs=[{label:'1',ev:evHome},{label:'X',ev:evDraw},{label:'2',ev:evAway},{label:'BTTS',ev:evBTTS},{label:'Over2.5',ev:evO25}];
+  evs.sort((a,b)=>b.ev-a.ev);
+  const bestEvLabel=evs[0].label;
+
+  renderRecommendations({
+    lambdaHome,lambdaAway,pHomeWin,pDraw,pAwayWin,pBTTS,pOver25,
+    kellyHome:kHome,kellyDraw:kDraw,kellyAway:kAway,kellyBTTS:kBTTS,kellyO25:kO25,
+    bestEvLabel
   });
-  details.appendChild(list);
 }
 
-// --- Cálculo principal ---
-function runCalculation(){
-  const input=gatherInputs();
-  const {lambdaHome, lambdaAway, h_adv, posFactor}=computeLambdas(input);
-  $('pHome').innerText=formatPct(compute1X2(lambdaHome,lambdaAway,input.maxGoals).pHomeWin);
-  const oneX2=compute1X2(lambdaHome,lambdaAway,input.maxGoals);
-  const btts=computeBTTS(lambdaHome,lambdaAway);
-  $('pDraw').innerText=formatPct(oneX2.pDraw);
-  $('pAway').innerText=formatPct(oneX2.pAwayWin);
-  $('pBTTS').innerText=formatPct(btts.pBTTS);
-  $('pO25').innerText=formatPct(btts.pOver25);
-  const markets=[
-    {name:'1X2 Local',p:oneX2.pHomeWin,odds:input.oddsHome},
-    {name:'1X2 Empate',p:oneX2.pDraw,odds:input.oddsDraw},
-    {name:'1X2 Visitante',p:oneX2.pAwayWin,odds:input.oddsAway},
-    {name:'BTTS Sí',p:btts.pBTTS,odds:input.oddsBTTS},
-    {name:'Over 2.5',p:btts.pOver25,odds:input.oddsOver25},
-  ];
-  markets.forEach(m=>{m.ev=expectedValue(m.p,m.odds); m.kelly=kellyFraction(m.p,m.odds)*100;});
-  const best=markets.reduce((a,b)=>b.ev>a.ev?b:a); $('expectedBest').innerText=best.name;
-  renderRecommendations({lambdaHome,lambdaAway,h_adv,posFactor,markets});
-}
-
-// --- Events ---
-$('recalc').addEventListener('click',runCalculation);
-$('reset').addEventListener('click',()=>{window.location.reload();});
-$('saveBank').addEventListener('click',()=>{saveBankrollToStorage({bankroll:Number($('bankroll').value)}); alert('Banca guardada');});
-window.addEventListener('load',()=>{
+// --- Eventos ---
+$('recalc').addEventListener('click',calculateAll);
+$('reset').addEventListener('click',()=>location.reload());
+$('saveBank').addEventListener('click',()=>{
+  saveBankrollToStorage({bankroll:Number($('bankroll').value)||0});
+  alert('Banca guardada!');
+});
+document.addEventListener('DOMContentLoaded',()=>{
   const saved=getBankrollFromStorage();
   if(saved) $('bankroll').value=saved.bankroll;
-});
-
-// --- Cargar partido Statshub ---
-$('loadMatch').addEventListener('click', async () => {
-  const link = $('matchLink').value.trim();
-  if (!link) return alert('Ingresa un link');
-  try {
-    const res = await fetch(`http://localhost:3000/api/fetchStatshub?link=${encodeURIComponent(link)}`);
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-
-    $('teamHome').value = data.teamHome;
-    $('teamAway').value = data.teamAway;
-    $('gfHome').value = data.gfHome;
-    $('gaHome').value = data.gaHome;
-    $('gfAway').value = data.gfAway;
-    $('gaAway').value = data.gaAway;
-    $('formHome').value = data.formHome;
-    $('formAway').value = data.formAway;
-
-    runCalculation();
-  } catch (err) {
-    console.error(err);
-    alert('Error al cargar datos del partido');
-  }
 });
 </script>
 </body>

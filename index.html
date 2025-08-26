@@ -206,6 +206,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     leagueSelect.appendChild(opt);
   });
 
+  // cargar banca guardada
+  const savedBank = localStorage.getItem('bankroll');
+  if(savedBank) $('bankroll').value = savedBank;
+
   leagueSelect.addEventListener('change', () => {
     const l = leagueSelect.value;
     teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
@@ -237,13 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     calculateAll();
   }
 
-  teamHome.addEventListener('change', () => {
-    fillTeamData(teamHome.value, leagueSelect.value, 'Home');
-  });
-
-  teamAway.addEventListener('change', () => {
-    fillTeamData(teamAway.value, leagueSelect.value, 'Away');
-  });
+  teamHome.addEventListener('change', () => fillTeamData(teamHome.value, leagueSelect.value, 'Home'));
+  teamAway.addEventListener('change', () => fillTeamData(teamAway.value, leagueSelect.value, 'Away'));
 
   $('recalc').addEventListener('click', () => calculateAll());
   $('reset').addEventListener('click', ()=>location.reload());
@@ -252,9 +251,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
     ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
   });
+
+  $('saveBank').addEventListener('click', () => {
+    const bank = parseNumberString($('bankroll').value);
+    localStorage.setItem('bankroll', bank);
+    alert(`Banca guardada: Q${bank}`);
+  });
 });
 
-// ----------------- Aquí van tus funciones de cálculo: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations -----------------
+// ----------------- Funciones Poisson & Kelly -----------------
+function logFactorial(n){ return n<=1?0:Math.log(n)+logFactorial(n-1); }
+function poissonPMF(lambda,k){ return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k)); }
+
+function compute1X2(lambdaHome, lambdaAway, maxGoals=8){
+  let pHome=0, pDraw=0, pAway=0;
+  for(let i=0;i<=maxGoals;i++){
+    for(let j=0;j<=maxGoals;j++){
+      const prob = poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j);
+      if(i>j) pHome+=prob;
+      else if(i===j) pDraw+=prob;
+      else pAway+=prob;
+    }
+  }
+  return {pHome,pDraw,pAway};
+}
+
+function computeBTTS(lambdaHome, lambdaAway){
+  let p=0;
+  for(let i=1;i<=8;i++){
+    for(let j=1;j<=8;j++){
+      p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);
+    }
+  }
+  return p;
+}
+
+function computeOver25(lambdaHome, lambdaAway, maxGoals=8){
+  let p=0;
+  for(let i=0;i<=maxGoals;i++){
+    for(let j=0;j<=maxGoals;j++){
+      if(i+j>2)p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);
+    }
+  }
+  return p;
+}
+
+function kellyFraction(p, odds){
+  return Math.max(0,(p*odds-1)/(odds-1));
+}
+
+// ----------------- Calcular & Renderizar -----------------
+function calculateAll(){
+  const lambdaHome = parseNumberString($('gfHome').value);
+  const lambdaAway = parseNumberString($('gfAway').value);
+
+  const {pHome,pDraw,pAway} = compute1X2(lambdaHome, lambdaAway);
+  const pBTTS = computeBTTS(lambdaHome, lambdaAway);
+  const pO25 = computeOver25(lambdaHome, lambdaAway);
+
+  $('pHome').textContent = formatPct(pHome);
+  $('pDraw').textContent = formatPct(pDraw);
+  $('pAway').textContent = formatPct(pAway);
+  $('pBTTS').textContent = formatPct(pBTTS);
+  $('pO25').textContent = formatPct(pO25);
+
+  const bankroll = parseNumberString($('bankroll').value);
+
+  const evs = [
+    {name:'Local',p:pHome,odds:toDecimalOdds($('oddsHome').value)},
+    {name:'Empate',p:pDraw,odds:toDecimalOdds($('oddsDraw').value)},
+    {name:'Visitante',p:pAway,odds:toDecimalOdds($('oddsAway').value)},
+    {name:'BTTS',p:pBTTS,odds:toDecimalOdds($('oddsBTTS').value)},
+    {name:'Over2.5',p:pO25,odds:toDecimalOdds($('oddsOver25').value)}
+  ];
+
+  evs.forEach(e=>e.ev=e.p*e.odds-1);
+  evs.forEach(e=>e.stake=kellyFraction(e.p,e.odds)*bankroll);
+
+  evs.sort((a,b)=>b.ev-a.ev);
+  $('expectedBest').textContent = evs[0].name;
+
+  $('details').innerHTML = evs.map(e=>`${e.name}: EV ${e.ev.toFixed(2)}, Stake sugerido Q${e.stake.toFixed(0)}`).join('<br/>');
+}
 </script>
 </body>
 </html>

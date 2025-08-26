@@ -1,395 +1,297 @@
-console.log("Script.js cargado correctamente");
-
-const $ = id => document.getElementById(id);
-const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
-const formatDec = x => (isFinite(x) ? x.toFixed(2) : '0.00');
-function parseNumberString(val) { 
-  const s = String(val || '').replace(/,/g, '.'); 
-  const n = Number(s); 
-  return isFinite(n) ? n : 0; 
-}
-function toDecimalOdds(v) { 
-  const a = parseFloat(String(v).replace(/,/g, '.')); 
-  return isNaN(a) || a <= 1 ? 1.01 : a; 
+:root {
+  --main-bg: #1a1a1a;
+  --text: #e0e0e0;
+  --card-bg: #2c2c2c;
+  --card-border: #444;
+  --shadow: rgba(0,0,0,0.3);
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --error: #e74c3c;
+  --small-text: #a0a0a0;
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
-let teamsByLeague = {};
-const leagueNames = { 
-  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
-  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
-  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
-  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
-};
-
-function normalizeTeam(raw) {
-  if (!raw) return null;
-  const r = {};
-  r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || raw['team_name'] || raw['team.shortName'] || '';
-  r.pos = raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || null;
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] || raw['goals_against']);
-  r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches']);
-  r.g = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
-  r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
-  r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
-  r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
-  r.form = raw.form || raw.Form || null;
-  return r;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-async function fetchTeams() {
-  try {
-    const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error('fetch falló ' + res.status);
-    const data = await res.json();
-    const normalized = {};
-    for (const key in data) { 
-      const arr = data[key] || []; 
-      normalized[key] = arr.map(x => normalizeTeam(x)); 
-    }
-    return normalized;
-  } catch (err) { 
-    console.error('Error fetching teams:', err); 
-    alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
-    return {
-      "BSA": [
-        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46, form: "4-1-0" },
-        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10, form: "0-2-3" }
-      ]
-    };
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: var(--main-bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding: 16px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+h4 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.table-like {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.button-group {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: #333;
+  color: var(--text);
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn {
+  background: var(--accent);
+  color: white;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+  border-color: #5aa0f2;
+}
+
+.sep {
+  border-top: 1px solid var(--card-border);
+  margin: 12px 0;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  text-align: center;
+  padding: 8px;
+  background: #333;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.tile .small {
+  font-size: 0.75rem;
+  color: var(--small-text);
+}
+
+.correction-factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.correction-factor {
+  text-align: center;
+}
+
+.correction-factor .label {
+  font-size: 0.8rem;
+  color: var(--small-text);
+}
+
+.correction-factor .value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.stat-card {
+  background: #333;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stat-values {
+  font-size: 0.8rem;
+  color: var(--small-text);
+}
+
+.recs {
+  margin-top: 12px;
+}
+
+.suggest {
+  margin-top: 12px;
+  padding: 8px;
+  background: #2a4b7c;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.abbrev {
+  font-size: 0.8rem;
+  color: var(--small-text);
+  margin-top: 12px;
+}
+
+.small {
+  font-size: 0.8rem;
+  color: var(--small-text);
+}
+
+.hidden {
+  display: none !important;
+}
+Instrucciones para implementar los cambios
+Reemplazar los archivos:
+Copia el contenido de cada archivo (index.html, styles.css, script.js) en los archivos correspondientes de tu repositorio.
+Asegúrate de que estén en la raíz del repositorio y que los nombres sean exactamente index.html, styles.css, y script.js (sin mayúsculas ni espacios adicionales).
+Subir a GitHub:
+bash
+git add index.html styles.css script.js
+git commit -m "Cambiar a tema oscuro y mejorar diseño del menú de Banco mensual"
+git push origin main
+Probar localmente:
+Ejecuta:
+bash
+python -m http.server
+Accede a http://localhost:8000.
+Verifica que:
+La calculadora tenga un tema oscuro (fondo gris oscuro, texto claro, tarjetas oscuras, botones azules).
+La ficha de Banco mensual se vea ordenada:
+Input Banca actual (Q) y botón Guardar banca en una fila.
+Botones Calcular, Reset valores, y Resetear todo en una cuadrícula uniforme debajo de un título "Acciones".
+Espaciado consistente y botones más compactos.
+Las secciones de Cuotas y Forma reciente sigan ocultas.
+Selecciona la liga "BSA", "CR Flamengo" (local), y "SC Recife" (visitante), y haz clic en "Calcular". Deberías obtener resultados similares a los anteriores (~94% para Local, ~75-80% para Over 2.5).
+Abre la consola del navegador (F12 > Console) y confirma que aparece "Script.js cargado correctamente" sin errores.
+Verificar en GitHub Pages:
+Accede a https://<tu_usuario>.github.io/<nombre_repositorio>/ tras la subida.
+Espera unos minutos para que GitHub Pages refleje los cambios (puede tardar si hay caché).
+Confirma que:
+La interfaz esté en tema oscuro (fondo #1a1a1a, tarjetas #2c2c2c, texto claro, botones azules).
+El menú de Banco mensual se vea ordenado y estilizado (input y botón Guardar banca en una fila, botones de acción en una cuadrícula clara).
+Las secciones de Cuotas y Forma reciente no sean visibles.
+Los cálculos funcionen con los valores predeterminados (cuotas: 1.40, 4.50, 8.00, 2.10, 1.80; forma: 4-1-0, 0-2-3).
+Abre la consola del navegador (F12 > Console) y revisa si hay errores, como problemas de carga de styles.css (por ejemplo, "404 Not Found"). Si ves un error, verifica que styles.css esté en la raíz del repositorio.
+Solución de problemas:
+Si el tema oscuro no se aplica:
+Limpia la caché del navegador (Ctrl+Shift+R o Cmd+Shift+R) o prueba en modo incógnito.
+Inspecciona la página (clic derecho > Inspeccionar) y verifica que las variables CSS (--main-bg, --text, etc.) estén definidas en :root y aplicadas correctamente.
+Asegúrate de que styles.css se cargue (en la pestaña "Network" del inspector, busca styles.css).
+Si el menú de Banco mensual sigue viéndose desordenado:
+Confirma que el div.button-group en index.html contiene los botones Calcular, Reset valores, y Resetear todo en una estructura table-like.
+Verifica que la clase .button-group en styles.css tenga grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) y gap: 6px.
+En pantallas pequeñas, la cuadrícula se ajustará automáticamente a una columna si es necesario (revisa en modo responsive).
+Si las secciones de Cuotas o Forma reciente reaparecen:
+Inspecciona los elementos <div class="card hidden"> (Cuotas) y <h4 class="hidden">/div class="table-like hidden" (Forma reciente). Deben tener display: none !important.
+Si no están ocultas, verifica que styles.css incluya .hidden { display: none !important; \}.
+Si los cálculos no coinciden:
+Verifica los valores predeterminados en los inputs ocultos (oddsHome, formHome, etc.) en index.html.
+Compara con los resultados esperados (~94.1% Local, ~5.6% Empate, ~0.3% Visitante, ~5.6% BTTS, ~58.7% Over 2.5). Si el EV para Local es ~97.6%, es probable que estés usando una cuota ~2.10 en lugar de 1.40. Confirma las cuotas en los inputs ocultos.
+Resultados esperados
+Con las cuotas (1.40, 4.50, 8.00, 2.10, 1.80) y los datos de Flamengo vs. Recife:
+
+Probabilidades: ~94% (Local), ~5-6% (Empate), ~0.3-0.6% (Visitante), ~5-6% (BTTS), ~75-80% (Over 2.5).
+EV para Local: ~31.74% con cuota 1.40 (0.941 * 1.40 - 1). Si ves 97.6%, confirma si usaste una cuota ~2.10.
+Stake: Con cuota 1.40, el stake de Kelly debería ser ~15-20%. Con cuota 2.10, ~44% es correcto.
+Apariencia:
+Tema oscuro: fondo gris oscuro (#1a1a1a), tarjetas gris medio (#2c2c2c), texto claro (#e0e0e0), botones azules (#4a90e2).
+Ficha de Banco mensual: Input Banca actual (Q) y botón Guardar banca en una fila, seguidos de un separador y un título "Acciones", con los botones Calcular, Reset valores, y Resetear todo en una cuadrícula uniforme.
+Notas adicionales
+Valores predeterminados: Los inputs ocultos mantienen los valores para CR Flamengo vs. SC Recife (cuotas: 1.40, 4.50, 8.00, 2.10, 1.80; forma: 4-1-0, 0-2-3).
+Reversión al tema claro: Si quieres volver al tema claro, cambia las variables en :root de styles.css a los valores originales (por ejemplo, --main-bg: #ffffff, --text: #222222, etc.).
+Ajustes al menú: Si prefieres un diseño diferente para los botones (por ejemplo, más grandes, en una sola fila, o con íconos), dime y lo personalizamos.
+EV inconsistente: Si sigues viendo un EV de ~97.6% para Local, pásame las cuotas exactas que estás usando o un enlace a tu repositorio para revisar los inputs ocultos.
+Si después de subir estos archivos el tema oscuro no se aplica o el menú de Banco mensual no se ve ordenado, envíame una captura de pantalla de la página y el inspector del navegador (F12) o el enlace a tu repositorio de GitHub. También, si los cálculos no coinciden o necesitas ajustes adicionales (por ejemplo, cambiar el tamaño de los botones o añadir más espacio), dímelo y lo resolvemos. ¡Vamos a dejar esa calculadora con un look pro y súper limpia! 😎
+
+5,8s
+$0
+@media (max-width: 600px) {
+  html {
+    font-size: 14px;
   }
-}
-
-async function init() {
-  try {
-    teamsByLeague = await fetchTeams();
-    const leagueCodes = Object.keys(teamsByLeague);
-    leagueCodes.forEach(code => { 
-      const opt = document.createElement('option'); 
-      opt.value = code; 
-      opt.textContent = leagueNames[code] || code; 
-      $('leagueSelect').appendChild(opt); 
-    });
-    const saved = localStorage.getItem('bankroll');
-    if (saved) $('bankroll').value = saved;
-    $('leagueSelect').addEventListener('change', onLeagueChange);
-    $('teamHome').addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
-    $('teamAway').addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
-    $('recalc').addEventListener('click', calculateAll);
-    $('reset').addEventListener('click', () => location.reload());
-    $('clearAll').addEventListener('click', clearAll);
-    $('saveBank').addEventListener('click', saveBankrollToStorage);
-    $('homeAdvantage').addEventListener('change', calculateAll);
-    $('formWeight').addEventListener('change', calculateAll);
-    $('dixonColesParam').addEventListener('change', calculateAll);
-    $('maxTeams').addEventListener('change', calculateAll);
-    $('formHome').addEventListener('change', calculateAll);
-    $('formAway').addEventListener('change', calculateAll);
-  } catch (err) {
-    console.error("Error en init:", err);
-    alert("Error al inicializar la aplicación. Por favor, recarga la página.");
-  }
-}
-document.addEventListener('DOMContentLoaded', init);
-
-function onLeagueChange() {
-  const code = $('leagueSelect').value;
-  $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!teamsByLeague[code]) return;
-  teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
-  });
-}
-
-function findTeam(leagueCode, teamName) {
-  if (!teamsByLeague[leagueCode]) return null;
-  return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
-}
-
-function fillTeamData(teamName, leagueCode, type) {
-  if (!teamName) return;
-  const t = findTeam(leagueCode, teamName);
-  if (!t) return;
-
-  const formString = t.form || `${t.g || 0}-${t.e || 0}-${t.p || 0}`;
-  if (type === 'Home') {
-    $('posHome').value = t.pos || '';
-    $('gfHome').value = Number.isFinite(t.gf) ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaHome').value = Number.isFinite(t.ga) ? (t.ga / t.pj).toFixed(2) : '';
-    $('formHome').value = formString;
-    $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
-  } else {
-    $('posAway').value = t.pos || '';
-    $('gfAway').value = Number.isFinite(t.gf) ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaAway').value = Number.isFinite(t.ga) ? (t.ga / t.pj).toFixed(2) : '';
-    $('formAway').value = formString;
-    $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
-  }
-  calculateAll();
-}
-
-function saveBankrollToStorage() {
-  const bank = parseNumberString($('bankroll').value);
-  if (bank <= 0) {
-    alert('La banca debe ser mayor a 0.');
-    return;
-  }
-  localStorage.setItem('bankroll', bank);
-  alert('Banca guardada: Q' + bank);
-}
-
-function clearAll() {
-  document.querySelectorAll('input').forEach(i => {
-    if (i.id !== 'bankroll') i.value = '';
-  });
-  document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-  ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25', 'expectedBest', 'details', 'suggestion', 
-   'formHomeTeam', 'formAwayTeam', 'formHomeBox', 'formAwayBox', 
-   'homeAdvantageFactor', 'strengthFactor', 'recentFormFactor', 'dixonColesFactor', 
-   'kellyStake', 'betAmount'].forEach(id => {
-    const el = $(id);
-    if (el) el.textContent = id.includes('form') ? 
-      (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
-  });
-  $('suggestion').style.display = 'none';
-  $('homeAdvantage').value = 15;
-  $('formWeight').value = 30;
-  $('dixonColesParam').value = -0.13;
-  $('maxTeams').value = 20;
-  $('formHome').value = '4-1-0';
-  $('formAway').value = '0-2-3';
-}
-
-function poissonPMF(lambda, k) { 
-  if (k < 0) return 0;
-  return Math.pow(lambda, k) * Math.exp(-lambda) / factorial(k); 
-}
-
-function factorial(n) { 
-  if (n <= 1) return 1; 
-  let f = 1; 
-  for (let i = 2; i <= n; i++) f *= i; 
-  return f; 
-}
-
-function clamp01(x) { return Math.max(0, Math.min(1, x)); }
-
-function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
-  if (lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
-  const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
-  const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
-  const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
-  const adjustedProb10 = prob10 * (1 + (lambdaAway * rho));
-  const prob01 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 1);
-  const adjustedProb01 = prob01 * (1 + (lambdaHome * rho));
-  const prob11 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 1);
-  const adjustedProb11 = prob11 * (1 - rho);
-  const originalProbs = prob00 + prob10 + prob01 + prob11;
-  const adjustedProbs = adjustedProb00 + adjustedProb10 + adjustedProb01 + adjustedProb11;
-  return originalProbs > 0 ? adjustedProbs / originalProbs : 1;
-}
-
-function calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway) {
-  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) return 1;
-  const normalizedHome = (maxTeams - posHome + 1) / maxTeams;
-  const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
-  const ppgHome = pointsHome / ($('gfHome').value || 1); // Evitar división por cero
-  const ppgAway = pointsAway / ($('gfAway').value || 1);
-  const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.sqrt(eloFactor); // Suavizar el factor
-}
-
-function calculateFormFactor(formHome, formAway, formWeight) {
-  if (!formHome || !formAway) return 1;
-  if (!formHome.match(/^\d+-\d+-\d+$/) || !formAway.match(/^\d+-\d+$/)) {
-    console.warn("Formato de forma reciente inválido. Usando factor 1.");
-    return 1;
-  }
-  try {
-    const [homeW, homeD, homeL] = formHome.split('-').map(x => parseInt(x) || 0);
-    const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
-    const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL || 1);
-    const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL || 1);
-    if (awayPpg === 0) return 1;
-    const formFactor = homePpg / awayPpg;
-    const weight = formWeight / 100;
-    return 1 + (formFactor - 1) * weight;
-  } catch (e) {
-    console.error("Error parsing form data:", e);
-    return 1;
-  }
-}
-
-function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
-  const homeAdvantageFactor = 1 + (parseNumberString($('homeAdvantage').value) / 100);
-  const posHome = parseNumberString($('posHome').value);
-  const posAway = parseNumberString($('posAway').value);
-  const maxTeams = parseNumberString($('maxTeams').value);
-  const strengthFactor = calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway);
-  const formHome = $('formHome').value;
-  const formAway = $('formAway').value;
-  const formWeight = parseNumberString($('formWeight').value);
-  const recentFormFactor = calculateFormFactor(formHome, formAway, formWeight);
-  const rho = parseNumberString($('dixonColesParam').value);
-  const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, rho);
   
-  $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
-  $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
-  $('recentFormFactor').textContent = formatDec(recentFormFactor) + 'x';
-  $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
-  
-  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.05); // Límite inferior más estricto
-  
-  let pHome = 0, pDraw = 0, pAway = 0;
-  const maxGoals = 8;
-  for (let i = 0; i <= maxGoals; i++) {
-    for (let j = 0; j <= maxGoals; j++) {
-      const prob = poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-      if (i > j) pHome += prob;
-      else if (i === j) pDraw += prob;
-      else pAway += prob;
-    }
+  .grid {
+    grid-template-columns: 1fr;
   }
   
-  const total = pHome + pDraw + pAway;
-  if (total > 0) {
-    pHome /= total;
-    pDraw /= total;
-    pAway /= total;
+  .table-like {
+    grid-template-columns: 1fr;
   }
   
-  let pBTTS = 0;
-  for (let i = 1; i <= maxGoals; i++) {
-    for (let j = 1; j <= maxGoals; j++) {
-      pBTTS += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-    }
+  .button-group {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
-  
-  let pO25 = 0;
-  for (let i = 0; i <= maxGoals; i++) {
-    for (let j = 0; j <= maxGoals; j++) {
-      if (i + j > 2.5) {
-        pO25 += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-      }
-    }
-  }
-  
-  return {
-    pHome: clamp01(pHome),
-    pDraw: clamp01(pDraw),
-    pAway: clamp01(pAway),
-    pBTTS: clamp01(pBTTS),
-    pO25: clamp01(pO25)
-  };
-}
-
-function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
-  const b = odds - 1;
-  const p = probability;
-  const q = 1 - p;
-  const idealStake = (b * p - q) / b;
-  const fractionalStake = Math.max(0, idealStake) * kellyFraction;
-  const amount = bankroll * fractionalStake;
-  return {
-    stakePercent: fractionalStake * 100,
-    amount: amount
-  };
-}
-
-function suggestBet(probObj, odds, bankroll) {
-  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
-  const maxEV = 0.5; // Umbral máximo de EV (50%)
-  let bestBet = null;
-  let maxEV = -Infinity;
-  let bestStake = 0;
-  let bestAmount = 0;
-  let bestOdds = 0;
-  
-  const bets = [
-    { name: 'Local', prob: probObj.pHome, odds: odds.oddsHome },
-    { name: 'Empate', prob: probObj.pDraw, odds: odds.oddsDraw },
-    { name: 'Visitante', prob: probObj.pAway, odds: odds.oddsAway },
-    { name: 'BTTS Sí', prob: probObj.pBTTS, odds: odds.oddsBTTS },
-    { name: 'Over 2.5', prob: probObj.pO25, odds: odds.oddsOver25 }
-  ];
-  
-  bets.forEach(bet => {
-    const ev = bet.prob * bet.odds - 1;
-    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
-      maxEV = ev;
-      bestBet = bet.name;
-      bestOdds = bet.odds;
-      const kelly = calculateKellyStake(bet.prob, bet.odds, bankroll);
-      bestStake = kelly.stakePercent;
-      bestAmount = kelly.amount;
-    }
-  });
-  
-  return {
-    bestBet,
-    stakePercent: bestStake,
-    amount: bestAmount,
-    ev: maxEV,
-    odds: bestOdds
-  };
-}
-
-function calculateAll() {
-  const lambdaHome = parseNumberString($('gfHome').value);
-  const lambdaAway = parseNumberString($('gfAway').value);
-  const bankroll = parseNumberString($('bankroll').value);
-
-  if (lambdaHome <= 0 || lambdaAway <= 0 || bankroll <= 0) {
-    alert('Por favor, ingrese valores válidos para goles y banca.');
-    return;
-  }
-
-  const odds = {
-    oddsHome: toDecimalOdds($('oddsHome').value),
-    oddsDraw: toDecimalOdds($('oddsDraw').value),
-    oddsAway: toDecimalOdds($('oddsAway').value),
-    oddsBTTS: toDecimalOdds($('oddsBTTS').value),
-    oddsOver25: toDecimalOdds($('oddsOver25').value)
-  };
-
-  if (odds.oddsHome < 1 || odds.oddsDraw < 1 || odds.oddsAway < 1 || 
-      odds.oddsBTTS < 1 || odds.oddsOver25 < 1) {
-    alert('Las cuotas deben ser mayores a 1.0');
-    return;
-  }
-
-  const teamHome = findTeam($('leagueSelect').value, $('teamHome').value);
-  const teamAway = findTeam($('leagueSelect').value, $('teamAway').value);
-  const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamAway.points : 0;
-
-  const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway);
-  $('pHome').textContent = formatPct(probs.pHome);
-  $('pDraw').textContent = formatPct(probs.pDraw);
-  $('pAway').textContent = formatPct(probs.pAway);
-  $('pBTTS').textContent = formatPct(probs.pBTTS);
-  $('pO25').textContent = formatPct(probs.pO25);
-
-  const suggestion = suggestBet(probs, odds, bankroll);
-  $('expectedBest').textContent = suggestion.bestBet || 'Ninguna';
-  $('kellyStake').textContent = formatDec(suggestion.stakePercent) + '%';
-  $('betAmount').textContent = 'Q' + formatDec(suggestion.amount);
-  
-  $('suggestion').textContent = suggestion.bestBet 
-    ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuestas con valor esperado confiable.';
-  $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
-  
-  let details = `<div><strong>Detalles del cálculo:</strong></div>`;
-  details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * parseNumberString($('homeAdvantage').value / 100 + 1))}</div>`;
-  details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
-  details += `<div>• Valor Esperado (EV) máximo: ${formatPct(suggestion.ev)}</div>`;
-  
-  $('details').innerHTML = details;
 }

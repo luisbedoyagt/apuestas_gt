@@ -10,11 +10,7 @@
   <div class="container">
     <div class="header">
       <h1>Calculadora Apuestas Avanzada • Modelo Mejorado</h1>
-      <p class="small">Sistema mejorado con factores de corrección, forma reciente y modelo Dixon-Coles</p>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
-        <button id="toggleCuotas" class="btn">Mostrar Cuotas</button>
-        <button id="toggleForma" class="btn">Mostrar Forma Reciente</button>
-      </div>
+      <p class="small">Sistema mejorado con factores de corrección y modelo Dixon-Coles</p>
     </div>
 
     <!-- Banco & Cuotas -->
@@ -31,14 +27,16 @@
             <button id="saveBank" class="btn">Guardar banca</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
-          <button id="recalc" class="btn">Calcular</button>
-          <button id="reset" class="btn">Reset valores</button>
-          <button id="clearAll" class="btn">Resetear todo</button>
+        <div class="sep"></div>
+        <h4>Acciones</h4>
+        <div class="table-like button-group">
+          <div><button id="recalc" class="btn">Calcular</button></div>
+          <div><button id="reset" class="btn">Reset valores</button></div>
+          <div><button id="clearAll" class="btn">Resetear todo</button></div>
         </div>
       </div>
 
-      <div class="card cuotas-section">
+      <div class="card hidden">
         <h3>Cuotas</h3>
         <div class="table-like">
           <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="1.40" step="0.01" min="1"/></div>
@@ -106,8 +104,8 @@
 
         <div class="sep"></div>
         
-        <h4 class="forma-reciente-title">Forma reciente (últimos 5 partidos)</h4>
-        <div class="table-like forma-reciente-section" style="margin-top:6px">
+        <h4 class="hidden">Forma reciente (últimos 5 partidos)</h4>
+        <div class="table-like hidden" style="margin-top:6px">
           <div>
             <label>Forma Local (G-E-P)</label>
             <input id="formHome" type="text" placeholder="4-1-0" value="4-1-0"/>

@@ -86,25 +86,6 @@ async function init() {
     $('maxTeams').addEventListener('change', calculateAll);
     $('formHome').addEventListener('change', calculateAll);
     $('formAway').addEventListener('change', calculateAll);
-
-    // Ocultar secciones de Cuotas y Forma reciente al cargar
-    document.querySelector('.cuotas-section').style.display = 'none';
-    document.querySelector('.forma-reciente-title').style.display = 'none';
-    document.querySelector('.forma-reciente-section').style.display = 'none';
-
-    // Manejadores para botones de mostrar/ocultar
-    $('toggleCuotas').addEventListener('click', () => {
-      const section = document.querySelector('.cuotas-section');
-      section.style.display = section.style.display === 'none' ? 'block' : 'none';
-      $('toggleCuotas').textContent = section.style.display === 'none' ? 'Mostrar Cuotas' : 'Ocultar Cuotas';
-    });
-    $('toggleForma').addEventListener('click', () => {
-      const title = document.querySelector('.forma-reciente-title');
-      const section = document.querySelector('.forma-reciente-section');
-      title.style.display = section.style.display = section.style.display === 'none' ? 'block' : 'none';
-      section.style.display = title.style.display;
-      $('toggleForma').textContent = section.style.display === 'none' ? 'Mostrar Forma Reciente' : 'Ocultar Forma Reciente';
-    });
   } catch (err) {
     console.error("Error en init:", err);
     alert("Error al inicializar la aplicación. Por favor, recarga la página.");

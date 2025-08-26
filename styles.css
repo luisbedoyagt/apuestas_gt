@@ -1,13 +1,13 @@
 :root {
-  --main-bg: #ffffff;
-  --text: #222222;
-  --card-bg: #f4f4f4;
-  --card-border: #e0e0e0;
-  --shadow: rgba(0,0,0,0.1);
-  --accent: #007bff;
-  --accent-hover: #0056b3;
-  --error: #dc3545;
-  --small-text: #666666;
+  --main-bg: #1a1a1a;
+  --text: #e0e0e0;
+  --card-bg: #2c2c2c;
+  --card-border: #444;
+  --shadow: rgba(0,0,0,0.3);
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --error: #e74c3c;
+  --small-text: #a0a0a0;
 }
 
 * {
@@ -75,6 +75,12 @@ h4 {
   gap: 8px;
 }
 
+.button-group {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+
 label {
   display: block;
   font-size: 0.9rem;
@@ -87,6 +93,8 @@ input, select {
   border: 1px solid var(--card-border);
   border-radius: 4px;
   font-size: 0.9rem;
+  background: #333;
+  color: var(--text);
 }
 
 input[type="number"] {
@@ -102,16 +110,17 @@ input::-webkit-inner-spin-button {
 .btn {
   background: var(--accent);
   color: white;
-  border: none;
-  padding: 8px 16px;
+  border: 1px solid transparent;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.2s;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .btn:hover {
   background: var(--accent-hover);
+  border-color: #5aa0f2;
 }
 
 .sep {
@@ -128,7 +137,7 @@ input::-webkit-inner-spin-button {
 .tile {
   text-align: center;
   padding: 8px;
-  background: white;
+  background: #333;
   border-radius: 4px;
   box-shadow: 0 1px 2px var(--shadow);
 }
@@ -157,10 +166,11 @@ input::-webkit-inner-spin-button {
 .correction-factor .value {
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--text);
 }
 
 .stat-card {
-  background: white;
+  background: #333;
   border-radius: 4px;
   padding: 8px;
   box-shadow: 0 1px 2px var(--shadow);
@@ -183,9 +193,10 @@ input::-webkit-inner-spin-button {
 .suggest {
   margin-top: 12px;
   padding: 8px;
-  background: #e8f0fe;
+  background: #2a4b7c;
   border-radius: 4px;
   font-weight: 500;
+  color: var(--text);
 }
 
 .abbrev {
@@ -199,6 +210,74 @@ input::-webkit-inner-spin-button {
   color: var(--small-text);
 }
 
+.hidden {
+  display: none !important;
+}
+Instrucciones para implementar los cambios
+Reemplazar los archivos:
+Copia el contenido de cada archivo (index.html, styles.css, script.js) en los archivos correspondientes de tu repositorio.
+Asegúrate de que estén en la raíz del repositorio y que los nombres sean exactamente index.html, styles.css, y script.js (sin mayúsculas ni espacios adicionales).
+Subir a GitHub:
+bash
+git add index.html styles.css script.js
+git commit -m "Cambiar a tema oscuro y mejorar diseño del menú de Banco mensual"
+git push origin main
+Probar localmente:
+Ejecuta:
+bash
+python -m http.server
+Accede a http://localhost:8000.
+Verifica que:
+La calculadora tenga un tema oscuro (fondo gris oscuro, texto claro, tarjetas oscuras, botones azules).
+La ficha de Banco mensual se vea ordenada:
+Input Banca actual (Q) y botón Guardar banca en una fila.
+Botones Calcular, Reset valores, y Resetear todo en una cuadrícula uniforme debajo de un título "Acciones".
+Espaciado consistente y botones más compactos.
+Las secciones de Cuotas y Forma reciente sigan ocultas.
+Selecciona la liga "BSA", "CR Flamengo" (local), y "SC Recife" (visitante), y haz clic en "Calcular". Deberías obtener resultados similares a los anteriores (~94% para Local, ~75-80% para Over 2.5).
+Abre la consola del navegador (F12 > Console) y confirma que aparece "Script.js cargado correctamente" sin errores.
+Verificar en GitHub Pages:
+Accede a https://<tu_usuario>.github.io/<nombre_repositorio>/ tras la subida.
+Espera unos minutos para que GitHub Pages refleje los cambios (puede tardar si hay caché).
+Confirma que:
+La interfaz esté en tema oscuro (fondo #1a1a1a, tarjetas #2c2c2c, texto claro, botones azules).
+El menú de Banco mensual se vea ordenado y estilizado (input y botón Guardar banca en una fila, botones de acción en una cuadrícula clara).
+Las secciones de Cuotas y Forma reciente no sean visibles.
+Los cálculos funcionen con los valores predeterminados (cuotas: 1.40, 4.50, 8.00, 2.10, 1.80; forma: 4-1-0, 0-2-3).
+Abre la consola del navegador (F12 > Console) y revisa si hay errores, como problemas de carga de styles.css (por ejemplo, "404 Not Found"). Si ves un error, verifica que styles.css esté en la raíz del repositorio.
+Solución de problemas:
+Si el tema oscuro no se aplica:
+Limpia la caché del navegador (Ctrl+Shift+R o Cmd+Shift+R) o prueba en modo incógnito.
+Inspecciona la página (clic derecho > Inspeccionar) y verifica que las variables CSS (--main-bg, --text, etc.) estén definidas en :root y aplicadas correctamente.
+Asegúrate de que styles.css se cargue (en la pestaña "Network" del inspector, busca styles.css).
+Si el menú de Banco mensual sigue viéndose desordenado:
+Confirma que el div.button-group en index.html contiene los botones Calcular, Reset valores, y Resetear todo en una estructura table-like.
+Verifica que la clase .button-group en styles.css tenga grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) y gap: 6px.
+En pantallas pequeñas, la cuadrícula se ajustará automáticamente a una columna si es necesario (revisa en modo responsive).
+Si las secciones de Cuotas o Forma reciente reaparecen:
+Inspecciona los elementos <div class="card hidden"> (Cuotas) y <h4 class="hidden">/div class="table-like hidden" (Forma reciente). Deben tener display: none !important.
+Si no están ocultas, verifica que styles.css incluya .hidden { display: none !important; \}.
+Si los cálculos no coinciden:
+Verifica los valores predeterminados en los inputs ocultos (oddsHome, formHome, etc.) en index.html.
+Compara con los resultados esperados (~94.1% Local, ~5.6% Empate, ~0.3% Visitante, ~5.6% BTTS, ~58.7% Over 2.5). Si el EV para Local es ~97.6%, es probable que estés usando una cuota ~2.10 en lugar de 1.40. Confirma las cuotas en los inputs ocultos.
+Resultados esperados
+Con las cuotas (1.40, 4.50, 8.00, 2.10, 1.80) y los datos de Flamengo vs. Recife:
+
+Probabilidades: ~94% (Local), ~5-6% (Empate), ~0.3-0.6% (Visitante), ~5-6% (BTTS), ~75-80% (Over 2.5).
+EV para Local: ~31.74% con cuota 1.40 (0.941 * 1.40 - 1). Si ves 97.6%, confirma si usaste una cuota ~2.10.
+Stake: Con cuota 1.40, el stake de Kelly debería ser ~15-20%. Con cuota 2.10, ~44% es correcto.
+Apariencia:
+Tema oscuro: fondo gris oscuro (#1a1a1a), tarjetas gris medio (#2c2c2c), texto claro (#e0e0e0), botones azules (#4a90e2).
+Ficha de Banco mensual: Input Banca actual (Q) y botón Guardar banca en una fila, seguidos de un separador y un título "Acciones", con los botones Calcular, Reset valores, y Resetear todo en una cuadrícula uniforme.
+Notas adicionales
+Valores predeterminados: Los inputs ocultos mantienen los valores para CR Flamengo vs. SC Recife (cuotas: 1.40, 4.50, 8.00, 2.10, 1.80; forma: 4-1-0, 0-2-3).
+Reversión al tema claro: Si quieres volver al tema claro, cambia las variables en :root de styles.css a los valores originales (por ejemplo, --main-bg: #ffffff, --text: #222222, etc.).
+Ajustes al menú: Si prefieres un diseño diferente para los botones (por ejemplo, más grandes, en una sola fila, o con íconos), dime y lo personalizamos.
+EV inconsistente: Si sigues viendo un EV de ~97.6% para Local, pásame las cuotas exactas que estás usando o un enlace a tu repositorio para revisar los inputs ocultos.
+Si después de subir estos archivos el tema oscuro no se aplica o el menú de Banco mensual no se ve ordenado, envíame una captura de pantalla de la página y el inspector del navegador (F12) o el enlace a tu repositorio de GitHub. También, si los cálculos no coinciden o necesitas ajustes adicionales (por ejemplo, cambiar el tamaño de los botones o añadir más espacio), dímelo y lo resolvemos. ¡Vamos a dejar esa calculadora con un look pro y súper limpia! 😎
+
+5,8s
+$0
 @media (max-width: 600px) {
   html {
     font-size: 14px;
@@ -210,5 +289,9 @@ input::-webkit-inner-spin-button {
   
   .table-like {
     grid-template-columns: 1fr;
+  }
+  
+  .button-group {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }

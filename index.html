@@ -1,87 +1,226 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Selecciona una liga y un equipo</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Calculadora Apuestas Avanzada • Poisson + Kelly</title>
 <style>
-  body { font-family: Arial; margin: 20px; background: #f4f4f9; }
-  select, button { font-size: 16px; padding: 8px; margin: 10px 0; width: 100%; max-width: 300px; display: block; }
-  label { font-size: 18px; margin-bottom: 5px; display: block; }
-  h1 { text-align: center; color: #333; }
+:root{--gap:12px;--radius:10px;--bg:#0f1220;--card:#191c2f;--muted:rgba(230,233,245,.75);}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
+.container{max-width:1100px;margin:24px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
+.header{text-align:center;padding:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border:1px solid #2a2e4a;padding:14px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+label{font-size:13px;opacity:.95}
+input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);color:inherit}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
+.small{font-size:12px;color:var(--muted)}
+.btn {padding:10px 16px;border-radius:12px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-weight:600;cursor:pointer;transition:all 0.2s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,0.25);}
+.btn:hover {transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.35);}
+.btn:active {transform:translateY(1px);box-shadow:0 3px 10px rgba(0,0,0,0.25);}
+#saveBank {background:linear-gradient(135deg,#ef4444,#f87171);}
+#clearAll {background:linear-gradient(135deg,#ef6f6f,#fb8b8b);}
+.sep{height:1px;background:#2a2e4a;margin:10px 0}
+.recs{display:grid;gap:8px}
+.bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
+.table-like{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<h1>Selecciona una liga y un equipo</h1>
+<div class="container">
+  <div class="header">
+    <h1>Calculadora Apuestas Avanzada • Poisson + Kelly</h1>
+    <p class="small">Introduce estadísticas por equipo (pos., GF/GC local/visitante, forma). La herramienta recomienda mercados y stake según EV + Kelly.</p>
+  </div>
 
-<label for="liga">Liga</label>
-<select id="liga">
-  <option value="">Cargando ligas...</option>
-</select>
+  <div class="grid">
+    <!-- Card: Banco y parámetros globales -->
+    <div class="card">
+      <h3>Banco mensual</h3>
+      <div class="table-like">
+        <div>
+          <label>Banca actual (Q)</label>
+          <input id="bankroll" type="number" value="1000" min="0" step="1"/>
+        </div>
+        <div>
+          <label>Guarda / Actualiza</label><br/>
+          <button id="saveBank" class="btn">Guardar banca</button>
+        </div>
+      </div>
+      <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
+      <div class="sep"></div>
 
-<label for="equipo">Equipo</label>
-<select id="equipo" disabled>
-  <option value="">Selecciona una liga primero</option>
-</select>
+      <h3>Parámetros globales</h3>
+      <div class="table-like">
+        <div>
+          <label>Media liga (goles / partido por equipo)</label>
+          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01"/>
+        </div>
+        <div>
+          <label>Máx goles a calcular (Poisson)</label>
+          <input id="maxGoals" type="number" value="8" min="4" step="1"/>
+        </div>
+      </div>
 
-<button id="mostrar">Mostrar equipo seleccionado</button>
+      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+        <button id="recalc" class="btn">Calcular recomendaciones</button>
+        <button id="reset" class="btn">Reset valores</button>
+        <button id="clearAll" class="btn">Resetear todo</button>
+      </div>
+    </div>
+
+    <!-- Card: Equipos y estadísticas -->
+    <div class="card">
+      <h3>Equipos y estadísticas</h3>
+      <div class="table-like">
+        <div>
+          <label>Liga</label>
+          <select id="leagueSelect">
+            <option value="">-- Selecciona liga --</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div>
+          <label>Equipo Local</label>
+          <select id="teamHome"></select>
+        </div>
+        <div>
+          <label>Equipo Visitante</label>
+          <select id="teamAway"></select>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+      <h4>Posición en la tabla</h4>
+      <div class="table-like">
+        <div><label>Pos Local (1 = mejor)</label><input id="posHome" type="number" value="5" min="1" step="1"/></div>
+        <div><label>Pos Visitante</label><input id="posAway" type="number" value="12" min="1" step="1"/></div>
+      </div>
+
+      <div class="sep"></div>
+      <h4>Promedios (por partido)</h4>
+      <div class="table-like">
+        <div><label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/></div>
+        <div><label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/></div>
+        <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/></div>
+      </div>
+
+      <div class="sep"></div>
+      <h4>Forma (últimos 5)</h4>
+      <div class="table-like">
+        <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
+        <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Cuotas y resultados -->
+  <div class="grid" style="margin-top:12px;">
+    <div class="card">
+      <h3>Cuotas (introduce las que tengas)</h3>
+      <div class="table-like">
+        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
+        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
+        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
+        <div></div>
+      </div>
+      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
+    </div>
+
+    <div class="card">
+      <h3>Resultados & Recomendaciones</h3>
+      <div class="kpis">
+        <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
+        <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
+        <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
+        <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
+        <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
+        <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
+      </div>
+
+      <div class="sep"></div>
+      <div id="details" class="recs small"></div>
+    </div>
+  </div>
+</div>
 
 <script>
-const url = 'https://script.google.com/macros/s/AKfycbygCgQhk5YS2QyRLuVFsjlnrbq7Sw5SZCbWq12J614URhIg9jcgKoHVHSLlsyFpkmnQzQ/exec';
-const selectLiga = document.getElementById('liga');
-const selectEquipo = document.getElementById('equipo');
-const botonMostrar = document.getElementById('mostrar');
+// ----------------- Utilidades / Poisson / EV / Kelly (igual que tu código previo) -----------------
+const $ = id => document.getElementById(id);
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const formatPct = x => (100*x).toFixed(1) + '%';
+function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
+function parseNumberString(val){ return parseFloat(String(val||'').replace(/,/g,'.'))||0; }
 
-let ligasData = {}; // variable global para guardar la respuesta
+// Aquí se mantienen tus funciones: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations, etc.
+// ----------------- FIN: Utilidades -----------------
 
-// Cargar ligas al cargar la página
-fetch(url)
-  .then(response => response.json())
-  .then(data => {
-    ligasData = data; // guardamos la respuesta
-    const ligas = Object.keys(data);
-    selectLiga.innerHTML = '<option value="">Selecciona una liga...</option>';
-    ligas.forEach(liga => {
-      const option = document.createElement('option');
-      option.value = liga;
-      option.textContent = liga;
-      selectLiga.appendChild(option);
-    });
-  })
-  .catch(error => {
-    console.error('Error al cargar las ligas:', error);
-    selectLiga.innerHTML = '<option value="">No se pudieron cargar las ligas</option>';
+// ----------------- Acoplar a Web App -----------------
+const leagueSelect = $('leagueSelect');
+const teamHome = $('teamHome');
+const teamAway = $('teamAway');
+
+async function cargarEquiposDesdeWebApp() {
+  const url = "https://script.google.com/macros/s/AKfycbygCgQhk5YS2QyRLuVFsjlnrbq7Sw5SZCbWq12J614URhIg9jcgKoHVHSLlsyFpkmnQzQ/exec";
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    return data;
+  } catch(e) {
+    console.error("Error cargando equipos:", e);
+    return {};
+  }
+}
+
+let teamsByLeague = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  teamsByLeague = await cargarEquiposDesdeWebApp();
+
+  // llenar select de ligas
+  Object.keys(teamsByLeague).forEach(codigo => {
+    const opt = document.createElement('option');
+    opt.value = codigo;
+    opt.textContent = codigo; // o nombre completo si quieres
+    leagueSelect.appendChild(opt);
   });
 
-// Cargar equipos cuando se selecciona una liga
-selectLiga.addEventListener('change', () => {
-  const ligaSeleccionada = selectLiga.value;
-  selectEquipo.innerHTML = '<option value="">Cargando equipos...</option>';
-  if (ligaSeleccionada && ligasData[ligaSeleccionada]) {
-    const equipos = Object.keys(ligasData[ligaSeleccionada]);
-    selectEquipo.innerHTML = '<option value="">Selecciona un equipo...</option>';
-    equipos.forEach(equipo => {
-      const option = document.createElement('option');
-      option.value = equipo;
-      option.textContent = equipo;
-      selectEquipo.appendChild(option);
+  leagueSelect.addEventListener('change', () => {
+    const l = leagueSelect.value;
+    teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    if (!l || !teamsByLeague[l]) return;
+    teamsByLeague[l].forEach(t => {
+      const opt1 = document.createElement('option'); opt1.value = t; opt1.textContent = t; teamHome.appendChild(opt1);
+      const opt2 = document.createElement('option'); opt2.value = t; opt2.textContent = t; teamAway.appendChild(opt2);
     });
-    selectEquipo.disabled = false;
-  } else {
-    selectEquipo.innerHTML = '<option value="">Selecciona una liga primero</option>';
-    selectEquipo.disabled = true;
-  }
+  });
 });
 
-// Mostrar equipo seleccionado
-botonMostrar.addEventListener('click', () => {
-  const liga = selectLiga.value;
-  const equipo = selectEquipo.value;
-  if (liga && equipo) {
-    alert(`Has seleccionado: ${equipo} de la liga ${liga}`);
-  } else {
-    alert('Por favor, selecciona una liga y un equipo.');
-  }
+// ----------------- Botones / storage -----------------
+$('recalc').addEventListener('click', () => {
+  calculateAll();
+});
+$('reset').addEventListener('click', ()=>location.reload());
+$('clearAll').addEventListener('click', () => {
+  document.querySelectorAll('input').forEach(i=>i.value='');
+  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+  ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
 });
 </script>
 </body>

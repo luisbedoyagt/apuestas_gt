@@ -86,25 +86,6 @@ async function init() {
     $('maxTeams').addEventListener('change', calculateAll);
     $('formHome').addEventListener('change', calculateAll);
     $('formAway').addEventListener('change', calculateAll);
-
-    // Ocultar secciones de Cuotas y Forma reciente al cargar
-    document.querySelector('.cuotas-section').style.display = 'none';
-    document.querySelector('.forma-reciente-title').style.display = 'none';
-    document.querySelector('.forma-reciente-section').style.display = 'none';
-
-    // Manejadores para botones de mostrar/ocultar
-    $('toggleCuotas').addEventListener('click', () => {
-      const section = document.querySelector('.cuotas-section');
-      section.style.display = section.style.display === 'none' ? 'block' : 'none';
-      $('toggleCuotas').textContent = section.style.display === 'none' ? 'Mostrar Cuotas' : 'Ocultar Cuotas';
-    });
-    $('toggleForma').addEventListener('click', () => {
-      const title = document.querySelector('.forma-reciente-title');
-      const section = document.querySelector('.forma-reciente-section');
-      title.style.display = section.style.display = section.style.display === 'none' ? 'block' : 'none';
-      section.style.display = title.style.display;
-      $('toggleForma').textContent = section.style.display === 'none' ? 'Mostrar Forma Reciente' : 'Ocultar Forma Reciente';
-    });
   } catch (err) {
     console.error("Error en init:", err);
     alert("Error al inicializar la aplicación. Por favor, recarga la página.");
@@ -322,6 +303,8 @@ function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
 }
 
 function suggestBet(probObj, odds, bankroll) {
+  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
+  const maxEV = 0.5; // Umbral máximo de EV (50%)
   let bestBet = null;
   let maxEV = -Infinity;
   let bestStake = 0;
@@ -338,7 +321,7 @@ function suggestBet(probObj, odds, bankroll) {
   
   bets.forEach(bet => {
     const ev = bet.prob * bet.odds - 1;
-    if (ev > maxEV) {
+    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
       maxEV = ev;
       bestBet = bet.name;
       bestOdds = bet.odds;
@@ -400,7 +383,7 @@ function calculateAll() {
   
   $('suggestion').textContent = suggestion.bestBet 
     ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuesta con valor esperado positivo.';
+    : 'No hay apuestas con valor esperado confiable.';
   $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;

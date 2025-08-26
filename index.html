@@ -337,16 +337,21 @@ function fillTeamData(teamName, leagueCode, type){
   if(!teamName) return;
   const t = findTeam(leagueCode, teamName);
   if(!t) return;
+
+  const formString = `${t.g||0}-${t.e||0}-${t.p||0}`; // ← nuevo: forma automática G-E-P
+
   if(type === 'Home'){
     $('posHome').value = t.pos || '';
     $('gfHome').value  = Number.isFinite(t.gf) ? t.gf : '';
     $('gaHome').value  = Number.isFinite(t.ga) ? t.ga : '';
+    $('formHome').value = formString;                 // ← nuevo
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   } else {
     $('posAway').value = t.pos || '';
     $('gfAway').value  = Number.isFinite(t.gf) ? t.gf : '';
     $('gaAway').value  = Number.isFinite(t.ga) ? t.ga : '';
+    $('formAway').value = formString;                 // ← nuevo
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   }

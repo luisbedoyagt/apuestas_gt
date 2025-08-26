@@ -16,10 +16,10 @@ function toDecimalOdds(v) {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
-  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
-  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
-  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
-  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
+  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga / Alemania", 
+  "DED": "Eredivisie / Paises Bajos", "BSA": "Campeonato Brasileiro / Brasil", "PD": "La Liga / Liga Española", 
+  "FL1": "Ligue 1 / Francia", "ELC": "Championship / Inglaterra", "PPL": "Primeira Liga / Portugal", 
+  "EC": "European Championship", "SA": "Serie A / Italia", "PL": "Premier League / Inglaterra" 
 };
 
 function normalizeTeam(raw) {

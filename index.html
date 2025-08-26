@@ -11,23 +11,24 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;backgrou
 .container{max-width:1100px;margin:24px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
 .header{text-align:center;padding:12px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.card{background:var(--card);border:1px solid #2a2e4a;padding:14px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.card{background:var(--card);border:1px solid #2a2e4a;padding:12px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
 label{font-size:13px;opacity:.95}
-input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;background:var(--bg);color:inherit}
+input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;background:var(--bg);color:inherit}
 .row{display:flex;gap:10px}
 .row > *{flex:1}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{text-align:center;padding:8px;border-radius:6px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
-.btn {padding:10px 16px;border-radius:12px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-weight:600;cursor:pointer;transition:all 0.2s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,0.25);}
+.btn {padding:8px 14px;border-radius:10px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-weight:600;cursor:pointer;transition:all 0.2s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,0.25);}
 .btn:hover {transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.35);}
 .btn:active {transform:translateY(1px);box-shadow:0 3px 10px rgba(0,0,0,0.25);}
 #saveBank {background:linear-gradient(135deg,#ef4444,#f87171);}
 #clearAll {background:linear-gradient(135deg,#ef6f6f,#fb8b8b);}
-.sep{height:1px;background:#2a2e4a;margin:10px 0}
-.recs{display:grid;gap:8px}
+.sep{height:1px;background:#2a2e4a;margin:8px 0}
+.recs{display:grid;gap:6px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
 .table-like{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.abbreviations{margin-top:12px;font-size:12px;line-height:1.4;color:var(--muted);}
 @media(max-width:880px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -54,31 +55,55 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
       <div class="sep"></div>
 
-      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+      <h3>Parámetros globales</h3>
+      <div class="table-like">
+        <div>
+          <label>Media liga (goles / partido por equipo)</label>
+          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01"/>
+        </div>
+        <div>
+          <label>Máx goles a calcular (Poisson)</label>
+          <input id="maxGoals" type="number" value="8" min="4" step="1"/>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:10px; justify-content:center;">
+        <button id="recalc" class="btn">Calcular</button>
         <button id="reset" class="btn">Reset valores</button>
         <button id="clearAll" class="btn">Resetear todo</button>
       </div>
     </div>
 
     <div class="card">
+      <h3>Cuotas (introduce las que tengas)</h3>
+      <div class="table-like">
+        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
+        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:6px">
+        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
+        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:6px">
+        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
+        <div></div>
+      </div>
+      <p class="small" style="margin-top:6px">Si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:12px;">
+    <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
         <div>
           <label>Liga</label>
-          <select id="leagueSelect">
-            <option value="">-- Selecciona liga --</option>
-          </select>
+          <select id="leagueSelect"><option value="">-- Selecciona liga --</option></select>
         </div>
       </div>
-      <div class="table-like" style="margin-top:8px">
-        <div>
-          <label>Equipo Local</label>
-          <select id="teamHome"></select>
-        </div>
-        <div>
-          <label>Equipo Visitante</label>
-          <select id="teamAway"></select>
-        </div>
+      <div class="table-like" style="margin-top:6px">
+        <div><label>Equipo Local</label><select id="teamHome"></select></div>
+        <div><label>Equipo Visitante</label><select id="teamAway"></select></div>
       </div>
 
       <div class="sep"></div>
@@ -94,7 +119,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div><label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/></div>
         <div><label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/></div>
       </div>
-      <div class="table-like" style="margin-top:8px">
+      <div class="table-like" style="margin-top:6px">
         <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/></div>
         <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/></div>
       </div>
@@ -105,25 +130,6 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
         <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
       </div>
-    </div>
-  </div>
-
-  <div class="grid" style="margin-top:12px;">
-    <div class="card">
-      <h3>Cuotas (introduce las que tengas)</h3>
-      <div class="table-like">
-        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
-        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
-      </div>
-      <div class="table-like" style="margin-top:8px">
-        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
-        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
-      </div>
-      <div class="table-like" style="margin-top:8px">
-        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
-        <div></div>
-      </div>
-      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
     </div>
 
     <div class="card">
@@ -136,10 +142,16 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
         <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
       </div>
-
       <div class="sep"></div>
       <div id="details" class="recs small"></div>
     </div>
+  </div>
+
+  <div class="abbreviations">
+    <strong>Guía de abreviaturas:</strong><br/>
+    GF = Goles a favor, GC = Goles en contra, BTTS = Ambos equipos marcan,<br/>
+    EV = Valor esperado (Expected Value), Stake = Monto sugerido según Kelly,<br/>
+    1X2 = Local / Empate / Visitante
   </div>
 </div>
 
@@ -156,169 +168,99 @@ const leagueSelect = $('leagueSelect');
 const teamHome = $('teamHome');
 const teamAway = $('teamAway');
 let teamsByLeague = {};
-
 const leagueNames = {
-  "WC": "FIFA World Cup",
-  "CL": "UEFA Champions League",
-  "BL1": "Bundesliga",
-  "DED": "Eredivisie",
-  "BSA": "Campeonato Brasileiro Série A",
-  "PD": "Liga Española",
-  "FL1": "Ligue 1",
-  "ELC": "Championship",
-  "PPL": "Primeira Liga / Portugal",
-  "EC": "European Championship",
-  "SA": "Serie A",
-  "PL": "Premier League"
+  "WC": "FIFA World Cup","CL": "UEFA Champions League","BL1": "Bundesliga","DED": "Eredivisie",
+  "BSA": "Campeonato Brasileiro Série A","PD": "Liga Española","FL1": "Ligue 1","ELC": "Championship",
+  "PPL": "Primeira Liga / Portugal","EC": "European Championship","SA": "Serie A","PL": "Premier League"
 };
 
 async function cargarEquiposDesdeWebApp() {
   const url = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
-  try {
-    const resp = await fetch(url);
-    const data = await resp.json();
-    return data;
-  } catch(e) {
-    console.error("Error cargando equipos:", e);
-    return {};
-  }
+  try { const resp = await fetch(url); return await resp.json(); } 
+  catch(e){ console.error("Error cargando equipos:", e); return {}; }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   teamsByLeague = await cargarEquiposDesdeWebApp();
-  Object.keys(teamsByLeague).forEach(codigo => {
-    const opt = document.createElement('option');
-    opt.value = codigo;
-    opt.textContent = leagueNames[codigo] || codigo;
+  Object.keys(teamsByLeague).forEach(codigo=>{
+    const opt = document.createElement('option'); opt.value = codigo; opt.textContent = leagueNames[codigo]||codigo;
     leagueSelect.appendChild(opt);
   });
 
-  const savedBank = localStorage.getItem('bankroll');
-  if(savedBank) $('bankroll').value = savedBank;
+  const savedBank = localStorage.getItem('bankroll'); if(savedBank) $('bankroll').value = savedBank;
 
   leagueSelect.addEventListener('change', () => {
     const l = leagueSelect.value;
     teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
     teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
     if (!l || !teamsByLeague[l]) return;
-    teamsByLeague[l].forEach(t => {
+    teamsByLeague[l].forEach(t=>{
       const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; teamHome.appendChild(opt1);
       const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; teamAway.appendChild(opt2);
     });
   });
 
-  function fillTeamData(teamName, leagueCode, type) {
-    if (!teamsByLeague[leagueCode]) return;
-    const teamData = teamsByLeague[leagueCode].find(t => t.name === teamName);
-    if (!teamData) return;
-    if (type === 'Home') {
-      $('posHome').value = teamData.pos;
-      $('gfHome').value = teamData.gf;
-      $('gaHome').value = teamData.ga;
-      $('formHome').value = teamData.form;
-    } else if (type === 'Away') {
-      $('posAway').value = teamData.pos;
-      $('gfAway').value = teamData.gf;
-      $('gaAway').value = teamData.ga;
-      $('formAway').value = teamData.form;
-    }
+  function fillTeamData(teamName, leagueCode, type){
+    if(!teamsByLeague[leagueCode]) return;
+    const teamData = teamsByLeague[leagueCode].find(t=>t.name===teamName);
+    if(!teamData) return;
+    if(type==='Home'){$('posHome').value=teamData.pos;$('gfHome').value=teamData.gf;$('gaHome').value=teamData.ga;$('formHome').value=teamData.form;}
+    else{$('posAway').value=teamData.pos;$('gfAway').value=teamData.gf;$('gaAway').value=teamData.ga;$('formAway').value=teamData.form;}
     calculateAll();
   }
 
-  teamHome.addEventListener('change', () => fillTeamData(teamHome.value, leagueSelect.value, 'Home'));
-  teamAway.addEventListener('change', () => fillTeamData(teamAway.value, leagueSelect.value, 'Away'));
+  teamHome.addEventListener('change', ()=>fillTeamData(teamHome.value, leagueSelect.value, 'Home'));
+  teamAway.addEventListener('change', ()=>fillTeamData(teamAway.value, leagueSelect.value, 'Away'));
 
-  $('reset').addEventListener('click', ()=>location.reload());
-  $('clearAll').addEventListener('click', () => {
+  $('recalc').addEventListener('click',()=>calculateAll());
+  $('reset').addEventListener('click',()=>location.reload());
+  $('clearAll').addEventListener('click',()=>{
     document.querySelectorAll('input').forEach(i=>i.value='');
     document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
     ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
   });
 
-  $('saveBank').addEventListener('click', () => {
-    const bank = parseNumberString($('bankroll').value);
+  $('saveBank').addEventListener('click',()=>{
+    const bank=parseNumberString($('bankroll').value);
     localStorage.setItem('bankroll', bank);
     alert(`Banca guardada: Q${bank}`);
   });
 });
 
 // ----------------- Funciones Poisson & Kelly -----------------
-function logFactorial(n){ return n<=1?0:Math.log(n)+logFactorial(n-1); }
-function poissonPMF(lambda,k){ return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k)); }
-function compute1X2(lambdaHome, lambdaAway,maxGoals=8){
-  let pHome=0,pDraw=0,pAway=0;
-  for(let i=0;i<=maxGoals;i++){
-    for(let j=0;j<=maxGoals;j++){
-      const prob = poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j);
-      if(i>j)pHome+=prob; else if(i===j)pDraw+=prob; else pAway+=prob;
-    }
-  }
-  return {pHome,pDraw,pAway};
-}
-function computeBTTS(lambdaHome,lambdaAway){
-  let p=0;
-  for(let i=1;i<=8;i++){
-    for(let j=1;j<=8;j++){
-      p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);
-    }
-  }
-  return p;
-}
-function computeOver25(lambdaHome,lambdaAway,maxGoals=8){
-  let p=0;
-  for(let i=0;i<=maxGoals;i++){
-    for(let j=0;j<=maxGoals;j++){
-      if(i+j>2)p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);
-    }
-  }
-  return p;
-}
-function kellyFraction(p,odds){ return Math.max(0,(p*odds-1)/(odds-1)); }
+function logFactorial(n){return n<=1?0:Math.log(n)+logFactorial(n-1);}
+function poissonPMF(lambda,k){return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k));}
+function compute1X2(lambdaHome,lambdaAway,maxGoals=8){let pHome=0,pDraw=0,pAway=0;for(let i=0;i<=maxGoals;i++){for(let j=0;j<=maxGoals;j++){const prob=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);if(i>j)pHome+=prob;else if(i===j)pDraw+=prob;else pAway+=prob;}}return {pHome,pDraw,pAway};}
+function computeBTTS(lambdaHome,lambdaAway){let p=0;for(let i=1;i<=8;i++){for(let j=1;j<=8;j++){p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);}}return p;}
+function computeOver25(lambdaHome,lambdaAway,maxGoals=8){let p=0;for(let i=0;i<=maxGoals;i++){for(let j=0;j<=maxGoals;j++){if(i+j>2)p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);}}return p;}
+function kellyFraction(p,odds){return Math.max(0,(p*odds-1)/(odds-1));}
 
 // ----------------- Calcular & Renderizar -----------------
 function calculateAll(){
-  const lambdaHome = parseNumberString($('gfHome').value);
-  const lambdaAway = parseNumberString($('gfAway').value);
+  const lambdaHome=parseNumberString($('gfHome').value);
+  const lambdaAway=parseNumberString($('gfAway').value);
+  const {pHome,pDraw,pAway}=compute1X2(lambdaHome,lambdaAway);
+  const pBTTS=computeBTTS(lambdaHome,lambdaAway);
+  const pO25=computeOver25(lambdaHome,lambdaAway);
+  $('pHome').textContent=formatPct(pHome);
+  $('pDraw').textContent=formatPct(pDraw);
+  $('pAway').textContent=formatPct(pAway);
+  $('pBTTS').textContent=formatPct(pBTTS);
+  $('pO25').textContent=formatPct(pO25);
 
-  const {pHome,pDraw,pAway} = compute1X2(lambdaHome, lambdaAway);
-  const pBTTS = computeBTTS(lambdaHome, lambdaAway);
-  const pO25 = computeOver25(lambdaHome, lambdaAway);
-
-  $('pHome').textContent = formatPct(pHome);
-  $('pDraw').textContent = formatPct(pDraw);
-  $('pAway').textContent = formatPct(pAway);
-  $('pBTTS').textContent = formatPct(pBTTS);
-  $('pO25').textContent = formatPct(pO25);
-
-  const bankroll = parseNumberString($('bankroll').value);
-
-  const evs = [
-    {id:'pHome',name:'Local',p:pHome,odds:toDecimalOdds($('oddsHome').value)},
-    {id:'pDraw',name:'Empate',p:pDraw,odds:toDecimalOdds($('oddsDraw').value)},
-    {id:'pAway',name:'Visitante',p:pAway,odds:toDecimalOdds($('oddsAway').value)},
-    {id:'pBTTS',name:'BTTS',p:pBTTS,odds:toDecimalOdds($('oddsBTTS').value)},
-    {id:'pO25',name:'Over2.5',p:pO25,odds:toDecimalOdds($('oddsOver25').value)}
+  const bankroll=parseNumberString($('bankroll').value);
+  const evs=[
+    {name:'Local',p:pHome,odds:toDecimalOdds($('oddsHome').value)},
+    {name:'Empate',p:pDraw,odds:toDecimalOdds($('oddsDraw').value)},
+    {name:'Visitante',p:pAway,odds:toDecimalOdds($('oddsAway').value)},
+    {name:'BTTS',p:pBTTS,odds:toDecimalOdds($('oddsBTTS').value)},
+    {name:'Over2.5',p:pO25,odds:toDecimalOdds($('oddsOver25').value)}
   ];
 
-  evs.forEach(e=>{
-    e.ev = e.p*e.odds-1;
-    e.stake = kellyFraction(e.p,e.odds)*bankroll;
-  });
-
-  // Colorear tiles según EV
-  evs.forEach(e=>{
-    const tile = $(e.id);
-    const parentTile = tile.parentElement;
-    parentTile.classList.remove('good','bad','neutral');
-    if(e.ev>0.05) parentTile.classList.add('good');
-    else if(e.ev<-0.05) parentTile.classList.add('bad');
-    else parentTile.classList.add('neutral');
-  });
-
+  evs.forEach(e=>{e.ev=e.p*e.odds-1;e.stake=kellyFraction(e.p,e.odds)*bankroll;});
   evs.sort((a,b)=>b.ev-a.ev);
-  $('expectedBest').textContent = evs[0].name;
-
-  $('details').innerHTML = evs.map(e=>`${e.name}: EV ${e.ev.toFixed(2)}, Stake sugerido Q${e.stake.toFixed(0)}`).join('<br/>');
+  $('expectedBest').textContent=evs[0].name;
+  $('details').innerHTML=evs.map(e=>`${e.name}: EV ${e.ev.toFixed(2)}, Stake sugerido Q${e.stake.toFixed(0)}`).join('<br/>');
 }
 </script>
 </body>

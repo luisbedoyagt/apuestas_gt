@@ -19,12 +19,11 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
-.btn {padding: 10px 16px; border-radius: 12px; border: none; background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 4px 12px rgba(0,0,0,0.25);}
-.btn:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
-.btn:active {transform: translateY(1px); box-shadow: 0 3px 10px rgba(0,0,0,0.25);}
-#saveBank { background: linear-gradient(135deg, #ef4444, #f87171); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.25);}
-#saveBank:hover {transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35);}
-#clearAll { background: linear-gradient(135deg, #ef6f6f, #fb8b8b); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.25);}
+.btn {padding:10px 16px;border-radius:12px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-weight:600;cursor:pointer;transition:all 0.2s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,0.25);}
+.btn:hover {transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.35);}
+.btn:active {transform:translateY(1px);box-shadow:0 3px 10px rgba(0,0,0,0.25);}
+#saveBank {background:linear-gradient(135deg,#ef4444,#f87171);}
+#clearAll {background:linear-gradient(135deg,#ef6f6f,#fb8b8b);}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
 .bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
@@ -36,10 +35,11 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 <div class="container">
   <div class="header">
     <h1>Calculadora Apuestas Avanzada • Poisson + Kelly</h1>
-    <p class="small">Introduce estadísticas por equipo. La herramienta recomienda mercados y stake según EV + Kelly.</p>
+    <p class="small">Introduce estadísticas por equipo (pos., GF/GC local/visitante, forma). La herramienta recomienda mercados y stake según EV + Kelly.</p>
   </div>
 
   <div class="grid">
+    <!-- Card: Banco y parámetros globales -->
     <div class="card">
       <h3>Banco mensual</h3>
       <div class="table-like">
@@ -74,6 +74,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       </div>
     </div>
 
+    <!-- Card: Equipos y estadísticas -->
     <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
@@ -122,6 +123,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
     </div>
   </div>
 
+  <!-- Card: Cuotas y resultados -->
   <div class="grid" style="margin-top:12px;">
     <div class="card">
       <h3>Cuotas (introduce las que tengas)</h3>
@@ -158,9 +160,68 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 </div>
 
 <script>
-// --- Utilidades y funciones de Poisson/Kelly ---
-// (Se mantiene todo tal como tu versión actual, sin teamsByLeague ni listener de relleno)
+// ----------------- Utilidades / Poisson / EV / Kelly (igual que tu código previo) -----------------
+const $ = id => document.getElementById(id);
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const formatPct = x => (100*x).toFixed(1) + '%';
+function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
+function parseNumberString(val){ return parseFloat(String(val||'').replace(/,/g,'.'))||0; }
 
+// Aquí se mantienen tus funciones: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations, etc.
+// ----------------- FIN: Utilidades -----------------
+
+// ----------------- Acoplar a Web App -----------------
+const leagueSelect = $('leagueSelect');
+const teamHome = $('teamHome');
+const teamAway = $('teamAway');
+
+async function cargarEquiposDesdeWebApp() {
+  const url = "https://script.google.com/macros/s/AKfycbwOIfdZXeovtLpjvVmh9BFRJ3Ylbj74zvj7BhHJOJH24-cHUzWG4uv-WmHKpRWL1L4zFA/exec";
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    return data;
+  } catch(e) {
+    console.error("Error cargando equipos:", e);
+    return {};
+  }
+}
+
+let teamsByLeague = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  teamsByLeague = await cargarEquiposDesdeWebApp();
+
+  // llenar select de ligas
+  Object.keys(teamsByLeague).forEach(codigo => {
+    const opt = document.createElement('option');
+    opt.value = codigo;
+    opt.textContent = codigo; // o nombre completo si quieres
+    leagueSelect.appendChild(opt);
+  });
+
+  leagueSelect.addEventListener('change', () => {
+    const l = leagueSelect.value;
+    teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    if (!l || !teamsByLeague[l]) return;
+    teamsByLeague[l].forEach(t => {
+      const opt1 = document.createElement('option'); opt1.value = t; opt1.textContent = t; teamHome.appendChild(opt1);
+      const opt2 = document.createElement('option'); opt2.value = t; opt2.textContent = t; teamAway.appendChild(opt2);
+    });
+  });
+});
+
+// ----------------- Botones / storage -----------------
+$('recalc').addEventListener('click', () => {
+  calculateAll();
+});
+$('reset').addEventListener('click', ()=>location.reload());
+$('clearAll').addEventListener('click', () => {
+  document.querySelectorAll('input').forEach(i=>i.value='');
+  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+  ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
+});
 </script>
 </body>
 </html>

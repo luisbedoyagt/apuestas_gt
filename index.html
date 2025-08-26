@@ -13,7 +13,7 @@
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
 .container{max-width:1100px;margin:20px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
 .header{text-align:center;padding:8px}
-.grid{display:grid;grid-template-columns:1fr;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .card{background:var(--card);border:1px solid #2a2e4a;padding:12px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(0,0,0,.28)}
 label{font-size:13px;opacity:.95}
 input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;background:transparent;color:inherit}
@@ -47,7 +47,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
     <p class="small">Sistema mejorado con factores de corrección, forma reciente y modelo Dixon-Coles</p>
   </div>
 
-  <!-- Solo Banco (se eliminó la sección de cuotas) -->
+  <!-- Banco & Cuotas -->
   <div class="grid">
     <div class="card">
       <h3>Banco mensual</h3>
@@ -67,6 +67,23 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <button id="reset" class="btn">Reset valores</button>
         <button id="clearAll" class="btn">Resetear todo</button>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>Cuotas</h3>
+      <div class="table-like">
+        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
+        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
+        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
+        <div></div>
+      </div>
+      <p class="small" style="margin-top:8px">Consejo: usa decimales. (Americana → decimal antes)</p>
     </div>
   </div>
 
@@ -184,7 +201,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
         <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
-        <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor Probabilidad</div></div>
+        <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
       </div>
 
       <div class="sep"></div>
@@ -218,22 +235,22 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <div class="sep"></div>
       
       <div>
-        <h4>Análisis de Probabilidades</h4>
+        <h4>Stake según Kelly</h4>
         <div class="table-like">
           <div class="stat-card">
-            <div class="stat-title">Mejor opción</div>
-            <div class="stat-values" id="bestOption">—</div>
+            <div class="stat-title">Stake recomendado</div>
+            <div class="stat-values" id="kellyStake">—%</div>
           </div>
           <div class="stat-card">
-            <div class="stat-title">Valor esperado</div>
-            <div class="stat-values" id="expectedValue">—</div>
+            <div class="stat-title">Monto a apostar</div>
+            <div class="stat-values" id="betAmount">—</div>
           </div>
         </div>
       </div>
 
       <div class="sep"></div>
       <div class="abbrev">
-        <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos
+        <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos · Stake = Monto sugerido
       </div>
     </div>
   </div>
@@ -244,6 +261,7 @@ const $ = id => document.getElementById(id);
 const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
 const formatDec = x => (isFinite(x) ? x.toFixed(2) : '0.00');
 function parseNumberString(val){ const s=String(val||'').toString().replace(/,/g,'.'); const n=Number(s); return isFinite(n)?n:0; }
+function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
 
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
@@ -289,7 +307,7 @@ async function init(){
   $('clearAll').addEventListener('click', clearAll);
   $('saveBank').addEventListener('click', saveBankrollToStorage);
   
-  // Event listeners para los campos
+  // Event listeners para los nuevos campos
   $('homeAdvantage').addEventListener('change', calculateAll);
   $('formWeight').addEventListener('change', calculateAll);
   $('dixonColesParam').addEventListener('change', calculateAll);
@@ -320,20 +338,20 @@ function fillTeamData(teamName, leagueCode, type){
   const t = findTeam(leagueCode, teamName);
   if(!t) return;
 
-  const formString = `${t.g||0}-${t.e||0}-${t.p||0}`;
+  const formString = `${t.g||0}-${t.e||0}-${t.p||0}`; // ← nuevo: forma automática G-E-P
 
   if(type === 'Home'){
     $('posHome').value = t.pos || '';
     $('gfHome').value  = Number.isFinite(t.gf) ? t.gf : '';
     $('gaHome').value  = Number.isFinite(t.ga) ? t.ga : '';
-    $('formHome').value = formString;
+    $('formHome').value = formString;                 // ← nuevo
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   } else {
     $('posAway').value = t.pos || '';
     $('gfAway').value  = Number.isFinite(t.gf) ? t.gf : '';
     $('gaAway').value  = Number.isFinite(t.ga) ? t.ga : '';
-    $('formAway').value = formString;
+    $('formAway').value = formString;                 // ← nuevo
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   }
@@ -352,7 +370,7 @@ function clearAll(){
   });
   document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
   ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details','suggestion','formHomeTeam','formAwayTeam','formHomeBox','formAwayBox', 
-   'homeAdvantageFactor', 'strengthFactor', 'recentFormFactor', 'dixonColesFactor', 'bestOption', 'expectedValue'].forEach(id=>{
+   'homeAdvantageFactor', 'strengthFactor', 'recentFormFactor', 'dixonColesFactor', 'kellyStake', 'betAmount'].forEach(id=>{
     const el = $(id);
     if(el) el.textContent = id.includes('form') ? (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
@@ -523,34 +541,74 @@ function computeProbabilities(lambdaHome, lambdaAway){
   };
 }
 
-function analyzeProbabilities(probObj){
-  let bestOption = null;
-  let maxProb = -Infinity;
+function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
+  // Fórmula de Kelly: f* = (bp - q) / b
+  // donde b = cuota - 1, p = probabilidad, q = 1 - p
+  const b = odds - 1;
+  const p = probability;
+  const q = 1 - p;
   
-  const options = [
-    {name: 'Local', prob: probObj.pHome},
-    {name: 'Empate', prob: probObj.pDraw},
-    {name: 'Visitante', prob: probObj.pAway},
-    {name: 'BTTS Sí', prob: probObj.pBTTS},
-    {name: 'Over 2.5', prob: probObj.pO25}
+  const idealStake = (b * p - q) / b;
+  
+  // Usar sólo una fracción del criterio de Kelly completo (más conservador)
+  const fractionalStake = Math.max(0, idealStake) * kellyFraction;
+  
+  // Calcular monto a apostar
+  const amount = bankroll * fractionalStake;
+  
+  return {
+    stakePercent: fractionalStake * 100,
+    amount: amount
+  };
+}
+
+function suggestBet(probObj, odds, bankroll){
+  let bestBet = null;
+  let maxEV = -Infinity;
+  let bestStake = 0;
+  let bestAmount = 0;
+  
+  const bets = [
+    {name: 'Local', prob: probObj.pHome, odds: odds.oddsHome},
+    {name: 'Empate', prob: probObj.pDraw, odds: odds.oddsDraw},
+    {name: 'Visitante', prob: probObj.pAway, odds: odds.oddsAway},
+    {name: 'BTTS Sí', prob: probObj.pBTTS, odds: odds.oddsBTTS},
+    {name: 'Over 2.5', prob: probObj.pO25, odds: odds.oddsOver25}
   ];
   
-  options.forEach(option => {
-    if (option.prob > maxProb) {
-      maxProb = option.prob;
-      bestOption = option.name;
+  bets.forEach(bet => {
+    const ev = bet.prob * bet.odds - 1;
+    if (ev > maxEV) {
+      maxEV = ev;
+      bestBet = bet.name;
+      
+      // Calcular stake según Kelly
+      const kelly = calculateKellyStake(bet.prob, bet.odds, bankroll);
+      bestStake = kelly.stakePercent;
+      bestAmount = kelly.amount;
     }
   });
   
   return {
-    bestOption,
-    maxProb
+    bestBet,
+    stakePercent: bestStake,
+    amount: bestAmount,
+    ev: maxEV
   };
 }
 
 function calculateAll(){
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
+  const bankroll = parseNumberString($('bankroll').value);
+
+  const odds = {
+    oddsHome: toDecimalOdds($('oddsHome').value),
+    oddsDraw: toDecimalOdds($('oddsDraw').value),
+    oddsAway: toDecimalOdds($('oddsAway').value),
+    oddsBTTS: toDecimalOdds($('oddsBTTS').value),
+    oddsOver25: toDecimalOdds($('oddsOver25').value)
+  };
 
   const probs = computeProbabilities(lambdaHome, lambdaAway);
   $('pHome').textContent = formatPct(probs.pHome);
@@ -559,19 +617,19 @@ function calculateAll(){
   $('pBTTS').textContent = formatPct(probs.pBTTS);
   $('pO25').textContent = formatPct(probs.pO25);
 
-  const analysis = analyzeProbabilities(probs);
-  $('expectedBest').textContent = analysis.bestOption;
-  $('bestOption').textContent = analysis.bestOption;
-  $('expectedValue').textContent = formatPct(analysis.maxProb);
+  const suggestion = suggestBet(probs, odds, bankroll);
+  $('expectedBest').textContent = suggestion.bestBet;
+  $('kellyStake').textContent = formatDec(suggestion.stakePercent) + '%';
+  $('betAmount').textContent = 'Q' + formatDec(suggestion.amount);
   
-  $('suggestion').textContent = `Opción con mayor probabilidad → ${analysis.bestOption}: ${formatPct(analysis.maxProb)}`;
+  $('suggestion').textContent = `Apuesta sugerida → ${suggestion.bestBet}: ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`;
   $('suggestion').style.display = 'block';
   
   // Detalles adicionales
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;
   details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * parseNumberString($('homeAdvantage').value/100 + 1))}</div>`;
   details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
-  details += `<div>• Probabilidad máxima: ${formatPct(analysis.maxProb)}</div>`;
+  details += `<div>• Valor Esperado (EV) máximo: ${formatPct(suggestion.ev)}</div>`;
   
   $('details').innerHTML = details;
 }

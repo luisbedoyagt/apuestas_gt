@@ -1,4 +1,4 @@
-console.log("Script.js cargado correctamente"); // Para depuración: confirma que el JS se carga
+console.log("Script.js cargado correctamente");
 
 const $ = id => document.getElementById(id);
 const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
@@ -18,9 +18,10 @@ function normalizeTeam(raw){
   r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
   r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] ||  raw['goals_against']);
   r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches']);
-  r.g  = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
-  r.e  = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
-  r.p  = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
+  r.g = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
+  r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
+  r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
+  r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0); // Nuevo: puntos totales
   r.form = raw.form || raw.Form || null;
   return r;
 }
@@ -36,16 +37,10 @@ async function fetchTeams(){
   }catch(err){ 
     console.error('Error fetching teams:', err); 
     alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
-    // Datos mockeados para que funcione sin API
     return {
-      "PL": [
-        { name: "Manchester United", pos: 1, gf: 2.5, ga: 1.2, pj: 10, g: 7, e: 2, p: 1 },
-        { name: "Liverpool", pos: 2, gf: 2.0, ga: 1.5, pj: 10, g: 6, e: 3, p: 1 },
-        { name: "Chelsea", pos: 3, gf: 1.8, ga: 1.0, pj: 10, g: 5, e: 4, p: 1 }
-      ],
-      "PD": [
-        { name: "Real Madrid", pos: 1, gf: 2.8, ga: 1.1, pj: 10, g: 8, e: 1, p: 1 },
-        { name: "Barcelona", pos: 2, gf: 2.2, ga: 1.3, pj: 10, g: 7, e: 2, p: 1 }
+      "BSA": [
+        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46, form: "4-1-0" },
+        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10, form: "0-2-3" }
       ]
     };
   }
@@ -70,8 +65,6 @@ async function init(){
     $('reset').addEventListener('click', ()=>location.reload());
     $('clearAll').addEventListener('click', clearAll);
     $('saveBank').addEventListener('click', saveBankrollToStorage);
-    
-    // Event listeners para los nuevos campos
     $('homeAdvantage').addEventListener('change', calculateAll);
     $('formWeight').addEventListener('change', calculateAll);
     $('dixonColesParam').addEventListener('change', calculateAll);
@@ -106,20 +99,19 @@ function fillTeamData(teamName, leagueCode, type){
   const t = findTeam(leagueCode, teamName);
   if(!t) return;
 
-  const formString = `${t.g||0}-${t.e||0}-${t.p||0}`; // ← nuevo: forma automática G-E-P
-
+  const formString = t.form || `${t.g||0}-${t.e||0}-${t.p||0}`;
   if(type === 'Home'){
     $('posHome').value = t.pos || '';
-    $('gfHome').value  = Number.isFinite(t.gf) ? t.gf : '';
-    $('gaHome').value  = Number.isFinite(t.ga) ? t.ga : '';
-    $('formHome').value = formString;                 // ← nuevo
+    $('gfHome').value = Number.isFinite(t.gf) ? t.gf/t.pj : '';
+    $('gaHome').value = Number.isFinite(t.ga) ? t.ga/t.pj : '';
+    $('formHome').value = formString;
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   } else {
     $('posAway').value = t.pos || '';
-    $('gfAway').value  = Number.isFinite(t.gf) ? t.gf : '';
-    $('gaAway').value  = Number.isFinite(t.ga) ? t.ga : '';
-    $('formAway').value = formString;                 // ← nuevo
+    $('gfAway').value = Number.isFinite(t.gf) ? t.gf/t.pj : '';
+    $('gaAway').value = Number.isFinite(t.ga) ? t.ga/t.pj : '';
+    $('formAway').value = formString;
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   }
@@ -143,14 +135,12 @@ function clearAll(){
     if(el) el.textContent = id.includes('form') ? (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
   $('suggestion').style.display = 'none';
-  
-  // Restablecer valores por defecto
   $('homeAdvantage').value = 15;
   $('formWeight').value = 30;
   $('dixonColesParam').value = -0.13;
   $('maxTeams').value = 20;
-  $('formHome').value = '3-1-1';
-  $('formAway').value = '2-2-1';
+  $('formHome').value = '4-1-0';
+  $('formAway').value = '0-2-3';
 }
 
 function poissonPMF(lambda,k){ 
@@ -167,65 +157,40 @@ function factorial(n){
 
 function clamp01(x){ return Math.max(0,Math.min(1,x)); }
 
-// Función Dixon-Coles para ajustar probabilidades de baja puntuación
 function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
   if (lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
-  
-  // Probabilidad de 0-0
   const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
   const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
-  
-  // Probabilidad de 1-0
   const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
   const adjustedProb10 = prob10 * (1 + (lambdaAway * rho));
-  
-  // Probabilidad de 0-1
   const prob01 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 1);
   const adjustedProb01 = prob01 * (1 + (lambdaHome * rho));
-  
-  // Probabilidad de 1-1
   const prob11 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 1);
   const adjustedProb11 = prob11 * (1 - rho);
-  
-  // Factor de corrección total
   const originalProbs = prob00 + prob10 + prob01 + prob11;
   const adjustedProbs = adjustedProb00 + adjustedProb10 + adjustedProb01 + adjustedProb11;
-  
   return originalProbs > 0 ? adjustedProbs / originalProbs : 1;
 }
 
-// Calcular fuerza relativa basada en posición en la tabla
-function calculateStrengthFactor(posHome, posAway, maxTeams) {
-  if (!posHome || !posAway || !maxTeams) return 1;
-  
-  // Normalizar posiciones (1 es el mejor, maxTeams es el peor)
+function calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway) {
+  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) return 1;
   const normalizedHome = (maxTeams - posHome + 1) / maxTeams;
   const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
-  
-  // Calcular factor de fuerza relativa
-  return normalizedHome / normalizedAway;
+  const ppgHome = pointsHome / $('gfHome').value; // Puntos por partido
+  const ppgAway = pointsAway / $('gfAway').value;
+  const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
+  return Math.sqrt(eloFactor); // Suavizar el factor
 }
 
-// Calcular factor de forma reciente
 function calculateFormFactor(formHome, formAway, formWeight) {
   if (!formHome || !formAway) return 1;
-  
   try {
-    // Parsear forma (formato: G-E-P)
     const [homeW, homeD, homeL] = formHome.split('-').map(x => parseInt(x) || 0);
     const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
-    
-    // Calcular puntos por partido (3 por victoria, 1 por empate)
     const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL);
     const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL);
-    
-    // Evitar divisiones por cero
     if (awayPpg === 0) return 1;
-    
-    // Calcular factor de forma
     const formFactor = homePpg / awayPpg;
-    
-    // Aplicar peso (formWeight es el porcentaje de influencia de la forma reciente)
     const weight = formWeight / 100;
     return 1 + (formFactor - 1) * weight;
   } catch (e) {
@@ -234,47 +199,38 @@ function calculateFormFactor(formHome, formAway, formWeight) {
   }
 }
 
-function computeProbabilities(lambdaHome, lambdaAway){
-  // Obtener factores de corrección
+function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway){
   const homeAdvantageFactor = 1 + (parseNumberString($('homeAdvantage').value) / 100);
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
   const maxTeams = parseNumberString($('maxTeams').value);
-  const strengthFactor = calculateStrengthFactor(posHome, posAway, maxTeams);
-  
+  const strengthFactor = calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway);
   const formHome = $('formHome').value;
   const formAway = $('formAway').value;
   const formWeight = parseNumberString($('formWeight').value);
   const recentFormFactor = calculateFormFactor(formHome, formAway, formWeight);
-  
   const rho = parseNumberString($('dixonColesParam').value);
   const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, rho);
   
-  // Mostrar factores aplicados
   $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
   $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
   $('recentFormFactor').textContent = formatDec(recentFormFactor) + 'x';
   $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
   
-  // Aplicar factores de corrección
-  const adjHome = Math.max(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 0.3);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.3);
-
-  // Calcular probabilidades básicas
+  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
+  const adjAway = Math.min(lambdaAway / strengthFactor / recentFormFactor, 0.3);
+  
   let pHome = 0, pDraw = 0, pAway = 0;
   const maxGoals = 8;
-  
   for (let i = 0; i <= maxGoals; i++) {
     for (let j = 0; j <= maxGoals; j++) {
       const prob = poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-      
       if (i > j) pHome += prob;
       else if (i === j) pDraw += prob;
       else pAway += prob;
     }
   }
   
-  // Normalizar probabilidades
   const total = pHome + pDraw + pAway;
   if (total > 0) {
     pHome /= total;
@@ -282,7 +238,6 @@ function computeProbabilities(lambdaHome, lambdaAway){
     pAway /= total;
   }
   
-  // Calcular BTTS (Both Teams To Score)
   let pBTTS = 0;
   for (let i = 1; i <= maxGoals; i++) {
     for (let j = 1; j <= maxGoals; j++) {
@@ -290,7 +245,6 @@ function computeProbabilities(lambdaHome, lambdaAway){
     }
   }
   
-  // Calcular Over 2.5
   let pO25 = 0;
   for (let i = 0; i <= maxGoals; i++) {
     for (let j = 0; j <= maxGoals; j++) {
@@ -310,20 +264,12 @@ function computeProbabilities(lambdaHome, lambdaAway){
 }
 
 function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
-  // Fórmula de Kelly: f* = (bp - q) / b
-  // donde b = cuota - 1, p = probabilidad, q = 1 - p
   const b = odds - 1;
   const p = probability;
   const q = 1 - p;
-  
   const idealStake = (b * p - q) / b;
-  
-  // Usar sólo una fracción del criterio de Kelly completo (más conservador)
   const fractionalStake = Math.max(0, idealStake) * kellyFraction;
-  
-  // Calcular monto a apostar
   const amount = bankroll * fractionalStake;
-  
   return {
     stakePercent: fractionalStake * 100,
     amount: amount
@@ -349,8 +295,6 @@ function suggestBet(probObj, odds, bankroll){
     if (ev > maxEV) {
       maxEV = ev;
       bestBet = bet.name;
-      
-      // Calcular stake según Kelly
       const kelly = calculateKellyStake(bet.prob, bet.odds, bankroll);
       bestStake = kelly.stakePercent;
       bestAmount = kelly.amount;
@@ -370,6 +314,11 @@ function calculateAll(){
   const lambdaAway = parseNumberString($('gfAway').value);
   const bankroll = parseNumberString($('bankroll').value);
 
+  if (lambdaHome <= 0 || lambdaAway <= 0 || bankroll <= 0) {
+    alert('Por favor, ingrese valores válidos para goles y banca.');
+    return;
+  }
+
   const odds = {
     oddsHome: toDecimalOdds($('oddsHome').value),
     oddsDraw: toDecimalOdds($('oddsDraw').value),
@@ -378,7 +327,12 @@ function calculateAll(){
     oddsOver25: toDecimalOdds($('oddsOver25').value)
   };
 
-  const probs = computeProbabilities(lambdaHome, lambdaAway);
+  const teamHome = findTeam($('leagueSelect').value, $('teamHome').value);
+  const teamAway = findTeam($('leagueSelect').value, $('teamAway').value);
+  const pointsHome = teamHome ? teamHome.points : 0;
+  const pointsAway = teamAway ? teamAway.points : 0;
+
+  const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway);
   $('pHome').textContent = formatPct(probs.pHome);
   $('pDraw').textContent = formatPct(probs.pDraw);
   $('pAway').textContent = formatPct(probs.pAway);
@@ -386,14 +340,15 @@ function calculateAll(){
   $('pO25').textContent = formatPct(probs.pO25);
 
   const suggestion = suggestBet(probs, odds, bankroll);
-  $('expectedBest').textContent = suggestion.bestBet;
+  $('expectedBest').textContent = suggestion.bestBet || 'Ninguna';
   $('kellyStake').textContent = formatDec(suggestion.stakePercent) + '%';
   $('betAmount').textContent = 'Q' + formatDec(suggestion.amount);
   
-  $('suggestion').textContent = `Apuesta sugerida → ${suggestion.bestBet}: ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`;
-  $('suggestion').style.display = 'block';
+  $('suggestion').textContent = suggestion.bestBet 
+    ? `Apuesta sugerida → ${suggestion.bestBet}: ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
+    : 'No hay apuesta con valor esperado positivo.';
+  $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
-  // Detalles adicionales
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;
   details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * parseNumberString($('homeAdvantage').value/100 + 1))}</div>`;
   details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;

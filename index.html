@@ -5,42 +5,46 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Calculadora Apuestas Avanzada • Poisson + Kelly</title>
 <style>
-:root{--gap:12px;--radius:10px;--bg:#0f1220;--card:#191c2f;--muted:rgba(230,233,245,.75);}
+:root{
+  --gap:12px; --radius:10px; --bg:#0f1220; --card:#191c2f; --muted:rgba(230,233,245,.75);
+  --accent: #4f46e5; --accent-2: #6ee7a1;
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
-.container{max-width:1100px;margin:24px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
-.header{text-align:center;padding:12px}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6e9f5}
+.container{max-width:1100px;margin:20px auto;padding:16px;display:grid;grid-template-columns:1fr;gap:var(--gap)}
+.header{text-align:center;padding:8px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.card{background:var(--card);border:1px solid #2a2e4a;padding:14px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.card{background:var(--card);border:1px solid #2a2e4a;padding:12px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(0,0,0,.28)}
 label{font-size:13px;opacity:.95}
-input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;background:var(--bg);color:inherit}
+input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;background:transparent;color:inherit}
 .row{display:flex;gap:10px}
 .row > *{flex:1}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{text-align:center;padding:10px;border-radius:8px;background:#0f1220;border:1px solid #2a2e4a}
 .small{font-size:12px;color:var(--muted)}
-.btn {padding:8px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-weight:600;cursor:pointer;transition:all 0.2s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,0.25);}
-.btn:hover {transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.35);}
-.btn:active {transform:translateY(1px);box-shadow:0 3px 10px rgba(0,0,0,0.25);}
-#saveBank {background:linear-gradient(135deg,#ef4444,#f87171);}
-#clearAll {background:linear-gradient(135deg,#ef6f6f,#fb8b8b);}
+.btn {padding:8px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;font-weight:700;cursor:pointer;transition:all .14s ease}
+.btn:hover{transform:translateY(-2px)}
 .sep{height:1px;background:#2a2e4a;margin:10px 0}
 .recs{display:grid;gap:8px}
-.bad{color:#f87171}.good{color:#6ee7a1}.neutral{color:#93c5fd}
 .table-like{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat-box{background:#191c2f;padding:6px 8px;border-radius:8px;text-align:center;font-size:12px;margin-top:4px}
-@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.stat-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.stat-title{font-size:12px;color:var(--muted);font-weight:600}
+.stat-values{font-size:15px;font-weight:700}
+.suggest{margin-top:8px;padding:10px;border-radius:10px;background:linear-gradient(90deg,#062b14, rgba(110,231,161,0.06));border-left:4px solid var(--accent-2);font-weight:700}
+.abbrev{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}.table-like{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <h1>Calculadora Apuestas Avanzada • Poisson + Kelly</h1>
-    <p class="small">Introduce estadísticas por equipo (Posición, GF/GC, PJ/G/E/P). La herramienta recomienda mercados y stake según EV + Kelly.</p>
+    <p class="small">Introduce o selecciona equipos — los datos PJ/G/E/P se cargan desde tu hoja y se muestran en un cuadro profesional.</p>
   </div>
 
+  <!-- Banco & Cuotas -->
   <div class="grid">
-    <div class="card" style="grid-template-rows:auto;">
+    <div class="card">
       <h3>Banco mensual</h3>
       <div class="table-like">
         <div>
@@ -48,22 +52,20 @@ input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;b
           <input id="bankroll" type="number" value="1000" min="0" step="1"/>
         </div>
         <div>
-          <label>Guarda / Actualiza</label><br/>
+          <label>Guardar</label><br/>
           <button id="saveBank" class="btn">Guardar banca</button>
         </div>
       </div>
-      <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
       <div class="sep"></div>
-
-      <div style="margin-top:8px; display:flex; gap:8px; justify-content:center;">
-        <button id="recalc" class="btn">Calcular recomendaciones</button>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="recalc" class="btn">Calcular</button>
         <button id="reset" class="btn">Reset valores</button>
         <button id="clearAll" class="btn">Resetear todo</button>
       </div>
     </div>
 
     <div class="card">
-      <h3>Cuotas (introduce las que tengas)</h3>
+      <h3>Cuotas</h3>
       <div class="table-like">
         <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
         <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
@@ -76,21 +78,21 @@ input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;b
         <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
         <div></div>
       </div>
-      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
+      <p class="small" style="margin-top:8px">Consejo: usa decimales. (Americana → decimal antes)</p>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:12px;">
+  <!-- Selección equipos -->
+  <div class="grid" style="margin-top:12px">
     <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
         <div>
           <label>Liga</label>
-          <select id="leagueSelect">
-            <option value="">-- Selecciona liga --</option>
-          </select>
+          <select id="leagueSelect"><option value="">-- Selecciona liga --</option></select>
         </div>
       </div>
+
       <div class="table-like" style="margin-top:8px">
         <div>
           <label>Equipo Local</label>
@@ -103,38 +105,54 @@ input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;b
       </div>
 
       <div class="sep"></div>
-      <h4>Posición en la tabla</h4>
-      <div class="table-like">
-        <div><label>Pos Local (1 = mejor)</label><input id="posHome" type="number" value="5" min="1" step="1"/></div>
-        <div><label>Pos Visitante</label><input id="posAway" type="number" value="12" min="1" step="1"/></div>
-      </div>
 
-      <div class="sep"></div>
-      <h4>Promedios (por partido)</h4>
-      <div class="table-like">
-        <div><label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/></div>
-        <div><label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/></div>
-      </div>
-      <div class="table-like" style="margin-top:8px">
-        <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/></div>
-        <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/></div>
-      </div>
-
-      <div class="sep"></div>
-      <h4>Forma general (PJ / G / E / P)</h4>
       <div class="table-like">
         <div>
-          <div id="formHomeBox" class="stat-box">PJ: — | G: — | E: — | P: —</div>
+          <label>Pos Local</label><input id="posHome" type="number" value="-" min="1" step="1"/>
         </div>
         <div>
-          <div id="formAwayBox" class="stat-box">PJ: — | G: — | E: — | P: —</div>
+          <label>Pos Visitante</label><input id="posAway" type="number" value="-" min="1" step="1"/>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="table-like">
+        <div>
+          <label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/>
+        </div>
+        <div>
+          <label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/>
+        </div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div>
+          <label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/>
+        </div>
+        <div>
+          <label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <h4>Forma general</h4>
+      <div class="table-like" style="margin-top:6px">
+        <div class="stat-card" id="formHomeCard">
+          <div class="stat-title" id="formHomeTeam">Local: —</div>
+          <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+        </div>
+        <div class="stat-card" id="formAwayCard">
+          <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+          <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
         </div>
       </div>
     </div>
 
+    <!-- Resultados -->
     <div class="card">
       <h3>Resultados & Recomendaciones</h3>
-      <div class="kpis">
+      <div class="kpis" style="margin-top:6px">
         <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
         <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
         <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
@@ -145,138 +163,220 @@ input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #2a2e4a;b
 
       <div class="sep"></div>
       <div id="details" class="recs small"></div>
-      <div id="suggestedBet" class="recs small" style="margin-top:4px;font-weight:600;"></div>
+
+      <div class="suggest" id="suggestion" style="display:none"></div>
+
+      <div class="sep"></div>
+      <div class="abbrev">
+        <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos · Stake = Monto sugerido
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-// ----------------- Utilidades -----------------
+/* ----------------- Utilidades ----------------- */
 const $ = id => document.getElementById(id);
-const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
-const formatPct = x => (100*x).toFixed(1) + '%';
+const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
+function parseNumberString(val){ const s=String(val||'').toString().replace(/,/g,'.'); const n=Number(s); return isFinite(n)?n:0; }
 function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
-function parseNumberString(val){ return parseFloat(String(val||'').replace(/,/g,'.'))||0; }
 
-// ----------------- Web App / Autollenado -----------------
-const leagueSelect = $('leagueSelect');
-const teamHome = $('teamHome');
-const teamAway = $('teamAway');
-let teamsByLeague = {};
+/* ----------------- WebApp URL (AJUSTA si necesitas) ----------------- */
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 
+/* ----------------- Estado y mapeo de ligas ----------------- */
+let teamsByLeague = {}; // se llenará con fetch
 const leagueNames = {
-  "WC": "FIFA World Cup",
-  "CL": "UEFA Champions League",
-  "BL1": "Bundesliga",
-  "DED": "Eredivisie",
-  "BSA": "Campeonato Brasileiro Série A",
-  "PD": "Liga Española",
-  "FL1": "Ligue 1",
-  "ELC": "Championship",
-  "PPL": "Primeira Liga / Portugal",
-  "EC": "European Championship",
-  "SA": "Serie A",
-  "PL": "Premier League"
+  "WC":"FIFA World Cup","CL":"UEFA Champions League","BL1":"Bundesliga","DED":"Eredivisie",
+  "BSA":"Campeonato Brasileiro","PD":"Liga Española","FL1":"Ligue 1","ELC":"Championship",
+  "PPL":"Primeira Liga","EC":"European Championship","SA":"Serie A","PL":"Premier League"
 };
 
-async function cargarEquiposDesdeWebApp() {
-  const url = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
-  try {
-    const resp = await fetch(url);
-    const data = await resp.json();
-    return data;
-  } catch(e) {
-    console.error("Error cargando equipos:", e);
+/* ----------------- Normalize team object (varias fuentes de nombres) ----------------- */
+function normalizeTeam(raw){
+  if(!raw) return null;
+  const r = {};
+  // nombre
+  r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || raw['team_name'] || raw['team.shortName'] || '';
+  // posición
+  r.pos = raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || null;
+  // goles a favor/contra
+  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
+  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] ||  raw['goals_against']);
+  // PJ/G/E/P: intentamos múltiples nombres
+  r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches']);
+  r.g  = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
+  r.e  = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
+  r.p  = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
+  // form (si existe)
+  r.form = raw.form || raw.Form || null;
+  return r;
+}
+
+/* ----------------- Cargar equipos desde WebApp (tu API de Sheets) ----------------- */
+async function fetchTeams(){
+  try{
+    const res = await fetch(WEBAPP_URL);
+    if(!res.ok) throw new Error('fetch falló ' + res.status);
+    const data = await res.json();
+    // data: objeto per-league -> array de objetos rows
+    const normalized = {};
+    for(const key in data){
+      const arr = data[key] || [];
+      normalized[key] = arr.map(x => normalizeTeam(x));
+    }
+    return normalized;
+  }catch(err){
+    console.error('Error fetching teams:', err);
     return {};
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  teamsByLeague = await cargarEquiposDesdeWebApp();
-  Object.keys(teamsByLeague).forEach(codigo => {
+/* ----------------- Inicialización UI ----------------- */
+async function init(){
+  teamsByLeague = await fetchTeams();
+  // llenar select de ligas
+  const leagueCodes = Object.keys(teamsByLeague);
+  leagueCodes.forEach(code => {
     const opt = document.createElement('option');
-    opt.value = codigo;
-    opt.textContent = leagueNames[codigo] || codigo;
-    leagueSelect.appendChild(opt);
+    opt.value = code;
+    opt.textContent = leagueNames[code] || code;
+    $('leagueSelect').appendChild(opt);
   });
+  // cargar banca guardada
+  const saved = localStorage.getItem('bankroll');
+  if(saved) $('bankroll').value = saved;
 
-  const savedBank = localStorage.getItem('bankroll');
-  if(savedBank) $('bankroll').value = savedBank;
-
-  leagueSelect.addEventListener('change', () => {
-    const l = leagueSelect.value;
-    teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-    teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-    if (!l || !teamsByLeague[l]) return;
-    teamsByLeague[l].forEach(t => {
-      const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; teamHome.appendChild(opt1);
-      const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; teamAway.appendChild(opt2);
-    });
-  });
-
-  function fillTeamData(teamName, leagueCode, type) {
-    if (!teamsByLeague[leagueCode]) return;
-    const teamData = teamsByLeague[leagueCode].find(t => t.name === teamName);
-    if (!teamData) return;
-
-    if (type === 'Home') {
-      $('posHome').value = teamData.pos;
-      $('gfHome').value = teamData.gf;
-      $('gaHome').value = teamData.ga;
-      $('formHomeBox').textContent = `PJ: ${teamData.pj} | G: ${teamData.g} | E: ${teamData.e} | P: ${teamData.p}`;
-    } else if (type === 'Away') {
-      $('posAway').value = teamData.pos;
-      $('gfAway').value = teamData.gf;
-      $('gaAway').value = teamData.ga;
-      $('formAwayBox').textContent = `PJ: ${teamData.pj} | G: ${teamData.g} | E: ${teamData.e} | P: ${teamData.p}`;
-    }
-
-    calculateAll();
-  }
-
-  teamHome.addEventListener('change', () => fillTeamData(teamHome.value, leagueSelect.value, 'Home'));
-  teamAway.addEventListener('change', () => fillTeamData(teamAway.value, leagueSelect.value, 'Away'));
-
-  $('recalc').addEventListener('click', () => calculateAll());
+  // listeners
+  $('leagueSelect').addEventListener('change', onLeagueChange);
+  $('teamHome').addEventListener('change', ()=>fillTeamData($('teamHome').value, $('leagueSelect').value,'Home'));
+  $('teamAway').addEventListener('change', ()=>fillTeamData($('teamAway').value, $('leagueSelect').value,'Away'));
+  $('recalc').addEventListener('click', calculateAll);
   $('reset').addEventListener('click', ()=>location.reload());
-  $('clearAll').addEventListener('click', () => {
-    document.querySelectorAll('input').forEach(i=>i.value='');
-    document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
-    ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details','suggestedBet','formHomeBox','formAwayBox'].forEach(id=>$$(id).textContent='—');
-  });
-
-  $('saveBank').addEventListener('click', () => {
-    const bank = parseNumberString($('bankroll').value);
-    localStorage.setItem('bankroll', bank);
-    alert(`Banca guardada: Q${bank}`);
-  });
-});
-
-// ----------------- Poisson & Kelly -----------------
-function logFactorial(n){ return n<=1?0:Math.log(n)+logFactorial(n-1); }
-function poissonPMF(lambda,k){ return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k)); }
-function compute1X2(lambdaHome, lambdaAway, maxGoals=8){
-  let pHome=0, pDraw=0, pAway=0;
-  for(let i=0;i<=maxGoals;i++){for(let j=0;j<=maxGoals;j++){
-    const prob = poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j);
-    if(i>j) pHome+=prob; else if(i===j) pDraw+=prob; else pAway+=prob;
-  }} return {pHome,pDraw,pAway};
+  $('clearAll').addEventListener('click', clearAll);
+  $('saveBank').addEventListener('click', saveBankrollToStorage);
 }
-function computeBTTS(lambdaHome, lambdaAway){
-  let p=0; for(let i=1;i<=8;i++){for(let j=1;j<=8;j++){ p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j); }} return p;
+document.addEventListener('DOMContentLoaded', init);
+
+/* ----------------- UI helpers ----------------- */
+function onLeagueChange(){
+  const code = $('leagueSelect').value;
+  $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
+  $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
+  if(!teamsByLeague[code]) return;
+  teamsByLeague[code].forEach(t => {
+    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
+    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
+  });
+}
+
+/* Encuentra y devuelve el objeto normalizado del equipo (por nombre) */
+function findTeam(leagueCode, teamName){
+  if(!teamsByLeague[leagueCode]) return null;
+  return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
+}
+
+/* Rellena inputs y cuadros con datos de la hoja (robusto con mayúsculas/minúsculas) */
+function fillTeamData(teamName, leagueCode, type){
+  if(!teamName) return;
+  const t = findTeam(leagueCode, teamName);
+  if(!t) return;
+  // Rellenar valores visibles e inputs
+  if(type === 'Home'){
+    $('posHome').value = t.pos || '';
+    $('gfHome').value  = Number.isFinite(t.gf) ? t.gf : '';
+    $('gaHome').value  = Number.isFinite(t.ga) ? t.ga : '';
+    $('formHomeTeam').textContent = `Local: ${t.name}`;
+    $('formHomeBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
+  } else {
+    $('posAway').value = t.pos || '';
+    $('gfAway').value  = Number.isFinite(t.gf) ? t.gf : '';
+    $('gaAway').value  = Number.isFinite(t.ga) ? t.ga : '';
+    $('formAwayTeam').textContent = `Visitante: ${t.name}`;
+    $('formAwayBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
+  }
+  // Recalcular al final
+  calculateAll();
+}
+
+/* Guardado simple de banca */
+function saveBankrollToStorage(){
+  const bank = parseNumberString($('bankroll').value);
+  localStorage.setItem('bankroll', bank);
+  alert('Banca guardada: Q' + bank);
+}
+
+/* Clear */
+function clearAll(){
+  document.querySelectorAll('input').forEach(i=>i.value='');
+  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+  ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details','suggestion','formHomeTeam','formAwayTeam','formHomeBox','formAwayBox'].forEach(id=>{
+    const el = $(id);
+    if(el) el.textContent = id.includes('form') ? (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
+  });
+  $('suggestion').style.display = 'none';
+}
+
+/* ----------------- Poisson / EV / Kelly ----------------- */
+function logFactorial(n){
+  if(n <= 1) return 0;
+  let s = 0;
+  for(let i=2;i<=n;i++) s += Math.log(i);
+  return s;
+}
+function poissonPMF(lambda, k){
+  if(!isFinite(lambda) || lambda <= 0) return (k===0?1:0);
+  return Math.exp(-lambda + k*Math.log(lambda) - logFactorial(k));
+}
+function compute1X2(lambdaHome, lambdaAway, maxGoals=8){
+  let pHome=0,pDraw=0,pAway=0;
+  for(let i=0;i<=maxGoals;i++){
+    for(let j=0;j<=maxGoals;j++){
+      const prob = poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j);
+      if(i>j) pHome += prob;
+      else if(i===j) pDraw += prob;
+      else pAway += prob;
+    }
+  }
+  const total = pHome + pDraw + pAway;
+  if(total === 0) return {pHome:0,pDraw:0,pAway:0};
+  return {pHome: pHome/total, pDraw: pDraw/total, pAway: pAway/total};
+}
+function computeBTTS(lambdaHome, lambdaAway, maxGoals=8){
+  // both teams score = 1 - (P(home 0) + P(away 0) - P(both zero))
+  const pNoHome = Math.exp(-lambdaHome);
+  const pNoAway = Math.exp(-lambdaAway);
+  const pBTTS = 1 - pNoHome - pNoAway + pNoHome*pNoAway;
+  return clamp01(pBTTS);
 }
 function computeOver25(lambdaHome, lambdaAway, maxGoals=8){
-  let p=0; for(let i=0;i<=maxGoals;i++){for(let j=0;j<=maxGoals;j++){ if(i+j>2)p+=poissonPMF(lambdaHome,i)*poissonPMF(lambdaAway,j);}} return p;
+  let p = 0;
+  for(let i=0;i<=maxGoals;i++){
+    for(let j=0;j<=maxGoals;j++){
+      if(i + j > 2) p += poissonPMF(lambdaHome,i) * poissonPMF(lambdaAway,j);
+    }
+  }
+  return clamp01(p);
 }
-function kellyFraction(p, odds){ return Math.max(0,(p*odds-1)/(odds-1)); }
+function clamp01(x){ if(!isFinite(x)) return 0; return Math.max(0, Math.min(1, x)); }
+function kellyFraction(p, odds){
+  const b = odds - 1;
+  const q = 1 - p;
+  if(b <= 0) return 0;
+  const f = (b * p - q) / b;
+  return Math.max(0, Math.min(1, f));
+}
 
-// ----------------- Calcular & Renderizar -----------------
+/* ----------------- Calcular y Renderizar ----------------- */
 function calculateAll(){
+  // Lambdas: aquí tomamos GF por partido como lambda estimado (puedes mejorar con computeLambdas)
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
-  const {pHome,pDraw,pAway} = compute1X2(lambdaHome, lambdaAway);
+  const maxGoals = Math.max(4, parseInt($('maxGoals') ? $('maxGoals').value : 8) || 8);
+
+  const {pHome,pDraw,pAway} = compute1X2(lambdaHome, lambdaAway, maxGoals);
   const pBTTS = computeBTTS(lambdaHome, lambdaAway);
-  const pO25 = computeOver25(lambdaHome, lambdaAway);
+  const pO25  = computeOver25(lambdaHome, lambdaAway, maxGoals);
 
   $('pHome').textContent = formatPct(pHome);
   $('pDraw').textContent = formatPct(pDraw);
@@ -285,22 +385,31 @@ function calculateAll(){
   $('pO25').textContent = formatPct(pO25);
 
   const bankroll = parseNumberString($('bankroll').value);
-  const evs = [
-    {name:'Local',p:pHome,odds:toDecimalOdds($('oddsHome').value)},
-    {name:'Empate',p:pDraw,odds:toDecimalOdds($('oddsDraw').value)},
-    {name:'Visitante',p:pAway,odds:toDecimalOdds($('oddsAway').value)},
-    {name:'BTTS',p:pBTTS,odds:toDecimalOdds($('oddsBTTS').value)},
-    {name:'Over2.5',p:pO25,odds:toDecimalOdds($('oddsOver25').value)}
-  ];
-  evs.forEach(e=>e.ev=e.p*e.odds-1);
-  evs.forEach(e=>e.stake=kellyFraction(e.p,e.odds)*bankroll);
-  evs.sort((a,b)=>b.ev-a.ev);
-  $('expectedBest').textContent = evs[0].name;
-  $('details').innerHTML = evs.map(e=>`${e.name}: EV ${e.ev.toFixed(2)}, Stake sugerido Q${e.stake.toFixed(0)}`).join('<br/>');
 
-  // Recomendación sugerida
-  $('suggestedBet').textContent = `Apuesta sugerida: ${evs[0].name} (Stake Q${evs[0].stake.toFixed(0)})`;
+  const evs = [
+    {name:'Local', p:pHome, odds: toDecimalOdds($('oddsHome').value)},
+    {name:'Empate', p:pDraw, odds: toDecimalOdds($('oddsDraw').value)},
+    {name:'Visitante', p:pAway, odds: toDecimalOdds($('oddsAway').value)},
+    {name:'BTTS', p:pBTTS, odds: toDecimalOdds($('oddsBTTS').value)},
+    {name:'Over2.5', p:pO25, odds: toDecimalOdds($('oddsOver25').value)}
+  ];
+
+  evs.forEach(e => { e.ev = (e.p * e.odds) - 1; e.stake = Math.round(kellyFraction(e.p, e.odds) * bankroll); });
+  evs.sort((a,b) => b.ev - a.ev);
+
+  $('expectedBest').textContent = evs[0].name;
+  $('details').innerHTML = evs.map(e => `${e.name}: EV ${e.ev.toFixed(2)} — Stake sugerido Q${e.stake}`).join('<br/>');
+
+  // Apuesta sugerida: mostrar en bloque separado y vistoso
+  const best = evs[0];
+  const suggestionEl = $('suggestion');
+  suggestionEl.style.display = 'block';
+  suggestionEl.textContent = `Apuesta sugerida → ${best.name}: Stake Q${best.stake} (EV ${best.ev.toFixed(2)})`;
 }
+
+/* ----------------- arrancar helpers ----------------- */
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
 </script>
 </body>
 </html>

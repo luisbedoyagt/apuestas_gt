@@ -96,7 +96,7 @@ let dataByLeague = {};
 
 // Cargar datos desde WebApp
 async function cargarDatos() {
-  const url = "https://script.google.com/macros/s/TU_WEBAPP_ID/exec"; // reemplaza TU_WEBAPP_ID
+  const url = "https://script.google.com/macros/s/AKfycbyjWaj-o3e9PFupPNco44CksmhCwNcJqRL_DrkdfaTuFPWTj_a9uourSWYoehdcL0ZNFg/exec"; // reemplaza TU_WEBAPP_ID
   try {
     const resp = await fetch(url);
     dataByLeague = await resp.json();

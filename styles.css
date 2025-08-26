@@ -200,7 +200,7 @@ input::-webkit-inner-spin-button {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 600px) {

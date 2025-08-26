@@ -39,7 +39,40 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
   </div>
 
   <div class="grid">
-    <!-- Card: Equipos y estadísticas -->
+    <div class="card">
+      <h3>Banco mensual</h3>
+      <div class="table-like">
+        <div>
+          <label>Banca actual (Q)</label>
+          <input id="bankroll" type="number" value="1000" min="0" step="1"/>
+        </div>
+        <div>
+          <label>Guarda / Actualiza</label><br/>
+          <button id="saveBank" class="btn">Guardar banca</button>
+        </div>
+      </div>
+      <p class="small">La banca se guarda en tu navegador y se resetea si cambia el mes.</p>
+      <div class="sep"></div>
+
+      <h3>Parámetros globales</h3>
+      <div class="table-like">
+        <div>
+          <label>Media liga (goles / partido por equipo)</label>
+          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01"/>
+        </div>
+        <div>
+          <label>Máx goles a calcular (Poisson)</label>
+          <input id="maxGoals" type="number" value="8" min="4" step="1"/>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+        <button id="recalc" class="btn">Calcular recomendaciones</button>
+        <button id="reset" class="btn">Reset valores</button>
+        <button id="clearAll" class="btn">Resetear todo</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>Equipos y estadísticas</h3>
       <div class="table-like">
@@ -64,98 +97,149 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <div class="sep"></div>
       <h4>Posición en la tabla</h4>
       <div class="table-like">
-        <div><label>Pos Local (1 = mejor)</label><input id="posHome" type="number" min="1" step="1"/></div>
-        <div><label>Pos Visitante</label><input id="posAway" type="number" min="1" step="1"/></div>
+        <div><label>Pos Local (1 = mejor)</label><input id="posHome" type="number" value="5" min="1" step="1"/></div>
+        <div><label>Pos Visitante</label><input id="posAway" type="number" value="12" min="1" step="1"/></div>
       </div>
 
       <div class="sep"></div>
       <h4>Promedios (por partido)</h4>
       <div class="table-like">
-        <div><label>GF local</label><input id="gfHome" type="number" step="0.01" min="0"/></div>
-        <div><label>GC local</label><input id="gaHome" type="number" step="0.01" min="0"/></div>
+        <div><label>GF local</label><input id="gfHome" type="number" value="1.6" step="0.01" min="0"/></div>
+        <div><label>GC local</label><input id="gaHome" type="number" value="1.1" step="0.01" min="0"/></div>
       </div>
       <div class="table-like" style="margin-top:8px">
-        <div><label>GF visitante</label><input id="gfAway" type="number" step="0.01" min="0"/></div>
-        <div><label>GC visitante</label><input id="gaAway" type="number" step="0.01" min="0"/></div>
+        <div><label>GF visitante</label><input id="gfAway" type="number" value="1.4" step="0.01" min="0"/></div>
+        <div><label>GC visitante</label><input id="gaAway" type="number" value="1.2" step="0.01" min="0"/></div>
       </div>
 
       <div class="sep"></div>
       <h4>Forma (últimos 5)</h4>
       <div class="table-like">
-        <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" min="0" max="5" step="1"/></div>
-        <div><label>Victorias últimas 5 (Visitante)</label><input id="formAway" type="number" min="0" max="5" step="1"/></div>
+        <div><label>Victorias últimas 5 (Local)</label><input id="formHome" type="number" value="3" min="0" max="5" step="1"/></div>
+        <div><label>Victorias últimas 5 (Away)</label><input id="formAway" type="number" value="1" min="0" max="5" step="1"/></div>
       </div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:12px;">
+    <div class="card">
+      <h3>Cuotas (introduce las que tengas)</h3>
+      <div class="table-like">
+        <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
+        <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
+        <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
+      </div>
+      <div class="table-like" style="margin-top:8px">
+        <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
+        <div></div>
+      </div>
+      <p class="small" style="margin-top:8px">Consejo: si tienes cuotas americanas conviértelas a decimales antes de introducirlas.</p>
+    </div>
+
+    <div class="card">
+      <h3>Resultados & Recomendaciones</h3>
+      <div class="kpis">
+        <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
+        <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
+        <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
+        <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
+        <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
+        <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
+      </div>
+
+      <div class="sep"></div>
+      <div id="details" class="recs small"></div>
     </div>
   </div>
 </div>
 
 <script>
+// ----------------- Utilidades -----------------
 const $ = id => document.getElementById(id);
-let teamsByLeague = {};
-let dataByLeague = {};
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const formatPct = x => (100*x).toFixed(1) + '%';
+function toDecimalOdds(v){ const a=parseFloat(String(v).replace(/,/g,'.')); return isNaN(a)||a<=0?1.01:a; }
+function parseNumberString(val){ return parseFloat(String(val||'').replace(/,/g,'.'))||0; }
 
-// Cargar datos desde WebApp
-async function cargarDatos() {
-  const url = "https://script.google.com/macros/s/AKfycbyjWaj-o3e9PFupPNco44CksmhCwNcJqRL_DrkdfaTuFPWTj_a9uourSWYoehdcL0ZNFg/exec"; // reemplaza TU_WEBAPP_ID
+// ----------------- Web App / Autollenado -----------------
+const leagueSelect = $('leagueSelect');
+const teamHome = $('teamHome');
+const teamAway = $('teamAway');
+let teamsByLeague = {};
+
+async function cargarEquiposDesdeWebApp() {
+  const url = "https://script.google.com/macros/s/AKfycbx3c4ndScwFNfOTIh-ciB08iiaG6QLGrDkzBMQrSsrmy9X7snKPUSM1QatSksb8PfvSFw/exec";
   try {
     const resp = await fetch(url);
-    dataByLeague = await resp.json();
-    teamsByLeague = {};
-    Object.keys(dataByLeague).forEach(codigo => {
-      teamsByLeague[codigo] = dataByLeague[codigo].map(t => t.name);
-    });
-    // llenar select de ligas
-    const leagueSelect = $('leagueSelect');
-    Object.keys(teamsByLeague).forEach(codigo => {
-      const opt = document.createElement('option');
-      opt.value = codigo;
-      opt.textContent = codigo; // puedes poner nombre completo si quieres
-      leagueSelect.appendChild(opt);
-    });
+    const data = await resp.json();
+    return data;
   } catch(e) {
-    console.error("Error cargando datos:", e);
-  }
-}
-
-// Llenar equipos y auto-completar stats
-function actualizarEquipos() {
-  const l = $('leagueSelect').value;
-  const teamHome = $('teamHome');
-  const teamAway = $('teamAway');
-  teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!l || !teamsByLeague[l]) return;
-  teamsByLeague[l].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t; opt1.textContent = t; teamHome.appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t; opt2.textContent = t; teamAway.appendChild(opt2);
-  });
-}
-
-// Llenar stats al seleccionar equipo
-function completarStats(equipo, esLocal=true) {
-  const liga = $('leagueSelect').value;
-  if (!liga || !dataByLeague[liga]) return;
-  const datos = dataByLeague[liga].find(t => t.name === equipo);
-  if (!datos) return;
-  if (esLocal) {
-    $('posHome').value = datos.pos;
-    $('gfHome').value = datos.gf;
-    $('gaHome').value = datos.ga;
-    $('formHome').value = datos.form || 0;
-  } else {
-    $('posAway').value = datos.pos;
-    $('gfAway').value = datos.gf;
-    $('gaAway').value = datos.ga;
-    $('formAway').value = datos.form || 0;
+    console.error("Error cargando equipos:", e);
+    return {};
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await cargarDatos();
-  $('leagueSelect').addEventListener('change', actualizarEquipos);
-  $('teamHome').addEventListener('change', e => completarStats(e.target.value, true));
-  $('teamAway').addEventListener('change', e => completarStats(e.target.value, false));
+  teamsByLeague = await cargarEquiposDesdeWebApp();
+  Object.keys(teamsByLeague).forEach(codigo => {
+    const opt = document.createElement('option');
+    opt.value = codigo;
+    opt.textContent = codigo;
+    leagueSelect.appendChild(opt);
+  });
+
+  leagueSelect.addEventListener('change', () => {
+    const l = leagueSelect.value;
+    teamHome.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    teamAway.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+    if (!l || !teamsByLeague[l]) return;
+    teamsByLeague[l].forEach(t => {
+      const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; teamHome.appendChild(opt1);
+      const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; teamAway.appendChild(opt2);
+    });
+  });
+
+  function fillTeamData(teamName, leagueCode, type) {
+    if (!teamsByLeague[leagueCode]) return;
+    const teamData = teamsByLeague[leagueCode].find(t => t.name === teamName);
+    if (!teamData) return;
+
+    if (type === 'Home') {
+      $('posHome').value = teamData.pos;
+      $('gfHome').value = teamData.gf;
+      $('gaHome').value = teamData.ga;
+      $('formHome').value = teamData.form;
+    } else if (type === 'Away') {
+      $('posAway').value = teamData.pos;
+      $('gfAway').value = teamData.gf;
+      $('gaAway').value = teamData.ga;
+      $('formAway').value = teamData.form;
+    }
+
+    calculateAll();
+  }
+
+  teamHome.addEventListener('change', () => {
+    fillTeamData(teamHome.value, leagueSelect.value, 'Home');
+  });
+
+  teamAway.addEventListener('change', () => {
+    fillTeamData(teamAway.value, leagueSelect.value, 'Away');
+  });
+
+  $('recalc').addEventListener('click', () => calculateAll());
+  $('reset').addEventListener('click', ()=>location.reload());
+  $('clearAll').addEventListener('click', () => {
+    document.querySelectorAll('input').forEach(i=>i.value='');
+    document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+    ['pHome','pDraw','pAway','pBTTS','pO25','expectedBest','details'].forEach(id=>$$(id).textContent='—');
+  });
 });
+
+// ----------------- Aquí van tus funciones de cálculo: logFactorial, poissonPMF, computeLambdas, compute1X2, computeBTTS, expectedValue, kellyFraction, gatherInputs, calculateAll, renderRecommendations -----------------
 </script>
 </body>
 </html>

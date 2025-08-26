@@ -314,9 +314,6 @@ async function init(){
   $('maxTeams').addEventListener('change', calculateAll);
   $('formHome').addEventListener('change', calculateAll);
   $('formAway').addEventListener('change', calculateAll);
-  
-  // Calcular inicialmente
-  setTimeout(calculateAll, 500);
 }
 document.addEventListener('DOMContentLoaded', init);
 
@@ -381,10 +378,6 @@ function clearAll(){
   $('maxTeams').value = 20;
   $('formHome').value = '3-1-1';
   $('formAway').value = '2-2-1';
-  $('gfHome').value = '1.6';
-  $('gaHome').value = '1.1';
-  $('gfAway').value = '1.4';
-  $('gaAway').value = '1.2';
 }
 
 function poissonPMF(lambda,k){ 
@@ -402,20 +395,30 @@ function factorial(n){
 function clamp01(x){ return Math.max(0,Math.min(1,x)); }
 
 // Función Dixon-Coles para ajustar probabilidades de baja puntuación
-function dixonColesAdjustment(lambdaHome, lambdaAway, rho, homeGoals, awayGoals) {
-  let adjustment = 1.0;
+function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
+  if (lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
   
-  if (homeGoals === 0 && awayGoals === 0) {
-    adjustment = 1 - (lambdaHome * lambdaAway * rho);
-  } else if (homeGoals === 0 && awayGoals === 1) {
-    adjustment = 1 + (lambdaHome * rho);
-  } else if (homeGoals === 1 && awayGoals === 0) {
-    adjustment = 1 + (lambdaAway * rho);
-  } else if (homeGoals === 1 && awayGoals === 1) {
-    adjustment = 1 - rho;
-  }
+  // Probabilidad de 0-0
+  const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
+  const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
   
-  return Math.max(adjustment, 0.1); // Evitar valores negativos o cero
+  // Probabilidad de 1-0
+  const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
+  const adjustedProb10 = prob10 * (1 + (lambdaAway * rho));
+  
+  // Probabilidad de 0-1
+  const prob01 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 1);
+  const adjustedProb01 = prob01 * (1 + (lambdaHome * rho));
+  
+  // Probabilidad de 1-1
+  const prob11 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 1);
+  const adjustedProb11 = prob11 * (1 - rho);
+  
+  // Factor de corrección total
+  const originalProbs = prob00 + prob10 + prob01 + prob11;
+  const adjustedProbs = adjustedProb00 + adjustedProb10 + adjustedProb01 + adjustedProb11;
+  
+  return originalProbs > 0 ? adjustedProbs / originalProbs : 1;
 }
 
 // Calcular fuerza relativa basada en posición en la tabla
@@ -440,8 +443,8 @@ function calculateFormFactor(formHome, formAway, formWeight) {
     const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
     
     // Calcular puntos por partido (3 por victoria, 1 por empate)
-    const homePpg = (homeW * 3 + homeD) / Math.max((homeW + homeD + homeL), 1);
-    const awayPpg = (awayW * 3 + awayD) / Math.max((awayW + awayD + awayL), 1);
+    const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL);
+    const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL);
     
     // Evitar divisiones por cero
     if (awayPpg === 0) return 1;
@@ -472,12 +475,13 @@ function computeProbabilities(lambdaHome, lambdaAway){
   const recentFormFactor = calculateFormFactor(formHome, formAway, formWeight);
   
   const rho = parseNumberString($('dixonColesParam').value);
+  const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, rho);
   
   // Mostrar factores aplicados
   $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
   $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
   $('recentFormFactor').textContent = formatDec(recentFormFactor) + 'x';
-  $('dixonColesFactor').textContent = formatDec(rho);
+  $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
   
   // Aplicar factores de corrección
   const adjHome = Math.max(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 0.3);
@@ -485,28 +489,15 @@ function computeProbabilities(lambdaHome, lambdaAway){
 
   // Calcular probabilidades básicas
   let pHome = 0, pDraw = 0, pAway = 0;
-  let pBTTS = 0;
-  let pO25 = 0;
   const maxGoals = 8;
   
   for (let i = 0; i <= maxGoals; i++) {
     for (let j = 0; j <= maxGoals; j++) {
-      const adjustment = dixonColesAdjustment(adjHome, adjAway, rho, i, j);
-      const prob = poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * adjustment;
+      const prob = poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
       
       if (i > j) pHome += prob;
       else if (i === j) pDraw += prob;
       else pAway += prob;
-      
-      // Calcular BTTS (Both Teams To Score)
-      if (i > 0 && j > 0) {
-        pBTTS += prob;
-      }
-      
-      // Calcular Over 2.5
-      if (i + j > 2.5) {
-        pO25 += prob;
-      }
     }
   }
   
@@ -516,6 +507,24 @@ function computeProbabilities(lambdaHome, lambdaAway){
     pHome /= total;
     pDraw /= total;
     pAway /= total;
+  }
+  
+  // Calcular BTTS (Both Teams To Score)
+  let pBTTS = 0;
+  for (let i = 1; i <= maxGoals; i++) {
+    for (let j = 1; j <= maxGoals; j++) {
+      pBTTS += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
+    }
+  }
+  
+  // Calcular Over 2.5
+  let pO25 = 0;
+  for (let i = 0; i <= maxGoals; i++) {
+    for (let j = 0; j <= maxGoals; j++) {
+      if (i + j > 2.5) {
+        pO25 += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
+      }
+    }
   }
   
   return {

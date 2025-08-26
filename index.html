@@ -200,7 +200,7 @@ function normalizeTeam(raw){
   r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || raw['team_name'] || raw['team.shortName'] || '';
   // posición
   r.pos = raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || null;
-  // goles a favor/contra
+  // goles a favor/contra (intenta normalizar valores)
   r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
   r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] ||  raw['goals_against']);
   // PJ/G/E/P: intentamos múltiples nombres
@@ -210,6 +210,8 @@ function normalizeTeam(raw){
   r.p  = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
   // form (si existe)
   r.form = raw.form || raw.Form || null;
+  // other raw data keep
+  r._raw = raw;
   return r;
 }
 
@@ -219,7 +221,6 @@ async function fetchTeams(){
     const res = await fetch(WEBAPP_URL);
     if(!res.ok) throw new Error('fetch falló ' + res.status);
     const data = await res.json();
-    // data: objeto per-league -> array de objetos rows
     const normalized = {};
     for(const key in data){
       const arr = data[key] || [];
@@ -235,7 +236,6 @@ async function fetchTeams(){
 /* ----------------- Inicialización UI ----------------- */
 async function init(){
   teamsByLeague = await fetchTeams();
-  // llenar select de ligas
   const leagueCodes = Object.keys(teamsByLeague);
   leagueCodes.forEach(code => {
     const opt = document.createElement('option');
@@ -243,10 +243,8 @@ async function init(){
     opt.textContent = leagueNames[code] || code;
     $('leagueSelect').appendChild(opt);
   });
-  // cargar banca guardada
   const saved = localStorage.getItem('bankroll');
   if(saved) $('bankroll').value = saved;
-
   // listeners
   $('leagueSelect').addEventListener('change', onLeagueChange);
   $('teamHome').addEventListener('change', ()=>fillTeamData($('teamHome').value, $('leagueSelect').value,'Home'));
@@ -281,7 +279,6 @@ function fillTeamData(teamName, leagueCode, type){
   if(!teamName) return;
   const t = findTeam(leagueCode, teamName);
   if(!t) return;
-  // Rellenar valores visibles e inputs
   if(type === 'Home'){
     $('posHome').value = t.pos || '';
     $('gfHome').value  = Number.isFinite(t.gf) ? t.gf : '';
@@ -295,7 +292,6 @@ function fillTeamData(teamName, leagueCode, type){
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj||0} | G: ${t.g||0} | E: ${t.e||0} | P: ${t.p||0}`;
   }
-  // Recalcular al final
   calculateAll();
 }
 
@@ -343,7 +339,6 @@ function compute1X2(lambdaHome, lambdaAway, maxGoals=8){
   return {pHome: pHome/total, pDraw: pDraw/total, pAway: pAway/total};
 }
 function computeBTTS(lambdaHome, lambdaAway, maxGoals=8){
-  // both teams score = 1 - (P(home 0) + P(away 0) - P(both zero))
   const pNoHome = Math.exp(-lambdaHome);
   const pNoAway = Math.exp(-lambdaAway);
   const pBTTS = 1 - pNoHome - pNoAway + pNoHome*pNoAway;
@@ -367,17 +362,75 @@ function kellyFraction(p, odds){
   return Math.max(0, Math.min(1, f));
 }
 
-/* ----------------- Calcular y Renderizar ----------------- */
+/* ----------------- ENSEMBLE (Poisson + Elo-like) - invisible ----------------- */
+function getTeamRating(teamObj){
+  if(!teamObj) return 1500;
+  // prefer explicit rating/elo if present
+  const maybe = teamObj._raw && (teamObj._raw.elo || teamObj._raw.rating || teamObj._raw.Rating);
+  if(maybe) return parseNumberString(maybe) || 1500;
+  // proxy from points / pos / pj:
+  // If sheet has 'points' in raw, use; else fallback to pos
+  const pts = parseNumberString(teamObj._raw && (teamObj._raw.points || teamObj._raw.Points || teamObj._raw.Pts));
+  if(pts) return 1500 + pts * 8;
+  if(teamObj.pos) return 1700 - Number(teamObj.pos) * 8;
+  // fallback from general record
+  if(Number.isFinite(teamObj.pj) && Number.isFinite(teamObj.g)){
+    // wins carry weight: approximate wins = g, losses = p
+    const wins = Number(teamObj.g) || 0;
+    const draws = Number(teamObj.e) || 0;
+    const losses = Number(teamObj.p) || 0;
+    return 1500 + (wins*12 + draws*4 - losses*8);
+  }
+  return 1500;
+}
+function computeEloProb(homeRating, awayRating, homeAdvPts = 60){
+  const diff = (homeRating + homeAdvPts) - awayRating;
+  const pHome = 1 / (1 + Math.pow(10, -diff / 400));
+  const pAway = 1 - pHome;
+  return { pHome, pAway };
+}
+function computeEnsemble(lambdaHome, lambdaAway, teamHomeObj, teamAwayObj, weights = {wPoisson:0.6, wElo:0.4, homeAdvPts:60, maxGoals:8}){
+  const poissonProbs = compute1X2(lambdaHome, lambdaAway, weights.maxGoals);
+  const homeRating = getTeamRating(teamHomeObj);
+  const awayRating = getTeamRating(teamAwayObj);
+  const elo = computeEloProb(homeRating, awayRating, weights.homeAdvPts);
+  const wP = weights.wPoisson ?? 0.6;
+  const wE = weights.wElo ?? 0.4;
+  // combine
+  let pHome = clamp01(wP * poissonProbs.pHome + wE * elo.pHome);
+  let pAway = clamp01(wP * poissonProbs.pAway + wE * elo.pAway);
+  // draw: mainly from poisson but slightly adjusted
+  let rawDraw = poissonProbs.pDraw * (1 - 0.05 * Math.abs(elo.pHome - elo.pAway));
+  let pDraw = clamp01(wP * rawDraw + wE * (0.01)); // small constant from elo to avoid zero
+  // normalize
+  const s = pHome + pDraw + pAway;
+  if(s <= 0) return {pHome:0.33,pDraw:0.34,pAway:0.33};
+  return { pHome: pHome/s, pDraw: pDraw/s, pAway: pAway/s };
+}
+
+/* ----------------- Calcular y Renderizar (usa ensemble) ----------------- */
 function calculateAll(){
-  // Lambdas: aquí tomamos GF por partido como lambda estimado (puedes mejorar con computeLambdas)
+  // lambdas (siguen viniendo de tus inputs de GF por partido)
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
   const maxGoals = Math.max(4, parseInt($('maxGoals') ? $('maxGoals').value : 8) || 8);
 
-  const {pHome,pDraw,pAway} = compute1X2(lambdaHome, lambdaAway, maxGoals);
+  // equipo objeto desde sheets (si está seleccionado)
+  const league = $('leagueSelect').value;
+  const teamHomeObj = findTeam(league, $('teamHome').value);
+  const teamAwayObj = findTeam(league, $('teamAway').value);
+
+  // ensemble invisible (Poisson + Elo-like)
+  const ensemble = computeEnsemble(lambdaHome, lambdaAway, teamHomeObj, teamAwayObj, {wPoisson:0.6, wElo:0.4, homeAdvPts:60, maxGoals});
+  const pHome = ensemble.pHome;
+  const pDraw = ensemble.pDraw;
+  const pAway = ensemble.pAway;
+
+  // BTTS & Over2.5 from Poisson (mejor para estos mercados)
   const pBTTS = computeBTTS(lambdaHome, lambdaAway);
   const pO25  = computeOver25(lambdaHome, lambdaAway, maxGoals);
 
+  // render tiles
   $('pHome').textContent = formatPct(pHome);
   $('pDraw').textContent = formatPct(pDraw);
   $('pAway').textContent = formatPct(pAway);
@@ -400,7 +453,7 @@ function calculateAll(){
   $('expectedBest').textContent = evs[0].name;
   $('details').innerHTML = evs.map(e => `${e.name}: EV ${e.ev.toFixed(2)} — Stake sugerido Q${e.stake}`).join('<br/>');
 
-  // Apuesta sugerida: mostrar en bloque separado y vistoso
+  // Apuesta sugerida: mostrar en bloque separado y vistoso (separada por línea)
   const best = evs[0];
   const suggestionEl = $('suggestion');
   suggestionEl.style.display = 'block';
@@ -409,7 +462,6 @@ function calculateAll(){
 
 /* ----------------- arrancar helpers ----------------- */
 function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
-
 </script>
 </body>
 </html>

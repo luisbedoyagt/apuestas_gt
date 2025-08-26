@@ -343,7 +343,7 @@ function calculateAll() {
   const lambdaAway = parseNumberString($('gfAway').value);
   const bankroll = parseNumberString($('bankroll').value);
 
-  if (lambdaHome <= 0 || lambdaAway <= 0 || bankroll <= 0) {
+  if (lambdaHome <= -1 || lambdaAway <= -1 || bankroll <= -1) {
     alert('Por favor, ingrese valores válidos para goles y banca.');
     return;
   }

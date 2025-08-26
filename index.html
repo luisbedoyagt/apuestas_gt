@@ -283,19 +283,19 @@ function factorial(n){ if(n<=1) return 1; let f=1; for(let i=2;i<=n;i++) f*=i; r
 function clamp01(x){ return Math.max(0,Math.min(1,x)); }
 
 function computeProbabilities(lambdaHome, lambdaAway){
-  // Ajuste mínimo 0.8 para Over 2.5
-  const adjHome = Math.max(lambdaHome,0.8);
-  const adjAway = Math.max(lambdaAway,0.8);
+  const adjHome = Math.max(lambdaHome,0.5);
+  const adjAway = Math.max(lambdaAway,0.5);
 
-  // Prob Local, Empate, Visitante
-  const pHome = adjHome/(adjHome+adjAway+1); // simplificado
-  const pAway = adjAway/(adjHome+adjAway+1);
-  const pDraw = 1 - pHome - pAway;
+  const total = adjHome + adjAway;
+  let pHome = adjHome/total;
+  let pAway = adjAway/total;
+  let pDraw = 1 - pHome - pAway;
+  if(pDraw<0) pDraw=0;
 
-  // Prob BTTS (ambos anotan)
-  const pBTTS = 1 - (Math.exp(-adjHome) + Math.exp(-adjAway) - Math.exp(-adjHome-adjAway));
+  if(adjHome>adjAway*1.5) pHome = Math.min(pHome+0.15,1); pAway = 1 - pHome - pDraw;
 
-  // Prob Over 2.5
+  const pBTTS = 1 - (Math.exp(-adjHome)+Math.exp(-adjAway)-Math.exp(-adjHome-adjAway));
+
   let pO25 = 0;
   const maxGoals=8;
   for(let i=0;i<=maxGoals;i++){
@@ -309,7 +309,6 @@ function computeProbabilities(lambdaHome, lambdaAway){
 }
 
 function suggestBet(probObj, odds){
-  // refuerzo local si alta probabilidad
   let best = 'Empate';
   let maxEV = -Infinity;
   const evHome = probObj.pHome*odds.oddsHome -1;
@@ -318,7 +317,6 @@ function suggestBet(probObj, odds){
 
   const evArr = [{name:'Local',ev:evHome},{name:'Empate',ev:evDraw},{name:'Visitante',ev:evAway}];
   evArr.forEach(o=>{ if(o.ev>maxEV){maxEV=o.ev; best=o.name;} });
-
   return best;
 }
 
@@ -343,7 +341,6 @@ function calculateAll(){
 
   const best = suggestBet(probs,odds);
   $('expectedBest').textContent = best;
-
   $('suggestion').textContent = `Apuesta sugerida → ${best}: Stake`;
   $('suggestion').style.display='block';
 }

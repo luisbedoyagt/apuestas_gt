@@ -74,7 +74,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
       <div class="table-like">
         <div>
           <label>Media liga (goles / partido por equipo)</label>
-          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01" readonly/>
+          <input id="leagueAvg" type="number" value="1.35" step="0.01" min="0.01"/>
         </div>
         <div>
           <label>Máx goles a calcular (Poisson)</label>
@@ -174,6 +174,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
         <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
         <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
         <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
+        <div class="tile"><strong id="dailyStake">—</strong><div class="small">Inversión diaria</div></div>
       </div>
 
       <div class="sep"></div>
@@ -187,6 +188,7 @@ input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #2a2e4a;b
 const $ = id => document.getElementById(id);
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
 const formatPct = x => (100*x).toFixed(1) + '%';
+const formatMoney = x => '$' + x.toFixed(2);
 const MAX_GOALS_DEFAULT = 8;
 function toDecimalOdds(v){ const a=parseFloat(v); return isNaN(a)||a<=0?1.01:a; }
 
@@ -206,7 +208,7 @@ function computeLambdas({gfHome, gaHome, gfAway, gaAway, leagueAvg, posHome, pos
   const formHomeFactor = 1 + ((formHome-2.5)/25); const formAwayFactor = 1 + ((formAway-2.5)/25);
   lambdaHome *= clamp(formHomeFactor,0.85,1.12); lambdaAway *= clamp(formAwayFactor,0.85,1.12);
   lambdaHome = clamp(lambdaHome,0,6); lambdaAway = clamp(lambdaAway,0,6);
-  return {lambdaHome,lambdaAway};
+  return {lambdaHome,lambdaAway, h_adv, posFactor};
 }
 
 // --- 1X2 ---
@@ -270,58 +272,68 @@ function gatherInputs(){
 
 // --- Render ---
 function renderRecommendations(result){
+  const details=$('details'); details.innerHTML='';
+  const info=document.createElement('div'); info.className='small';
+  info.innerHTML=`<strong>Lambdas:</strong> λA=${result.lambdaHome.toFixed(2)} λB=${result.lambdaAway.toFixed(2)}<br>`;
+  info.innerHTML+=`<strong>1X2:</strong> ${formatPct(result.pHomeWin)} / ${formatPct(result.pDraw)} / ${formatPct(result.pAwayWin)}<br>`;
+  info.innerHTML+=`<strong>BTTS:</strong> ${formatPct(result.pBTTS)}, Over2.5: ${formatPct(result.pOver25)}<br>`;
+  info.innerHTML+=`<strong>Kelly stake:</strong> ${formatPct(result.kellyHome)} / ${formatPct(result.kellyDraw)} / ${formatPct(result.kellyAway)} / ${formatPct(result.kellyBTTS)} / ${formatPct(result.kellyO25)}<br>`;
+  info.innerHTML+=`<strong>Inversión diaria (bank 30 días):</strong> ${formatMoney(result.dailyStake)}<br>`;
+  details.appendChild(info);
+
   $('pHome').textContent=formatPct(result.pHomeWin);
   $('pDraw').textContent=formatPct(result.pDraw);
   $('pAway').textContent=formatPct(result.pAwayWin);
   $('pBTTS').textContent=formatPct(result.pBTTS);
   $('pO25').textContent=formatPct(result.pOver25);
+  $('expectedBest').textContent=result.bestEvLabel;
+  $('dailyStake').textContent=formatMoney(result.dailyStake);
+}
 
-  const evs=[
-    {name:'Local 1X2',ev:expectedValue(result.pHomeWin,result.oddsHome),stake:kellyFraction(result.pHomeWin,result.oddsHome)},
-    {name:'Empate',ev:expectedValue(result.pDraw,result.oddsDraw),stake:kellyFraction(result.pDraw,result.oddsDraw)},
-    {name:'Visitante',ev:expectedValue(result.pAwayWin,result.oddsAway),stake:kellyFraction(result.pAwayWin,result.oddsAway)},
-    {name:'BTTS Sí',ev:expectedValue(result.pBTTS,result.oddsBTTS),stake:kellyFraction(result.pBTTS,result.oddsBTTS)},
-    {name:'Over 2.5',ev:expectedValue(result.pOver25,result.oddsOver25),stake:kellyFraction(result.pOver25,result.oddsOver25)}
-  ];
+// --- Calc ---
+function calculateAll(){
+  const inp=gatherInputs();
+  const {lambdaHome,lambdaAway}=computeLambdas(inp);
+  const {pHomeWin,pDraw,pAwayWin}=compute1X2(lambdaHome,lambdaAway,inp.maxGoals);
+  const {pBTTS,pOver25}=computeBTTS(lambdaHome,lambdaAway);
+
+  const evHome=expectedValue(pHomeWin,inp.oddsHome);
+  const evDraw=expectedValue(pDraw,inp.oddsDraw);
+  const evAway=expectedValue(pAwayWin,inp.oddsAway);
+  const evBTTS=expectedValue(pBTTS,inp.oddsBTTS);
+  const evO25=expectedValue(pOver25,inp.oddsOver25);
+
+  const kHome=kellyFraction(pHomeWin,inp.oddsHome);
+  const kDraw=kellyFraction(pDraw,inp.oddsDraw);
+  const kAway=kellyFraction(pAwayWin,inp.oddsAway);
+  const kBTTS=kellyFraction(pBTTS,inp.oddsBTTS);
+  const kO25=kellyFraction(pOver25,inp.oddsOver25);
+
+  const evs=[{label:'1',ev:evHome},{label:'X',ev:evDraw},{label:'2',ev:evAway},{label:'BTTS',ev:evBTTS},{label:'Over2.5',ev:evO25}];
   evs.sort((a,b)=>b.ev-a.ev);
-  $('expectedBest').textContent=evs[0].name;
+  const bestEvLabel=evs[0].label;
 
-  const details=$('details'); details.innerHTML='';
-  evs.forEach(e=>{
-    const div=document.createElement('div');
-    div.textContent=`${e.name}: EV=${e.ev.toFixed(2)} | Kelly=${(e.stake*100).toFixed(1)}%`;
-    div.className=(e.ev>0)?'good':'bad';
-    details.appendChild(div);
+  // --- Cálculo inversión diaria (bank / 30 días * Kelly) ---
+  const dailyStake = (inp.bankroll * Math.max(kHome,kDraw,kAway,kBTTS,kO25))/30;
+
+  renderRecommendations({
+    lambdaHome,lambdaAway,pHomeWin,pDraw,pAwayWin,pBTTS,pOver25,
+    kellyHome:kHome,kellyDraw:kDraw,kellyAway:kAway,kellyBTTS:kBTTS,kellyO25:kO25,
+    bestEvLabel,dailyStake
   });
 }
 
-// --- Calcular ---
-function recalc(){
-  const inp=gatherInputs();
-  const lambdas=computeLambdas(inp);
-  const x12=compute1X2(lambdas.lambdaHome,lambdas.lambdaAway,inp.maxGoals);
-  const btts=computeBTTS(lambdas.lambdaHome,lambdas.lambdaAway);
-  const result={...x12,...btts,...inp};
-  renderRecommendations(result);
-}
-
-// --- Botones ---
-$('recalc').addEventListener('click',recalc);
-$('reset').addEventListener('click',()=>{document.querySelectorAll('input[type=number]').forEach(i=>i.value=i.defaultValue); recalc();});
-$('saveBank').addEventListener('click',()=>{saveBankrollToStorage({bankroll:Number($('bankroll').value)}); alert('Banca guardada!');});
-
-// --- Auto calc y media liga ---
-function updateLeagueAvg(){ 
-  const gfHome=Number($('gfHome').value)||0;
-  const gfAway=Number($('gfAway').value)||0;
-  const avg=((gfHome+gfAway)/2).toFixed(2);
-  $('leagueAvg').value=avg;
-}
-['gfHome','gfAway'].forEach(id=>$(id).addEventListener('input',updateLeagueAvg));
-
-// --- Load storage ---
-const saved=getBankrollFromStorage(); if(saved){$('bankroll').value=saved.bankroll;}
-updateLeagueAvg(); recalc();
+// --- Eventos ---
+$('recalc').addEventListener('click',calculateAll);
+$('reset').addEventListener('click',()=>location.reload());
+$('saveBank').addEventListener('click',()=>{
+  saveBankrollToStorage({bankroll:Number($('bankroll').value)||0});
+  alert('Banca guardada!');
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  const saved=getBankrollFromStorage();
+  if(saved) $('bankroll').value=saved.bankroll;
+});
 </script>
 </body>
 </html>

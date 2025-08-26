@@ -1,395 +1,223 @@
-console.log("Script.js cargado correctamente");
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Calculadora Apuestas Avanzada • Poisson + Mejoras</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Calculadora Apuestas Avanzada • Modelo Mejorado</h1>
+      <p class="small">Sistema mejorado con factores de corrección y modelo Dixon-Coles</p>
+    </div>
 
-const $ = id => document.getElementById(id);
-const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
-const formatDec = x => (isFinite(x) ? x.toFixed(2) : '0.00');
-function parseNumberString(val) { 
-  const s = String(val || '').replace(/,/g, '.'); 
-  const n = Number(s); 
-  return isFinite(n) ? n : 0; 
-}
-function toDecimalOdds(v) { 
-  const a = parseFloat(String(v).replace(/,/g, '.')); 
-  return isNaN(a) || a <= 1 ? 1.01 : a; 
-}
+    <!-- Banco & Cuotas -->
+    <div class="grid">
+      <div class="card">
+        <h3>Banco mensual</h3>
+        <div class="table-like">
+          <div>
+            <label>Banca actual (Q)</label>
+            <input id="bankroll" type="number" value="1000" min="0" step="1"/>
+          </div>
+          <div>
+            <label>Guardar</label><br/>
+            <button id="saveBank" class="btn">Guardar banca</button>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <h4>Acciones</h4>
+        <div class="table-like button-group">
+          <div><button id="recalc" class="btn">Calcular</button></div>
+          <div><button id="reset" class="btn">Reset valores</button></div>
+          <div><button id="clearAll" class="btn">Resetear todo</button></div>
+        </div>
+      </div>
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
-let teamsByLeague = {};
-const leagueNames = { 
-  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
-  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
-  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
-  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
-};
+      <div class="card hidden">
+        <h3>Cuotas</h3>
+        <div class="table-like">
+          <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="1.40" step="0.01" min="1"/></div>
+          <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="4.50" step="0.01" min="1"/></div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="8.00" step="0.01" min="1"/></div>
+          <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="2.10" step="0.01" min="1"/></div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="1.80" step="0.01" min="1"/></div>
+          <div></div>
+        </div>
+        <p class="small" style="margin-top:8px">Consejo: usa decimales. (Americana → decimal antes)</p>
+      </div>
+    </div>
 
-function normalizeTeam(raw) {
-  if (!raw) return null;
-  const r = {};
-  r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || raw['team_name'] || raw['team.shortName'] || '';
-  r.pos = raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || null;
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] || raw['goals_against']);
-  r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches']);
-  r.g = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
-  r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
-  r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
-  r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
-  r.form = raw.form || raw.Form || null;
-  return r;
-}
+    <!-- Selección equipos -->
+    <div class="grid" style="margin-top:12px">
+      <div class="card">
+        <h3>Equipos y estadísticas</h3>
+        <div class="table-like">
+          <div>
+            <label>Liga</label>
+            <select id="leagueSelect"><option value="">-- Selecciona liga --</option></select>
+          </div>
+        </div>
 
-async function fetchTeams() {
-  try {
-    const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error('fetch falló ' + res.status);
-    const data = await res.json();
-    const normalized = {};
-    for (const key in data) { 
-      const arr = data[key] || []; 
-      normalized[key] = arr.map(x => normalizeTeam(x)); 
-    }
-    return normalized;
-  } catch (err) { 
-    console.error('Error fetching teams:', err); 
-    alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
-    return {
-      "BSA": [
-        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46, form: "4-1-0" },
-        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10, form: "0-2-3" }
-      ]
-    };
-  }
-}
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Equipo Local</label>
+            <select id="teamHome"></select>
+          </div>
+          <div>
+            <label>Equipo Visitante</label>
+            <select id="teamAway"></select>
+          </div>
+        </div>
 
-async function init() {
-  try {
-    teamsByLeague = await fetchTeams();
-    const leagueCodes = Object.keys(teamsByLeague);
-    leagueCodes.forEach(code => { 
-      const opt = document.createElement('option'); 
-      opt.value = code; 
-      opt.textContent = leagueNames[code] || code; 
-      $('leagueSelect').appendChild(opt); 
-    });
-    const saved = localStorage.getItem('bankroll');
-    if (saved) $('bankroll').value = saved;
-    $('leagueSelect').addEventListener('change', onLeagueChange);
-    $('teamHome').addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
-    $('teamAway').addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
-    $('recalc').addEventListener('click', calculateAll);
-    $('reset').addEventListener('click', () => location.reload());
-    $('clearAll').addEventListener('click', clearAll);
-    $('saveBank').addEventListener('click', saveBankrollToStorage);
-    $('homeAdvantage').addEventListener('change', calculateAll);
-    $('formWeight').addEventListener('change', calculateAll);
-    $('dixonColesParam').addEventListener('change', calculateAll);
-    $('maxTeams').addEventListener('change', calculateAll);
-    $('formHome').addEventListener('change', calculateAll);
-    $('formAway').addEventListener('change', calculateAll);
-  } catch (err) {
-    console.error("Error en init:", err);
-    alert("Error al inicializar la aplicación. Por favor, recarga la página.");
-  }
-}
-document.addEventListener('DOMContentLoaded', init);
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Pos Local</label><input id="posHome" type="number" value="-" min="1" step="1"/>
+          </div>
+          <div>
+            <label>Pos Visitante</label><input id="posAway" type="number" value="-" min="1" step="1"/>
+          </div>
+        </div>
 
-function onLeagueChange() {
-  const code = $('leagueSelect').value;
-  $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!teamsByLeague[code]) return;
-  teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
-  });
-}
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>GF local</label><input id="gfHome" type="number" value="-" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>GC local</label><input id="gaHome" type="number" value="-" step="0.01" min="0"/>
+          </div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>GF visitante</label><input id="gfAway" type="number" value="-" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>GC visitante</label><input id="gaAway" type="number" value="-" step="0.01" min="0"/>
+          </div>
+        </div>
 
-function findTeam(leagueCode, teamName) {
-  if (!teamsByLeague[leagueCode]) return null;
-  return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
-}
+        <div class="sep"></div>
+        
+        <h4 class="hidden">Forma reciente (últimos 5 partidos)</h4>
+        <div class="table-like hidden" style="margin-top:6px">
+          <div>
+            <label>Forma Local (G-E-P)</label>
+            <input id="formHome" type="text" placeholder="4-1-0" value="4-1-0"/>
+          </div>
+          <div>
+            <label>Forma Visitante (G-E-P)</label>
+            <input id="formAway" type="text" placeholder="0-2-3" value="0-2-3"/>
+          </div>
+        </div>
+        
+        <div class="sep"></div>
+        
+        <h4>Factores de Corrección</h4>
+        <div class="table-like">
+          <div>
+            <label>Ventaja local (+%)</label>
+            <input id="homeAdvantage" type="number" value="15" step="1" min="0" max="50"/>
+          </div>
+          <div>
+            <label>Peso forma reciente (%)</label>
+            <input id="formWeight" type="number" value="30" step="5" min="0" max="100"/>
+          </div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Factor Dixon-Coles (ρ)</label>
+            <input id="dixonColesParam" type="number" value="-0.13" step="0.01" min="-0.5" max="0.5"/>
+          </div>
+          <div>
+            <label>Máx. equipos en liga</label>
+            <input id="maxTeams" type="number" value="20" step="1" min="10" max="30"/>
+          </div>
+        </div>
 
-function fillTeamData(teamName, leagueCode, type) {
-  if (!teamName) return;
-  const t = findTeam(leagueCode, teamName);
-  if (!t) return;
+        <div class="sep"></div>
 
-  const formString = t.form || `${t.g || 0}-${t.e || 0}-${t.p || 0}`;
-  if (type === 'Home') {
-    $('posHome').value = t.pos || '';
-    $('gfHome').value = Number.isFinite(t.gf) ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaHome').value = Number.isFinite(t.ga) ? (t.ga / t.pj).toFixed(2) : '';
-    $('formHome').value = formString;
-    $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
-  } else {
-    $('posAway').value = t.pos || '';
-    $('gfAway').value = Number.isFinite(t.gf) ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaAway').value = Number.isFinite(t.ga) ? (t.ga / t.pj).toFixed(2) : '';
-    $('formAway').value = formString;
-    $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
-  }
-  calculateAll();
-}
+        <h4>Forma general</h4>
+        <div class="table-like" style="margin-top:6px">
+          <div class="stat-card" id="formHomeCard">
+            <div class="stat-title" id="formHomeTeam">Local: —</div>
+            <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+          </div>
+          <div class="stat-card" id="formAwayCard">
+            <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+            <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+          </div>
+        </div>
+      </div>
 
-function saveBankrollToStorage() {
-  const bank = parseNumberString($('bankroll').value);
-  if (bank <= 0) {
-    alert('La banca debe ser mayor a 0.');
-    return;
-  }
-  localStorage.setItem('bankroll', bank);
-  alert('Banca guardada: Q' + bank);
-}
+      <!-- Resultados -->
+      <div class="card">
+        <h3>Resultados & Recomendaciones</h3>
+        <div class="kpis" style="margin-top:6px">
+          <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
+          <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
+          <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
+          <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
+          <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
+          <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
+        </div>
 
-function clearAll() {
-  document.querySelectorAll('input').forEach(i => {
-    if (i.id !== 'bankroll') i.value = '';
-  });
-  document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-  ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25', 'expectedBest', 'details', 'suggestion', 
-   'formHomeTeam', 'formAwayTeam', 'formHomeBox', 'formAwayBox', 
-   'homeAdvantageFactor', 'strengthFactor', 'recentFormFactor', 'dixonColesFactor', 
-   'kellyStake', 'betAmount'].forEach(id => {
-    const el = $(id);
-    if (el) el.textContent = id.includes('form') ? 
-      (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
-  });
-  $('suggestion').style.display = 'none';
-  $('homeAdvantage').value = 15;
-  $('formWeight').value = 30;
-  $('dixonColesParam').value = -0.13;
-  $('maxTeams').value = 20;
-  $('formHome').value = '4-1-0';
-  $('formAway').value = '0-2-3';
-}
+        <div class="sep"></div>
+        
+        <h4>Factores Aplicados</h4>
+        <div class="correction-factors">
+          <div class="correction-factor">
+            <div class="label">Ventaja Local</div>
+            <div class="value" id="homeAdvantageFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Fuerza Relativa</div>
+            <div class="value" id="strengthFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Forma Reciente</div>
+            <div class="value" id="recentFormFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Dixon-Coles</div>
+            <div class="value" id="dixonColesFactor">1.00x</div>
+          </div>
+        </div>
+        
+        <div class="sep"></div>
+        
+        <div id="details" class="recs small"></div>
 
-function poissonPMF(lambda, k) { 
-  if (k < 0) return 0;
-  return Math.pow(lambda, k) * Math.exp(-lambda) / factorial(k); 
-}
+        <div class="suggest" id="suggestion" style="display:none"></div>
+        
+        <div class="sep"></div>
+        
+        <div>
+          <h4>Stake según Kelly</h4>
+          <div class="table-like">
+            <div class="stat-card">
+              <div class="stat-title">Stake recomendado</div>
+              <div class="stat-values" id="kellyStake">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Monto a apostar</div>
+              <div class="stat-values" id="betAmount">—</div>
+            </div>
+          </div>
+        </div>
 
-function factorial(n) { 
-  if (n <= 1) return 1; 
-  let f = 1; 
-  for (let i = 2; i <= n; i++) f *= i; 
-  return f; 
-}
-
-function clamp01(x) { return Math.max(0, Math.min(1, x)); }
-
-function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
-  if (lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
-  const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
-  const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
-  const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
-  const adjustedProb10 = prob10 * (1 + (lambdaAway * rho));
-  const prob01 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 1);
-  const adjustedProb01 = prob01 * (1 + (lambdaHome * rho));
-  const prob11 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 1);
-  const adjustedProb11 = prob11 * (1 - rho);
-  const originalProbs = prob00 + prob10 + prob01 + prob11;
-  const adjustedProbs = adjustedProb00 + adjustedProb10 + adjustedProb01 + adjustedProb11;
-  return originalProbs > 0 ? adjustedProbs / originalProbs : 1;
-}
-
-function calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway) {
-  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) return 1;
-  const normalizedHome = (maxTeams - posHome + 1) / maxTeams;
-  const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
-  const ppgHome = pointsHome / ($('gfHome').value || 1); // Evitar división por cero
-  const ppgAway = pointsAway / ($('gfAway').value || 1);
-  const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.sqrt(eloFactor); // Suavizar el factor
-}
-
-function calculateFormFactor(formHome, formAway, formWeight) {
-  if (!formHome || !formAway) return 1;
-  if (!formHome.match(/^\d+-\d+-\d+$/) || !formAway.match(/^\d+-\d+$/)) {
-    console.warn("Formato de forma reciente inválido. Usando factor 1.");
-    return 1;
-  }
-  try {
-    const [homeW, homeD, homeL] = formHome.split('-').map(x => parseInt(x) || 0);
-    const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
-    const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL || 1);
-    const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL || 1);
-    if (awayPpg === 0) return 1;
-    const formFactor = homePpg / awayPpg;
-    const weight = formWeight / 100;
-    return 1 + (formFactor - 1) * weight;
-  } catch (e) {
-    console.error("Error parsing form data:", e);
-    return 1;
-  }
-}
-
-function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
-  const homeAdvantageFactor = 1 + (parseNumberString($('homeAdvantage').value) / 100);
-  const posHome = parseNumberString($('posHome').value);
-  const posAway = parseNumberString($('posAway').value);
-  const maxTeams = parseNumberString($('maxTeams').value);
-  const strengthFactor = calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsAway);
-  const formHome = $('formHome').value;
-  const formAway = $('formAway').value;
-  const formWeight = parseNumberString($('formWeight').value);
-  const recentFormFactor = calculateFormFactor(formHome, formAway, formWeight);
-  const rho = parseNumberString($('dixonColesParam').value);
-  const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, rho);
-  
-  $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
-  $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
-  $('recentFormFactor').textContent = formatDec(recentFormFactor) + 'x';
-  $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
-  
-  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.05); // Límite inferior más estricto
-  
-  let pHome = 0, pDraw = 0, pAway = 0;
-  const maxGoals = 8;
-  for (let i = 0; i <= maxGoals; i++) {
-    for (let j = 0; j <= maxGoals; j++) {
-      const prob = poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-      if (i > j) pHome += prob;
-      else if (i === j) pDraw += prob;
-      else pAway += prob;
-    }
-  }
-  
-  const total = pHome + pDraw + pAway;
-  if (total > 0) {
-    pHome /= total;
-    pDraw /= total;
-    pAway /= total;
-  }
-  
-  let pBTTS = 0;
-  for (let i = 1; i <= maxGoals; i++) {
-    for (let j = 1; j <= maxGoals; j++) {
-      pBTTS += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-    }
-  }
-  
-  let pO25 = 0;
-  for (let i = 0; i <= maxGoals; i++) {
-    for (let j = 0; j <= maxGoals; j++) {
-      if (i + j > 2.5) {
-        pO25 += poissonPMF(adjHome, i) * poissonPMF(adjAway, j) * dixonColesFactor;
-      }
-    }
-  }
-  
-  return {
-    pHome: clamp01(pHome),
-    pDraw: clamp01(pDraw),
-    pAway: clamp01(pAway),
-    pBTTS: clamp01(pBTTS),
-    pO25: clamp01(pO25)
-  };
-}
-
-function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
-  const b = odds - 1;
-  const p = probability;
-  const q = 1 - p;
-  const idealStake = (b * p - q) / b;
-  const fractionalStake = Math.max(0, idealStake) * kellyFraction;
-  const amount = bankroll * fractionalStake;
-  return {
-    stakePercent: fractionalStake * 100,
-    amount: amount
-  };
-}
-
-function suggestBet(probObj, odds, bankroll) {
-  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
-  const maxEV = 0.5; // Umbral máximo de EV (50%)
-  let bestBet = null;
-  let maxEV = -Infinity;
-  let bestStake = 0;
-  let bestAmount = 0;
-  let bestOdds = 0;
-  
-  const bets = [
-    { name: 'Local', prob: probObj.pHome, odds: odds.oddsHome },
-    { name: 'Empate', prob: probObj.pDraw, odds: odds.oddsDraw },
-    { name: 'Visitante', prob: probObj.pAway, odds: odds.oddsAway },
-    { name: 'BTTS Sí', prob: probObj.pBTTS, odds: odds.oddsBTTS },
-    { name: 'Over 2.5', prob: probObj.pO25, odds: odds.oddsOver25 }
-  ];
-  
-  bets.forEach(bet => {
-    const ev = bet.prob * bet.odds - 1;
-    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
-      maxEV = ev;
-      bestBet = bet.name;
-      bestOdds = bet.odds;
-      const kelly = calculateKellyStake(bet.prob, bet.odds, bankroll);
-      bestStake = kelly.stakePercent;
-      bestAmount = kelly.amount;
-    }
-  });
-  
-  return {
-    bestBet,
-    stakePercent: bestStake,
-    amount: bestAmount,
-    ev: maxEV,
-    odds: bestOdds
-  };
-}
-
-function calculateAll() {
-  const lambdaHome = parseNumberString($('gfHome').value);
-  const lambdaAway = parseNumberString($('gfAway').value);
-  const bankroll = parseNumberString($('bankroll').value);
-
-  if (lambdaHome <= 0 || lambdaAway <= 0 || bankroll <= 0) {
-    alert('Por favor, ingrese valores válidos para goles y banca.');
-    return;
-  }
-
-  const odds = {
-    oddsHome: toDecimalOdds($('oddsHome').value),
-    oddsDraw: toDecimalOdds($('oddsDraw').value),
-    oddsAway: toDecimalOdds($('oddsAway').value),
-    oddsBTTS: toDecimalOdds($('oddsBTTS').value),
-    oddsOver25: toDecimalOdds($('oddsOver25').value)
-  };
-
-  if (odds.oddsHome < 1 || odds.oddsDraw < 1 || odds.oddsAway < 1 || 
-      odds.oddsBTTS < 1 || odds.oddsOver25 < 1) {
-    alert('Las cuotas deben ser mayores a 1.0');
-    return;
-  }
-
-  const teamHome = findTeam($('leagueSelect').value, $('teamHome').value);
-  const teamAway = findTeam($('leagueSelect').value, $('teamAway').value);
-  const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamAway.points : 0;
-
-  const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway);
-  $('pHome').textContent = formatPct(probs.pHome);
-  $('pDraw').textContent = formatPct(probs.pDraw);
-  $('pAway').textContent = formatPct(probs.pAway);
-  $('pBTTS').textContent = formatPct(probs.pBTTS);
-  $('pO25').textContent = formatPct(probs.pO25);
-
-  const suggestion = suggestBet(probs, odds, bankroll);
-  $('expectedBest').textContent = suggestion.bestBet || 'Ninguna';
-  $('kellyStake').textContent = formatDec(suggestion.stakePercent) + '%';
-  $('betAmount').textContent = 'Q' + formatDec(suggestion.amount);
-  
-  $('suggestion').textContent = suggestion.bestBet 
-    ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuestas con valor esperado confiable.';
-  $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
-  
-  let details = `<div><strong>Detalles del cálculo:</strong></div>`;
-  details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * parseNumberString($('homeAdvantage').value / 100 + 1))}</div>`;
-  details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
-  details += `<div>• Valor Esperado (EV) máximo: ${formatPct(suggestion.ev)}</div>`;
-  
-  $('details').innerHTML = details;
-}
+        <div class="sep"></div>
+        <div class="abbrev">
+          <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos · Stake = Monto sugerido
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,3 +1,5 @@
+console.log("Script.js cargado correctamente"); // Para depuración: confirma que el JS se carga
+
 const $ = id => document.getElementById(id);
 const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
 const formatDec = x => (isFinite(x) ? x.toFixed(2) : '0.00');
@@ -31,30 +33,55 @@ async function fetchTeams(){
     const normalized = {};
     for(const key in data){ const arr = data[key] || []; normalized[key] = arr.map(x => normalizeTeam(x)); }
     return normalized;
-  }catch(err){ console.error('Error fetching teams:', err); return {}; }
+  }catch(err){ 
+    console.error('Error fetching teams:', err); 
+    alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
+    // Datos mockeados para que funcione sin API
+    return {
+      "PL": [
+        { name: "Manchester United", pos: 1, gf: 2.5, ga: 1.2, pj: 10, g: 7, e: 2, p: 1 },
+        { name: "Liverpool", pos: 2, gf: 2.0, ga: 1.5, pj: 10, g: 6, e: 3, p: 1 },
+        { name: "Chelsea", pos: 3, gf: 1.8, ga: 1.0, pj: 10, g: 5, e: 4, p: 1 }
+      ],
+      "PD": [
+        { name: "Real Madrid", pos: 1, gf: 2.8, ga: 1.1, pj: 10, g: 8, e: 1, p: 1 },
+        { name: "Barcelona", pos: 2, gf: 2.2, ga: 1.3, pj: 10, g: 7, e: 2, p: 1 }
+      ]
+    };
+  }
 }
 
 async function init(){
-  teamsByLeague = await fetchTeams();
-  const leagueCodes = Object.keys(teamsByLeague);
-  leagueCodes.forEach(code => { const opt = document.createElement('option'); opt.value = code; opt.textContent = leagueNames[code] || code; $('leagueSelect').appendChild(opt); });
-  const saved = localStorage.getItem('bankroll');
-  if(saved) $('bankroll').value = saved;
-  $('leagueSelect').addEventListener('change', onLeagueChange);
-  $('teamHome').addEventListener('change', ()=>fillTeamData($('teamHome').value, $('leagueSelect').value,'Home'));
-  $('teamAway').addEventListener('change', ()=>fillTeamData($('teamAway').value, $('leagueSelect').value,'Away'));
-  $('recalc').addEventListener('click', calculateAll);
-  $('reset').addEventListener('click', ()=>location.reload());
-  $('clearAll').addEventListener('click', clearAll);
-  $('saveBank').addEventListener('click', saveBankrollToStorage);
-  
-  // Event listeners para los nuevos campos
-  $('homeAdvantage').addEventListener('change', calculateAll);
-  $('formWeight').addEventListener('change', calculateAll);
-  $('dixonColesParam').addEventListener('change', calculateAll);
-  $('maxTeams').addEventListener('change', calculateAll);
-  $('formHome').addEventListener('change', calculateAll);
-  $('formAway').addEventListener('change', calculateAll);
+  try {
+    teamsByLeague = await fetchTeams();
+    const leagueCodes = Object.keys(teamsByLeague);
+    leagueCodes.forEach(code => { 
+      const opt = document.createElement('option'); 
+      opt.value = code; 
+      opt.textContent = leagueNames[code] || code; 
+      $('leagueSelect').appendChild(opt); 
+    });
+    const saved = localStorage.getItem('bankroll');
+    if(saved) $('bankroll').value = saved;
+    $('leagueSelect').addEventListener('change', onLeagueChange);
+    $('teamHome').addEventListener('change', ()=>fillTeamData($('teamHome').value, $('leagueSelect').value,'Home'));
+    $('teamAway').addEventListener('change', ()=>fillTeamData($('teamAway').value, $('leagueSelect').value,'Away'));
+    $('recalc').addEventListener('click', calculateAll);
+    $('reset').addEventListener('click', ()=>location.reload());
+    $('clearAll').addEventListener('click', clearAll);
+    $('saveBank').addEventListener('click', saveBankrollToStorage);
+    
+    // Event listeners para los nuevos campos
+    $('homeAdvantage').addEventListener('change', calculateAll);
+    $('formWeight').addEventListener('change', calculateAll);
+    $('dixonColesParam').addEventListener('change', calculateAll);
+    $('maxTeams').addEventListener('change', calculateAll);
+    $('formHome').addEventListener('change', calculateAll);
+    $('formAway').addEventListener('change', calculateAll);
+  } catch (err) {
+    console.error("Error en init:", err);
+    alert("Error al inicializar la aplicación. Por favor, recarga la página.");
+  }
 }
 document.addEventListener('DOMContentLoaded', init);
 

@@ -1,102 +1,88 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Selecciona una liga y un equipo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f4f4f9;
-    }
-    select, button {
-      font-size: 16px;
-      padding: 8px;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 300px;
-      display: block;
-    }
-    label {
-      font-size: 18px;
-      margin-bottom: 5px;
-      display: block;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecciona una liga y un equipo</title>
+<style>
+  body { font-family: Arial; margin: 20px; background: #f4f4f9; }
+  select, button { font-size: 16px; padding: 8px; margin: 10px 0; width: 100%; max-width: 300px; display: block; }
+  label { font-size: 18px; margin-bottom: 5px; display: block; }
+  h1 { text-align: center; color: #333; }
+</style>
 </head>
 <body>
-  <h1>Selecciona una liga y un equipo</h1>
+<h1>Selecciona una liga y un equipo</h1>
 
-  <label for="liga">Liga</label>
-  <select id="liga">
-    <option value="">Cargando ligas...</option>
-  </select>
+<label for="liga">Liga</label>
+<select id="liga">
+  <option value="">Cargando ligas...</option>
+</select>
 
-  <label for="equipo">Equipo</label>
-  <select id="equipo" disabled>
-    <option value="">Selecciona una liga primero</option>
-  </select>
+<label for="equipo">Equipo</label>
+<select id="equipo" disabled>
+  <option value="">Selecciona una liga primero</option>
+</select>
 
-  <button id="mostrar">Mostrar equipo seleccionado</button>
+<button id="mostrar">Mostrar equipo seleccionado</button>
 
-  <script>
-    const url = 'https://script.google.com/macros/s/AKfycbygCgQhk5YS2QyRLuVFsjlnrbq7Sw5SZCbWq12J614URhIg9jcgKoHVHSLlsyFpkmnQzQ/exec';
-    const selectLiga = document.getElementById('liga');
-    const selectEquipo = document.getElementById('equipo');
-    const botonMostrar = document.getElementById('mostrar');
+<script>
+const url = 'https://script.google.com/macros/s/AKfycbygCgQhk5YS2QyRLuVFsjlnrbq7Sw5SZCbWq12J614URhIg9jcgKoHVHSLlsyFpkmnQzQ/exec';
+const selectLiga = document.getElementById('liga');
+const selectEquipo = document.getElementById('equipo');
+const botonMostrar = document.getElementById('mostrar');
 
-    // Cargar ligas al cargar la página
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const ligas = Object.keys(data);
-        selectLiga.innerHTML = '<option value="">Selecciona una liga...</option>';
-        ligas.forEach(liga => {
-          const option = document.createElement('option');
-          option.value = liga;
-          option.textContent = liga;
-          selectLiga.appendChild(option);
-        });
-      })
-      .catch(error => {
-        console.error('Error al cargar las ligas:', error);
-        selectLiga.innerHTML = '<option value="">No se pudieron cargar las ligas</option>';
-      });
+let ligasData = {}; // variable global para guardar la respuesta
 
-    // Cargar equipos cuando se selecciona una liga
-    selectLiga.addEventListener('change', () => {
-      const ligaSeleccionada = selectLiga.value;
-      if (ligaSeleccionada) {
-        const equipos = Object.keys(data[ligaSeleccionada]);
-        selectEquipo.innerHTML = '<option value="">Selecciona un equipo...</option>';
-        equipos.forEach(equipo => {
-          const option = document.createElement('option');
-          option.value = equipo;
-          option.textContent = equipo;
-          selectEquipo.appendChild(option);
-        });
-        selectEquipo.disabled = false;
-      } else {
-        selectEquipo.innerHTML = '<option value="">Selecciona una liga primero</option>';
-        selectEquipo.disabled = true;
-      }
+// Cargar ligas al cargar la página
+fetch(url)
+  .then(response => response.json())
+  .then(data => {
+    ligasData = data; // guardamos la respuesta
+    const ligas = Object.keys(data);
+    selectLiga.innerHTML = '<option value="">Selecciona una liga...</option>';
+    ligas.forEach(liga => {
+      const option = document.createElement('option');
+      option.value = liga;
+      option.textContent = liga;
+      selectLiga.appendChild(option);
     });
+  })
+  .catch(error => {
+    console.error('Error al cargar las ligas:', error);
+    selectLiga.innerHTML = '<option value="">No se pudieron cargar las ligas</option>';
+  });
 
-    // Mostrar equipo seleccionado
-    botonMostrar.addEventListener('click', () => {
-      const liga = selectLiga.value;
-      const equipo = selectEquipo.value;
-      if (liga && equipo) {
-        alert(`Has seleccionado: ${equipo} de la liga ${liga}`);
-      } else {
-        alert('Por favor, selecciona una liga y un equipo.');
-      }
+// Cargar equipos cuando se selecciona una liga
+selectLiga.addEventListener('change', () => {
+  const ligaSeleccionada = selectLiga.value;
+  selectEquipo.innerHTML = '<option value="">Cargando equipos...</option>';
+  if (ligaSeleccionada && ligasData[ligaSeleccionada]) {
+    const equipos = Object.keys(ligasData[ligaSeleccionada]);
+    selectEquipo.innerHTML = '<option value="">Selecciona un equipo...</option>';
+    equipos.forEach(equipo => {
+      const option = document.createElement('option');
+      option.value = equipo;
+      option.textContent = equipo;
+      selectEquipo.appendChild(option);
     });
-  </script>
+    selectEquipo.disabled = false;
+  } else {
+    selectEquipo.innerHTML = '<option value="">Selecciona una liga primero</option>';
+    selectEquipo.disabled = true;
+  }
+});
+
+// Mostrar equipo seleccionado
+botonMostrar.addEventListener('click', () => {
+  const liga = selectLiga.value;
+  const equipo = selectEquipo.value;
+  if (liga && equipo) {
+    alert(`Has seleccionado: ${equipo} de la liga ${liga}`);
+  } else {
+    alert('Por favor, selecciona una liga y un equipo.');
+  }
+});
+</script>
 </body>
 </html>

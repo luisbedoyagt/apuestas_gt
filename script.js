@@ -41,20 +41,12 @@ function normalizeTeam(raw) {
 async function fetchTeams() {
   try {
     const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error(`Fetch falló: ${res.status} ${res.statusText}`);
+    if (!res.ok) throw new Error('fetch falló ' + res.status);
     const data = await res.json();
-    console.log('Datos recibidos de la API:', data); // Depuración
-    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-      throw new Error('Datos de la API vacíos o inválidos');
-    }
     const normalized = {};
     for (const key in data) { 
       const arr = data[key] || []; 
-      normalized[key] = arr.map(x => normalizeTeam(x)).filter(t => t && t.name); 
-      console.log(`Liga ${key}:`, normalized[key]); // Depuración
-    }
-    if (Object.keys(normalized).length === 0) {
-      throw new Error('No se encontraron ligas válidas en los datos');
+      normalized[key] = arr.map(x => normalizeTeam(x)); 
     }
     return normalized;
   } catch (err) { 
@@ -73,11 +65,6 @@ async function init() {
   try {
     teamsByLeague = await fetchTeams();
     const leagueCodes = Object.keys(teamsByLeague);
-    console.log('Códigos de ligas:', leagueCodes); // Depuración
-    if (leagueCodes.length === 0) {
-      alert('No se encontraron ligas para mostrar en el selector.');
-      return;
-    }
     leagueCodes.forEach(code => { 
       const opt = document.createElement('option'); 
       opt.value = code; 
@@ -99,6 +86,25 @@ async function init() {
     $('maxTeams').addEventListener('change', calculateAll);
     $('formHome').addEventListener('change', calculateAll);
     $('formAway').addEventListener('change', calculateAll);
+
+    // Ocultar secciones de Cuotas y Forma reciente al cargar
+    document.querySelector('.cuotas-section').style.display = 'none';
+    document.querySelector('.forma-reciente-title').style.display = 'none';
+    document.querySelector('.forma-reciente-section').style.display = 'none';
+
+    // Manejadores para botones de mostrar/ocultar
+    $('toggleCuotas').addEventListener('click', () => {
+      const section = document.querySelector('.cuotas-section');
+      section.style.display = section.style.display === 'none' ? 'block' : 'none';
+      $('toggleCuotas').textContent = section.style.display === 'none' ? 'Mostrar Cuotas' : 'Ocultar Cuotas';
+    });
+    $('toggleForma').addEventListener('click', () => {
+      const title = document.querySelector('.forma-reciente-title');
+      const section = document.querySelector('.forma-reciente-section');
+      title.style.display = section.style.display = section.style.display === 'none' ? 'block' : 'none';
+      section.style.display = title.style.display;
+      $('toggleForma').textContent = section.style.display === 'none' ? 'Mostrar Forma Reciente' : 'Ocultar Forma Reciente';
+    });
   } catch (err) {
     console.error("Error en init:", err);
     alert("Error al inicializar la aplicación. Por favor, recarga la página.");
@@ -108,24 +114,13 @@ document.addEventListener('DOMContentLoaded', init);
 
 function onLeagueChange() {
   const code = $('leagueSelect').value;
-  console.log('Liga seleccionada:', code); // Depuración
   $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
   $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!code || !teamsByLeague[code]) {
-    console.warn(`No se encontraron equipos para la liga ${code}`);
-    return;
-  }
+  if (!teamsByLeague[code]) return;
   teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); 
-    opt1.value = t.name; 
-    opt1.textContent = t.name; 
-    $('teamHome').appendChild(opt1);
-    const opt2 = document.createElement('option'); 
-    opt2.value = t.name; 
-    opt2.textContent = t.name; 
-    $('teamAway').appendChild(opt2);
+    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
+    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
   });
-  console.log(`Equipos cargados para ${code}:`, teamsByLeague[code]); // Depuración
 }
 
 function findTeam(leagueCode, teamName) {
@@ -185,8 +180,8 @@ function clearAll() {
   $('formWeight').value = 30;
   $('dixonColesParam').value = -0.13;
   $('maxTeams').value = 20;
-  $('formHome').value = '';
-  $('formAway').value = '';
+  $('formHome').value = '4-1-0';
+  $('formAway').value = '0-2-3';
 }
 
 function poissonPMF(lambda, k) { 
@@ -327,8 +322,6 @@ function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
 }
 
 function suggestBet(probObj, odds, bankroll) {
-  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
-  const maxEV = 0.5; // Umbral máximo de EV (50%)
   let bestBet = null;
   let maxEV = -Infinity;
   let bestStake = 0;
@@ -345,7 +338,7 @@ function suggestBet(probObj, odds, bankroll) {
   
   bets.forEach(bet => {
     const ev = bet.prob * bet.odds - 1;
-    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
+    if (ev > maxEV) {
       maxEV = ev;
       bestBet = bet.name;
       bestOdds = bet.odds;
@@ -407,7 +400,7 @@ function calculateAll() {
   
   $('suggestion').textContent = suggestion.bestBet 
     ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuestas con valor esperado confiable.';
+    : 'No hay apuesta con valor esperado positivo.';
   $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;

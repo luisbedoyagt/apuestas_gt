@@ -14,82 +14,50 @@
     </div>
 
    
-<!-- Banco & Cuotas Dinámicas -->
-<div class="grid">
-  <!-- Banco -->
-  <div class="card">
-    <h3>Banco mensual</h3>
-    <div class="table-like">
-      <div>
-        <label>Banca actual (Q)</label>
-        <input id="bankroll" type="number" value="1000" min="0" step="1"/>
-      </div>
-      <div>
-        <label>Guardar</label><br/>
-        <button id="saveBank" class="btn">Guardar banca</button>
-      </div>
+<!-- Cuotas Dinámicas -->
+<div class="card">
+  <h3>Cuotas 1X2 y otros mercados</h3>
+  <p class="small">Se actualizan automáticamente según tus probabilidades calculadas. Puedes ajustar manualmente.</p>
+
+  <div class="table-like">
+    <div>
+      <label>1X2 - Local</label>
+      <input id="oddsHome" type="number" step="0.01" min="1"/>
+      <span id="evHome" class="ev-indicator">EV: —</span>
     </div>
-    <div class="sep"></div>
-    <h4>Acciones</h4>
-    <div class="table-like button-group">
-      <div><button id="recalc" class="btn">Calcular</button></div>
-      <div><button id="reset" class="btn">Reset valores</button></div>
-      <div><button id="clearAll" class="btn">Resetear todo</button></div>
+    <div>
+      <label>1X2 - Empate</label>
+      <input id="oddsDraw" type="number" step="0.01" min="1"/>
+      <span id="evDraw" class="ev-indicator">EV: —</span>
     </div>
   </div>
 
-  <!-- Cuotas Dinámicas -->
-  <div class="card">
-    <h3>Cuotas 1X2 y otros mercados</h3>
-    <p class="small">Se actualizan automáticamente según tus probabilidades calculadas. Puedes ajustar manualmente.</p>
-
-    <div class="table-like">
-      <div>
-        <label>1X2 - Local</label>
-        <input id="oddsHome" type="number" value="1.40" step="0.01" min="1"/>
-        <span id="evHome" class="ev-indicator">EV: —</span>
-      </div>
-      <div>
-        <label>1X2 - Empate</label>
-        <input id="oddsDraw" type="number" value="4.50" step="0.01" min="1"/>
-        <span id="evDraw" class="ev-indicator">EV: —</span>
-      </div>
+  <div class="table-like" style="margin-top:8px">
+    <div>
+      <label>1X2 - Visitante</label>
+      <input id="oddsAway" type="number" step="0.01" min="1"/>
+      <span id="evAway" class="ev-indicator">EV: —</span>
     </div>
-
-    <div class="table-like" style="margin-top:8px">
-      <div>
-        <label>1X2 - Visitante</label>
-        <input id="oddsAway" type="number" value="8.00" step="0.01" min="1"/>
-        <span id="evAway" class="ev-indicator">EV: —</span>
-      </div>
-      <div>
-        <label>BTTS Sí</label>
-        <input id="oddsBTTS" type="number" value="2.10" step="0.01" min="1"/>
-        <span id="evBTTS" class="ev-indicator">EV: —</span>
-      </div>
+    <div>
+      <label>BTTS Sí</label>
+      <input id="oddsBTTS" type="number" step="0.01" min="1"/>
+      <span id="evBTTS" class="ev-indicator">EV: —</span>
     </div>
-
-    <div class="table-like" style="margin-top:8px">
-      <div>
-        <label>Over 2.5</label>
-        <input id="oddsOver25" type="number" value="1.80" step="0.01" min="1"/>
-        <span id="evO25" class="ev-indicator">EV: —</span>
-      </div>
-      <div></div>
-    </div>
-
-    <p class="small" style="margin-top:8px">
-      Consejo: los valores en verde indican apuestas con EV positivo según tu modelo.
-    </p>
   </div>
+
+  <div class="table-like" style="margin-top:8px">
+    <div>
+      <label>Over 2.5</label>
+      <input id="oddsOver25" type="number" step="0.01" min="1"/>
+      <span id="evO25" class="ev-indicator">EV: —</span>
+    </div>
+    <div></div>
+  </div>
+
+  <p class="small" style="margin-top:8px">
+    Consejo: los valores en verde indican apuestas con EV positivo según tu modelo.
+  </p>
 </div>
-
-<style>
-  .ev-indicator { font-size: 0.85em; margin-left: 5px; font-weight: bold; }
-  .ev-positive { color: green; }
-  .ev-negative { color: red; }
-</style>
-
 
 
     <!-- Selección equipos -->
@@ -259,4 +227,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 

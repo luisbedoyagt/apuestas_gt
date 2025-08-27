@@ -12,20 +12,11 @@ function parseNumberString(val) {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyJSLIE5WDQgrJX6-iMRFKEJ20GWpgFRWPEpkzF6P5XCJBbKUA6nny1j37k97Ycr5HntQ/exec";
 let teamsByLeague = {};
 const leagueNames = { 
-  "BL1": "Bundesliga", 
-  "DED": "Eredivisie", 
-  "BSA": "Campeonato Brasileiro", 
-  "PD": "Liga Española", 
-  "FL1": "Ligue 1", 
-  "ELC": "Championship", 
-  "PPL": "Primeira Liga", 
-  "EC": "European Championship", 
-  "SA": "Serie A", 
-  "PL": "Premier League" 
-  "WC": "FIFA World Cup", 
-  "CL": "UEFA Champions League"
+  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
+  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
+  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
+  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
 };
-
 function normalizeTeam(raw) {
   if (!raw) {
     console.warn('Datos de equipo nulos:', raw);
@@ -384,6 +375,7 @@ function calculateAll() {
     pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
   });
 }
+
 
 
 

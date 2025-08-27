@@ -37,20 +37,20 @@
       </div>
 
       <div class="card">
-        <h3>Cuotas</h3>
+        <h3>Cuotas (ingresa las reales del partido)</h3>
         <div class="table-like">
-          <div><label>1X2 - Local</label><input id="oddsHome" type="number" step="0.01" min="1" placeholder="Auto"/></div>
-          <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" step="0.01" min="1" placeholder="Auto"/></div>
+          <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="1.40" step="0.01" min="1"/></div>
+          <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="4.50" step="0.01" min="1"/></div>
         </div>
         <div class="table-like" style="margin-top:8px">
-          <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" step="0.01" min="1" placeholder="Auto"/></div>
-          <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" step="0.01" min="1" placeholder="Manual"/></div>
+          <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="8.00" step="0.01" min="1"/></div>
+          <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="2.10" step="0.01" min="1"/></div>
         </div>
         <div class="table-like" style="margin-top:8px">
-          <div><label>Over 2.5</label><input id="oddsOver25" type="number" step="0.01" min="1" placeholder="Manual"/></div>
+          <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="1.80" step="0.01" min="1"/></div>
           <div></div>
         </div>
-        <p class="small" style="margin-top:8px">Si dejas vacío, se calcula automáticamente la cuota justa.</p>
+        <p class="small" style="margin-top:8px">⚠️ Importante: revisa que las cuotas sean correctas antes de calcular.</p>
       </div>
     </div>
 
@@ -58,7 +58,73 @@
     <div class="grid" style="margin-top:12px">
       <div class="card">
         <h3>Equipos y estadísticas</h3>
-        <!-- aquí van tus inputs de equipos, GF/GC, posiciones, etc. (sin cambios) -->
+        <div class="table-like">
+          <div>
+            <label>Liga</label>
+            <select id="leagueSelect"><option value="">-- Selecciona liga --</option></select>
+          </div>
+        </div>
+
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Equipo Local</label>
+            <select id="teamHome"></select>
+          </div>
+          <div>
+            <label>Equipo Visitante</label>
+            <select id="teamAway"></select>
+          </div>
+        </div>
+
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Pos Local</label><input id="posHome" type="number" value="1" min="1" step="1"/>
+          </div>
+          <div>
+            <label>Pos Visitante</label><input id="posAway" type="number" value="20" min="1" step="1"/>
+          </div>
+        </div>
+
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>GF local</label><input id="gfHome" type="number" value="2.20" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>GC local</label><input id="gaHome" type="number" value="0.45" step="0.01" min="0"/>
+          </div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>GF visitante</label><input id="gfAway" type="number" value="0.63" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>GC visitante</label><input id="gaAway" type="number" value="1.58" step="0.01" min="0"/>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+        
+        <h4>Factores de Corrección</h4>
+        <div class="table-like">
+          <div>
+            <label>Ventaja local (+%)</label>
+            <input id="homeAdvantage" type="number" value="15" step="1" min="0" max="50"/>
+          </div>
+          <div>
+            <label>Peso forma reciente (%)</label>
+            <input id="formWeight" type="number" value="30" step="5" min="0" max="100"/>
+          </div>
+        </div>
+        <div class="table-like" style="margin-top:8px">
+          <div>
+            <label>Factor Dixon-Coles (ρ)</label>
+            <input id="dixonColesParam" type="number" value="-0.13" step="0.01" min="-0.5" max="0.5"/>
+          </div>
+          <div>
+            <label>Máx. equipos en liga</label>
+            <input id="maxTeams" type="number" value="20" step="1" min="10" max="30"/>
+          </div>
+        </div>
       </div>
 
       <!-- Resultados -->
@@ -74,10 +140,13 @@
         </div>
 
         <div class="sep"></div>
+        
         <div id="details" class="recs small"></div>
+
         <div class="suggest" id="suggestion" style="display:none"></div>
         
         <div class="sep"></div>
+        
         <div>
           <h4>Stake según Kelly</h4>
           <div class="table-like">
@@ -90,6 +159,11 @@
               <div class="stat-values" id="betAmount">—</div>
             </div>
           </div>
+        </div>
+
+        <div class="sep"></div>
+        <div class="abbrev">
+          <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · Stake = Monto sugerido
         </div>
       </div>
     </div>

@@ -3,14 +3,14 @@ name: Deploy static site to GitHub Pages
 on:
   push:
     branches:
-      - main   # cámbialo si tu rama no es main
+      - main   # Cambia si tu rama principal no es 'main'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Esto cancela despliegues anteriores si subes otro commit
+# Cancela despliegues anteriores si subes otro commit
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -28,7 +28,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./   # raíz del repo, donde tienes index.html
+          path: ./   # raíz del repo, donde está index.html, style.css y script.js
 
       - name: Deploy to GitHub Pages
         id: deployment

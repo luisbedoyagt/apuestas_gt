@@ -3,54 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Calculadora Apuestas Avanzada • Poisson + Mejoras</title>
+  <title>Calculadora de Probabilidades • Poisson + Mejoras</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Calculadora Apuestas Avanzada • Modelo Mejorado</h1>
+      <h1>Calculadora de Probabilidades • Modelo Mejorado</h1>
       <p class="small">Sistema mejorado con factores de corrección, forma reciente y modelo Dixon-Coles</p>
-    </div>
-
-    <!-- Banco & Cuotas -->
-    <div class="grid">
-      <div class="card">
-        <h3>Banco mensual</h3>
-        <div class="table-like">
-          <div>
-            <label>Banca actual (Q)</label>
-            <input id="bankroll" type="number" value="1000" min="0" step="1"/>
-          </div>
-          <div>
-            <label>Guardar</label><br/>
-            <button id="saveBank" class="btn">Guardar banca</button>
-          </div>
-        </div>
-        <div class="sep"></div>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button id="recalc" class="btn">Calcular</button>
-          <button id="reset" class="btn">Reset valores</button>
-          <button id="clearAll" class="btn">Resetear todo</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Cuotas</h3>
-        <div class="table-like">
-          <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="2.10" step="0.01" min="1"/></div>
-          <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="3.40" step="0.01" min="1"/></div>
-        </div>
-        <div class="table-like" style="margin-top:8px">
-          <div><label>1X2 - Visitante</label><input id="oddsAway" type="number" value="3.80" step="0.01" min="1"/></div>
-          <div><label>BTTS Sí</label><input id="oddsBTTS" type="number" value="1.90" step="0.01" min="1"/></div>
-        </div>
-        <div class="table-like" style="margin-top:8px">
-          <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="2.00" step="0.01" min="1"/></div>
-          <div></div>
-        </div>
-        <p class="small" style="margin-top:8px">Consejo: usa decimales. (Americana → decimal antes)</p>
-      </div>
     </div>
 
     <!-- Selección equipos -->
@@ -67,11 +27,11 @@
         <div class="table-like" style="margin-top:8px">
           <div>
             <label>Equipo Local</label>
-            <select id="teamHome"></select>
+            <select id="teamHome"><option value="">-- Selecciona equipo --</option></select>
           </div>
           <div>
             <label>Equipo Visitante</label>
-            <select id="teamAway"></select>
+            <select id="teamAway"><option value="">-- Selecciona equipo --</option></select>
           </div>
         </div>
 
@@ -125,7 +85,7 @@
         <div class="table-like">
           <div>
             <label>Ventaja local (+%)</label>
-            <input id="homeAdvantage" type="number" value="15" step="1" min="0" max="50"/>
+            <input id="homeAdvantage" type="number" value="10" step="1" min="0" max="50"/>
           </div>
           <div>
             <label>Peso forma reciente (%)</label>
@@ -156,18 +116,25 @@
             <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
           </div>
         </div>
+
+        <div class="sep"></div>
+
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button id="recalc" class="btn">Calcular</button>
+          <button id="reset" class="btn">Reset valores</button>
+          <button id="clearAll" class="btn">Resetear todo</button>
+        </div>
       </div>
 
       <!-- Resultados -->
       <div class="card">
-        <h3>Resultados & Recomendaciones</h3>
+        <h3>Probabilidades</h3>
         <div class="kpis" style="margin-top:6px">
           <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
           <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
           <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
           <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
           <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
-          <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
         </div>
 
         <div class="sep"></div>
@@ -196,27 +163,10 @@
         
         <div id="details" class="recs small"></div>
 
-        <div class="suggest" id="suggestion" style="display:none"></div>
-        
         <div class="sep"></div>
-        
-        <div>
-          <h4>Stake según Kelly</h4>
-          <div class="table-like">
-            <div class="stat-card">
-              <div class="stat-title">Stake recomendado</div>
-              <div class="stat-values" id="kellyStake">—%</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-title">Monto a apostar</div>
-              <div class="stat-values" id="betAmount">—</div>
-            </div>
-          </div>
-        </div>
 
-        <div class="sep"></div>
         <div class="abbrev">
-          <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos · Stake = Monto sugerido
+          <strong>Guía abreviaturas:</strong> PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos
         </div>
       </div>
     </div>
@@ -224,5 +174,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-

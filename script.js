@@ -52,8 +52,7 @@ async function fetchTeams() {
     for (const key in data) normalized[key] = (data[key] || []).map(x => normalizeTeam(x));
     return normalized;
   } catch (err) { 
-    console.error('Error fetching teams:', err); 
-    alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados.');
+    console.warn('No se pudieron cargar los datos de la API, usando datos mock.');
     return {
       "BSA": [
         { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46, form: "4-1-0" },
@@ -65,63 +64,46 @@ async function fetchTeams() {
 
 // Inicialización
 async function init() {
-  try {
-    teamsByLeague = await fetchTeams();
-    console.log("teamsByLeague:", teamsByLeague);
+  teamsByLeague = await fetchTeams();
+  Object.keys(teamsByLeague).forEach(code => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = leagueNames[code] || code;
+    $('leagueSelect').appendChild(opt);
+  });
+  const saved = localStorage.getItem('bankroll');
+  if (saved) $('bankroll').value = saved;
 
-    const leagueSelectEl = $('leagueSelect');
-    if (leagueSelectEl) {
-      Object.keys(teamsByLeague).forEach(code => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = leagueNames[code] || code;
-        leagueSelectEl.appendChild(opt);
-      });
-      leagueSelectEl.addEventListener('change', onLeagueChange);
-    }
+  $('leagueSelect').addEventListener('change', onLeagueChange);
+  $('teamHome').addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
+  $('teamAway').addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
+  $('recalc').addEventListener('click', calculateAll);
+  $('reset').addEventListener('click', () => location.reload());
+  $('clearAll').addEventListener('click', clearAll);
+  $('saveBank').addEventListener('click', saveBankrollToStorage);
 
-    const safeAddListener = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
-    safeAddListener('recalc', calculateAll);
-    safeAddListener('reset', () => location.reload());
-    safeAddListener('clearAll', clearAll);
-    safeAddListener('saveBank', saveBankrollToStorage);
-
-    ['homeAdvantage','formWeight','dixonColesParam','maxTeams','formHome','formAway'].forEach(id => {
-      const el = $(id);
-      if(el) el.addEventListener('change', calculateAll);
-    });
-
-    const saved = localStorage.getItem('bankroll');
-    if (saved && $('bankroll')) $('bankroll').value = saved;
-
-  } catch (err) {
-    console.error("Error en init:", err);
-    alert("Error al inicializar la aplicación.");
-  }
+  $('homeAdvantage').addEventListener('change', calculateAll);
+  $('formWeight').addEventListener('change', calculateAll);
+  $('dixonColesParam').addEventListener('change', calculateAll);
+  $('maxTeams').addEventListener('change', calculateAll);
+  $('formHome').addEventListener('change', calculateAll);
+  $('formAway').addEventListener('change', calculateAll);
 }
 
 document.addEventListener('DOMContentLoaded', init);
 
 // Manejo de selección de liga
 function onLeagueChange() {
-  const code = $('leagueSelect')?.value;
-  if (!code) return;
-  const homeSel = $('teamHome');
-  const awaySel = $('teamAway');
-  if (!homeSel || !awaySel) return;
-
-  homeSel.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  awaySel.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-
+  const code = $('leagueSelect').value;
+  $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
+  $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
   if (!teamsByLeague[code]) return;
-
   teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; homeSel.appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; awaySel.appendChild(opt2);
+    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
+    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
   });
 }
 
-// Buscar equipo
 function findTeam(leagueCode, teamName) {
   if (!teamsByLeague[leagueCode]) return null;
   return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
@@ -180,12 +162,11 @@ function clearAll() {
   $('formAway').value = '';
 }
 
-// Funciones matemáticas
+// Funciones matemáticas y de cálculo
 function poissonPMF(lambda, k) { if (k<0) return 0; return Math.pow(lambda,k)*Math.exp(-lambda)/factorial(k); }
 function factorial(n) { if (n<=1) return 1; let f=1; for(let i=2;i<=n;i++) f*=i; return f; }
 function clamp01(x){ return Math.max(0,Math.min(1,x)); }
 
-// Dixon-Coles
 function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
   if(lambdaHome<0.01||lambdaAway<0.01) return 1;
   const prob00 = poissonPMF(lambdaHome,0)*poissonPMF(lambdaAway,0)*(1-(lambdaHome*lambdaAway*rho));
@@ -197,7 +178,6 @@ function dixonColesAdjustment(lambdaHome, lambdaAway, rho) {
   return originalProbs>0 ? adjustedProbs/originalProbs : 1;
 }
 
-// Factor de fuerza mejorado
 function calculateStrengthFactor(posHome,posAway,maxTeams,pointsHome,pointsAway,gamesHome,gamesAway){
   if(!posHome||!posAway||!maxTeams||!pointsHome||!pointsAway||!gamesHome||!gamesAway) return 1;
   const normalizedHome=(maxTeams-posHome+1)/maxTeams;
@@ -208,7 +188,6 @@ function calculateStrengthFactor(posHome,posAway,maxTeams,pointsHome,pointsAway,
   return Math.sqrt(eloFactor);
 }
 
-// Factor de forma mejorado
 function calculateFormFactor(formHome,formAway,formWeight){
   if(!formHome||!formAway) return 1;
   const parseForm=f=>f.match(/\d+/g)?.map(x=>parseInt(x))||[0,0,0];
@@ -222,18 +201,17 @@ function calculateFormFactor(formHome,formAway,formWeight){
   return 1+(formFactor-1)*weight;
 }
 
-// Cálculo de probabilidades
 function computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway, gamesHome, gamesAway){
-  const homeAdvFactor=1+(parseNumberString($('homeAdvantage')?.value)/100);
-  const posHome=parseNumberString($('posHome')?.value);
-  const posAway=parseNumberString($('posAway')?.value);
-  const maxTeams=parseNumberString($('maxTeams')?.value);
+  const homeAdvFactor=1+(parseNumberString($('homeAdvantage').value)/100);
+  const posHome=parseNumberString($('posHome').value);
+  const posAway=parseNumberString($('posAway').value);
+  const maxTeams=parseNumberString($('maxTeams').value);
   const strengthFactor=calculateStrengthFactor(posHome,posAway,maxTeams,pointsHome,pointsAway,gamesHome,gamesAway);
-  const formHome=$('formHome')?.value;
-  const formAway=$('formAway')?.value;
-  const formWeight=parseNumberString($('formWeight')?.value);
+  const formHome=$('formHome').value;
+  const formAway=$('formAway').value;
+  const formWeight=parseNumberString($('formWeight').value);
   const recentFormFactor=calculateFormFactor(formHome,formAway,formWeight);
-  const rho=parseNumberString($('dixonColesParam')?.value);
+  const rho=parseNumberString($('dixonColesParam').value);
   const dixonColesFactor=dixonColesAdjustment(lambdaHome,lambdaAway,rho);
 
   $('homeAdvantageFactor').textContent=formatDec(homeAdvFactor)+'x';
@@ -273,7 +251,6 @@ function computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway, games
   return {pHome:clamp01(pHome),pDraw:clamp01(pDraw),pAway:clamp01(pAway),pBTTS:clamp01(pBTTS),pO25:clamp01(pO25)};
 }
 
-// Kelly stake
 function calculateKellyStake(probability,odds,bankroll,kellyFraction=0.5){
   const b=odds-1;
   const p=probability;
@@ -283,7 +260,6 @@ function calculateKellyStake(probability,odds,bankroll,kellyFraction=0.5){
   return {stakePercent:fractionalStake*100,amount:bankroll*fractionalStake};
 }
 
-// Sugerencia de apuesta
 function suggestBet(probObj,odds,bankroll,kellyFraction=parseNumberString($('kellyFraction')?.value||0.5),maxEV=parseNumberString($('maxEV')?.value||0.5)){
   const minProb=0.01;
   let bestBet=null,maxEvFound=-Infinity,bestStake=0,bestAmount=0,bestOdds=0;
@@ -310,23 +286,23 @@ function suggestBet(probObj,odds,bankroll,kellyFraction=parseNumberString($('kel
 
 // Función principal
 function calculateAll(){
-  const lambdaHome=parseNumberString($('gfHome')?.value);
-  const lambdaAway=parseNumberString($('gfAway')?.value);
-  const bankroll=parseNumberString($('bankroll')?.value);
+  const lambdaHome=parseNumberString($('gfHome').value);
+  const lambdaAway=parseNumberString($('gfAway').value);
+  const bankroll=parseNumberString($('bankroll').value);
   if(lambdaHome<=0 || lambdaAway<=0 || bankroll<=0){ alert('Ingrese valores válidos para goles y banca.'); return; }
 
   const odds={
-    oddsHome:toDecimalOdds($('oddsHome')?.value),
-    oddsDraw:toDecimalOdds($('oddsDraw')?.value),
-    oddsAway:toDecimalOdds($('oddsAway')?.value),
-    oddsBTTS:toDecimalOdds($('oddsBTTS')?.value),
-    oddsOver25:toDecimalOdds($('oddsOver25')?.value)
+    oddsHome:toDecimalOdds($('oddsHome').value),
+    oddsDraw:toDecimalOdds($('oddsDraw').value),
+    oddsAway:toDecimalOdds($('oddsAway').value),
+    oddsBTTS:toDecimalOdds($('oddsBTTS').value),
+    oddsOver25:toDecimalOdds($('oddsOver25').value)
   };
 
   if(odds.oddsHome<1||odds.oddsDraw<1||odds.oddsAway<1||odds.oddsBTTS<1||odds.oddsOver25<1){ alert('Las cuotas deben ser > 1.0'); return; }
 
-  const teamHome=findTeam($('leagueSelect')?.value,$('teamHome')?.value);
-  const teamAway=findTeam($('leagueSelect')?.value,$('teamAway')?.value);
+  const teamHome=findTeam($('leagueSelect').value,$('teamHome').value);
+  const teamAway=findTeam($('leagueSelect').value,$('teamAway').value);
   const pointsHome=teamHome?teamHome.points:0;
   const pointsAway=teamAway?teamAway.points:0;
   const gamesHome=teamHome?teamHome.pj:1;
@@ -348,7 +324,7 @@ function calculateAll(){
   $('suggestion').style.display=suggestion.bestBet?'block':'none';
 
   $('details').innerHTML=`<div><strong>Detalles del cálculo:</strong></div>
-    <div>• Lambda Local ajustado: ${formatDec(lambdaHome*(parseNumberString($('homeAdvantage')?.value)/100+1))}</div>
+    <div>• Lambda Local ajustado: ${formatDec(lambdaHome*(parseNumberString($('homeAdvantage').value)/100+1))}</div>
     <div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>
     <div>• Valor Esperado (EV) máximo: ${formatPct(suggestion.ev)}</div>`;
 }

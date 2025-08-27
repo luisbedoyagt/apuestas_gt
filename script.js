@@ -147,6 +147,8 @@ function clearTeamData(type) {
   $('pAway').textContent = '—';
   $('pBTTS').textContent = '—';
   $('pO25').textContent = '—';
+  $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
+  $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
   $('homeAdvantageFactor').textContent = '—';
   $('strengthFactor').textContent = '—';
   $('dixonColesFactor').textContent = '—';
@@ -184,6 +186,9 @@ function fillTeamData(teamName, leagueCode, type) {
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
     $('pAway').parentElement.querySelector('.small').textContent = `Probabilidad: ${t.name}`;
   }
+  $('pDraw').parentElement.querySelector('.small').textContent = 'Probabilidad: Empate';
+  $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
+  $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
 
   // Solo calcular si ambos equipos están seleccionados
   const teamHome = $('teamHome').value;
@@ -206,6 +211,9 @@ function clearAll() {
   ['formHomeTeam', 'formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
   ['formHomeBox', 'formAwayBox'].forEach(id => $(id).textContent = 'PJ: — | G: — | E: — | P: —');
   ['pHome', 'pAway'].forEach(id => $(id).parentElement.querySelector('.small').textContent = 'Probabilidad: —');
+  $('pDraw').parentElement.querySelector('.small').textContent = 'Probabilidad: Empate';
+  $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
+  $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
   $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
 }
 

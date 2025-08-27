@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyJSLIE5WDQgrJX6-iMRFKEJ20GWpgFRWPEpkzF6P5XCJBbKUA6nny1j37k97Ycr5HntQ/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "BL1": "Bundesliga", 
@@ -384,6 +384,7 @@ function calculateAll() {
     pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
   });
 }
+
 
 
 

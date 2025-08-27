@@ -212,78 +212,85 @@ function computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway,gamesH
   $('recentFormFactor').textContent=formatDec(formFactor)+'x';
   $('dixonColesFactor').textContent=formatDec(dcFactor)+'x';
 
-  return {pHome, pDraw, pAway, pBTTS, pO25};
+  return {pHome,pDraw,pAway,pBTTS,pO25};
+}
+
+function calculateKellyStake(probability,odds,bankroll,kellyFraction=0.5){
+  const b=odds-1, p=probability, q=1-p;
+  const ideal=(b*p-q)/b;
+  const frac=Math.max(0,ideal)*kellyFraction;
+  return {stakePercent:frac*100, amount:bankroll*frac};
 }
 
 // -----------------------------------------------------------
-// Kelly y sugerencia
-function calculateKellyStake(prob,odds,bankroll,kellyFraction=0.5){
-  const b=odds-1, p=prob, q=1-p;
-  const ideal=(b*p-q)/b;
-  const fractional=Math.max(0,ideal)*kellyFraction;
-  return {stakePercent:fractional*100, amount:bankroll*fractional};
-}
+// NUEVA FUNCION SUGERIDA PARA APUESTAS
+function suggestBet(probObj, odds, bankroll) {
+  const minProbThreshold = 0.25;  // Probabilidad mínima
+  const minEdge = 0.1;            // Margen mínimo sobre cuota implícita
+  let bestBet = null, bestOdds = 0, bestStake = 0, bestAmount = 0, maxEV = -Infinity;
 
-function suggestBet(probObj,odds,bankroll,kellyFraction=0.5,maxEV=0.5){
-  const minProbThreshold=0.15;
-  let bestBet=null,maxEvFound=-Infinity,bestStake=0,bestAmount=0,bestOdds=0;
-  const bets=[
-    {name:'Local',prob:probObj.pHome,odds:odds.oddsHome},
-    {name:'Empate',prob:probObj.pDraw,odds:odds.oddsDraw},
-    {name:'Visitante',prob:probObj.pAway,odds:odds.oddsAway},
-    {name:'BTTS Sí',prob:probObj.pBTTS,odds:odds.oddsBTTS},
-    {name:'Over 2.5',prob:probObj.pO25,odds:odds.oddsOver25}
+  const bets = [
+    { name:'Local', prob:probObj.pHome, odds:odds.oddsHome },
+    { name:'Empate', prob:probObj.pDraw, odds:odds.oddsDraw },
+    { name:'Visitante', prob:probObj.pAway, odds:odds.oddsAway },
+    { name:'BTTS Sí', prob:probObj.pBTTS, odds:odds.oddsBTTS },
+    { name:'Over 2.5', prob:probObj.pO25, odds:odds.oddsOver25 }
   ];
+
   bets.forEach(bet=>{
-    const evAdj=bet.prob-1/bet.odds;
-    const ev=bet.prob*bet.odds-1;
-    if(bet.prob>=minProbThreshold && evAdj>maxEvFound && ev<=maxEV){
-      maxEvFound=evAdj;
-      bestBet=bet.name;
-      bestOdds=bet.odds;
-      const kelly=calculateKellyStake(bet.prob,bet.odds,bankroll,kellyFraction);
-      bestStake=kelly.stakePercent;
-      bestAmount=kelly.amount;
+    if(bet.prob<minProbThreshold) return;
+    const impliedOdds = 1/bet.prob;
+    if(bet.odds < impliedOdds*(1+minEdge)) return;
+
+    let kellyFraction = bet.prob<0.3?0.3:0.5;
+    const ev = bet.prob*bet.odds-1;
+    if(ev>maxEV){
+      maxEV=ev; bestBet=bet.name; bestOdds=bet.odds;
+      const kelly = calculateKellyStake(bet.prob,bet.odds,bankroll,kellyFraction);
+      bestStake=kelly.stakePercent; bestAmount=kelly.amount;
     }
   });
-  return {bestBet, stakePercent:bestStake, amount:bestAmount, ev:maxEvFound, odds:bestOdds};
+
+  return {bestBet,stakePercent:bestStake,amount:bestAmount,ev:maxEV,odds:bestOdds};
 }
 
 // -----------------------------------------------------------
-// Función principal
+// CALCULO COMPLETO
 function calculateAll(){
-  const lambdaHome=parseNumberString($('gfHome').value);
-  const lambdaAway=parseNumberString($('gfAway').value);
+  const lambdaHome=parseNumberString($('gfHome').value), lambdaAway=parseNumberString($('gfAway').value);
   const bankroll=parseNumberString($('bankroll').value);
-  if(lambdaHome<=0 || lambdaAway<=0 || bankroll<=0){ alert('Ingrese valores válidos'); return; }
+  if(lambdaHome<=0||lambdaAway<=0||bankroll<=0){ alert('Ingrese valores válidos'); return; }
 
-  const odds={
-    oddsHome:toDecimalOdds($('oddsHome').value),
-    oddsDraw:toDecimalOdds($('oddsDraw').value),
-    oddsAway:toDecimalOdds($('oddsAway').value),
-    oddsBTTS:toDecimalOdds($('oddsBTTS').value),
-    oddsOver25:toDecimalOdds($('oddsOver25').value)
+  const odds = {
+    oddsHome: toDecimalOdds($('oddsHome').value),
+    oddsDraw: toDecimalOdds($('oddsDraw').value),
+    oddsAway: toDecimalOdds($('oddsAway').value),
+    oddsBTTS: toDecimalOdds($('oddsBTTS').value),
+    oddsOver25: toDecimalOdds($('oddsOver25').value)
   };
 
-  const teamHome=findTeam($('leagueSelect').value,$('teamHome').value);
-  const teamAway=findTeam($('leagueSelect').value,$('teamAway').value);
-  const pointsHome=teamHome?teamHome.points:0;
-  const pointsAway=teamAway?teamAway.points:0;
-  const gamesHome=teamHome?teamHome.pj:1;
-  const gamesAway=teamAway?teamAway.pj:1;
+  const teamHome = findTeam($('leagueSelect').value,$('teamHome').value);
+  const teamAway = findTeam($('leagueSelect').value,$('teamAway').value);
+  const pointsHome=teamHome?teamHome.points:0, pointsAway=teamAway?teamAway.points:0;
+  const gamesHome=teamHome?teamHome.pj:1, gamesAway=teamAway?teamAway.pj:1;
 
-  const probs=computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway,gamesHome,gamesAway);
+  const probs = computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway,gamesHome,gamesAway);
   $('pHome').textContent=formatPct(probs.pHome);
   $('pDraw').textContent=formatPct(probs.pDraw);
   $('pAway').textContent=formatPct(probs.pAway);
   $('pBTTS').textContent=formatPct(probs.pBTTS);
   $('pO25').textContent=formatPct(probs.pO25);
 
-  const suggestion=suggestBet(probs,odds,bankroll);
+  const suggestion = suggestBet(probs,odds,bankroll);
   $('expectedBest').textContent=suggestion.bestBet||'Ninguna';
   $('kellyStake').textContent=formatDec(suggestion.stakePercent)+'%';
   $('betAmount').textContent='Q'+formatDec(suggestion.amount);
-
-  $('suggestion').textContent=suggestion.bestBet?`Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`:'Ninguna apuesta sugerida';
-  $('suggestion').style.display='block';
+  
+  $('suggestion').textContent=suggestion.bestBet?`Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`:'No hay apuestas confiables';
+  $('suggestion').style.display=suggestion.bestBet?'block':'none';
+  
+  $('details').innerHTML=`<div><strong>Detalles del cálculo:</strong></div>
+    <div>• Lambda Local ajustado: ${formatDec(lambdaHome*(1+parseNumberString($('homeAdvantage').value)/100))}</div>
+    <div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>
+    <div>• EV máximo: ${formatPct(suggestion.ev)}</div>`;
 }

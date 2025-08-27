@@ -133,12 +133,14 @@ function clearTeamData(type) {
     $('gaHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
     $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
+    $('pHome').parentElement.querySelector('.small').textContent = 'Probabilidad: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
     $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
+    $('pAway').parentElement.querySelector('.small').textContent = 'Probabilidad: —';
   }
   $('pHome').textContent = '—';
   $('pDraw').textContent = '—';
@@ -173,12 +175,14 @@ function fillTeamData(teamName, leagueCode, type) {
     $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '—';
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
+    $('pHome').parentElement.querySelector('.small').textContent = `Probabilidad: ${t.name}`;
   } else {
     $('posAway').value = t.pos || '—';
     $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '—';
     $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '—';
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
+    $('pAway').parentElement.querySelector('.small').textContent = `Probabilidad: ${t.name}`;
   }
 
   // Solo calcular si ambos equipos están seleccionados
@@ -201,6 +205,7 @@ function clearAll() {
   });
   ['formHomeTeam', 'formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
   ['formHomeBox', 'formAwayBox'].forEach(id => $(id).textContent = 'PJ: — | G: — | E: — | P: —');
+  ['pHome', 'pAway'].forEach(id => $(id).parentElement.querySelector('.small').textContent = 'Probabilidad: —');
   $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
 }
 
@@ -348,7 +353,7 @@ function calculateAll() {
   const teamHome = findTeam(leagueCode, teamHomeName);
   const teamAway = findTeam(leagueCode, teamAwayName);
   const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamHome.points : 0;
+  const pointsAway = teamAway ? teamAway.points : 0;
 
   const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode);
   $('pHome').textContent = formatPct(probs.pHome);

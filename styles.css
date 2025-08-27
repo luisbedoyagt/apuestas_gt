@@ -30,7 +30,7 @@ h3 {
 
 h4 {
   font-size: 14px;
-  margin: 8px 0 4px;
+  margin: 8px 0 12px; /* Aumentado de 4px a 12px para más espacio debajo de Local/Visitante */
   color: #e0e0e0;
 }
 
@@ -51,7 +51,7 @@ p.small, div.small {
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px; /* Aumentado para más espacio entre local y visitante */
+  gap: 12px;
 }
 
 .table-like {
@@ -64,23 +64,23 @@ label {
   font-size: 12px;
   color: #e0e0e0;
   display: block;
-  margin-bottom: 4px; /* Aumentado para más espacio */
+  margin-bottom: 4px;
 }
 
 input, select {
   width: 100%;
   padding: 5px;
-  border: 1px solid #4dabf7; /* Borde sutil para más diseño */
+  border: 1px solid #4dabf7;
   border-radius: 3px;
   font-size: 12px;
   box-sizing: border-box;
-  background: #2c2c2c; /* Fondo más contrastado */
+  background: #2c2c2c;
   color: #e0e0e0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra ligera para resaltar */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 input:focus, select:focus {
-  border-color: #74c0fc; /* Cambio al pasar el foco */
+  border-color: #74c0fc;
   outline: none;
 }
 
@@ -98,6 +98,7 @@ input:focus, select:focus {
   color: #fff;
   font-size: 12px;
   cursor: pointer;
+  margin-bottom: 12px; /* Aumentado de 0 a 12px para más espacio debajo de botones */
 }
 
 .btn:hover {
@@ -113,7 +114,7 @@ input:focus, select:focus {
 .kpis-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px; /* Aumentado para que no se salgan */
+  gap: 4px;
   justify-content: center;
 }
 
@@ -133,7 +134,7 @@ input:focus, select:focus {
   box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   position: relative;
   transition: background 0.3s ease;
-  box-sizing: border-box; /* Asegura que no se salga */
+  box-sizing: border-box;
 }
 
 .tile:hover {
@@ -277,20 +278,20 @@ input:focus, select:focus {
 }
 
 .stat-card {
-  background: #333; /* Fondo más contrastado */
-  border-radius: 8px; /* Bordes más redondeados */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* Sombra más marcada */
-  padding: 12px; /* Más padding para un look pro */
-  margin-bottom: 8px;
+  background: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  padding: 12px;
+  margin-bottom: 12px; /* Aumentado de 8px a 12px para más espacio entre tarjetas */
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border-left: 4px solid; /* Borde lateral más grueso */
+  border-left: 4px solid;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px); /* Efecto lift al pasar el ratón */
+  transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.6);
 }
 
@@ -304,12 +305,12 @@ input:focus, select:focus {
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 8px; /* Más espacio entre icono y texto */
+  gap: 8px;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 .stat-title::before {
-  width: 12px; /* Icono más grande */
+  width: 12px;
   height: 12px;
   border-radius: 50%;
   background: #74c0fc;
@@ -325,16 +326,17 @@ input:focus, select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  background: #2c2c2c; /* Fondo más claro */
+  background: #2c2c2c;
   padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid #4a4a4a;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+  margin-bottom: 8px; /* Añadido espacio debajo de PJ: | G: | E: | P: */
 }
 
 .stat-values span {
   padding: 4px 6px;
-  background: #3a3a3a; /* Fondo para opciones */
+  background: #3a3a3a;
   border-radius: 3px;
   border: 1px solid #5a5a5a;
   cursor: pointer;
@@ -440,7 +442,7 @@ input:focus, select:focus {
 
   h4 {
     font-size: 12px;
-    margin: 8px 0 4px;
+    margin: 8px 0 12px; /* Aumentado a 12px también en móvil */
   }
 
   .card {
@@ -475,6 +477,7 @@ input:focus, select:focus {
   .btn {
     padding: 4px 8px;
     font-size: 11px;
+    margin-bottom: 12px; /* Aumentado a 12px también en móvil */
   }
 
   .kpis-row {
@@ -545,6 +548,7 @@ input:focus, select:focus {
     font-size: 12px;
     padding: 3px 6px;
     gap: 4px;
+    margin-bottom: 8px; /* Añadido espacio también en móvil */
   }
 
   .stat-values span {

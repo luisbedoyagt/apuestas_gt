@@ -220,8 +220,11 @@ input:focus, select:focus {
 }
 
 .tile div.small {
-  font-size: 13px;
+  font-size: 12px;
   color: #e0e0e0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .correction-factors {

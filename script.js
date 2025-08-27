@@ -46,7 +46,7 @@ async function fetchTeams() {
     }
     return normalized;
   } catch (err) {
-    $('details').innerHTML = '<div><strong>Error:</strong> No se pudieron cargar los datos de la API.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API.</div>';
     return {};
   }
 }
@@ -58,7 +58,7 @@ async function init() {
   const teamAwaySelect = $('teamAway');
 
   if (!leagueSelect || !teamHomeSelect || !teamAwaySelect) {
-    $('details').innerHTML = '<div><strong>Error:</strong> Problema con la interfaz.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Problema con la interfaz.</div>';
     return;
   }
 
@@ -71,8 +71,16 @@ async function init() {
   });
 
   leagueSelect.addEventListener('change', onLeagueChange);
-  teamHomeSelect.addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
-  teamAwaySelect.addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
+  teamHomeSelect.addEventListener('change', () => {
+    if (restrictSameTeam()) {
+      fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home');
+    }
+  });
+  teamAwaySelect.addEventListener('change', () => {
+    if (restrictSameTeam()) {
+      fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away');
+    }
+  });
   $('recalc').addEventListener('click', calculateAll);
   $('reset').addEventListener('click', clearAll);
 
@@ -87,7 +95,7 @@ function onLeagueChange() {
   teamHomeSelect.innerHTML = '<option value="">-- Selecciona equipo --</option>';
   teamAwaySelect.innerHTML = '<option value="">-- Selecciona equipo --</option>';
   if (!code || !teamsByLeague[code]) {
-    $('details').innerHTML = '<div><strong>Error:</strong> No hay equipos disponibles para la liga seleccionada.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No hay equipos disponibles para la liga seleccionada.</div>';
     return;
   }
   teamsByLeague[code].forEach(t => {
@@ -100,6 +108,47 @@ function onLeagueChange() {
     opt2.textContent = t.name;
     teamAwaySelect.appendChild(opt2);
   });
+}
+
+function restrictSameTeam() {
+  const teamHome = $('teamHome').value;
+  const teamAway = $('teamAway').value;
+  if (teamHome && teamAway && teamHome === teamAway) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No puedes seleccionar el mismo equipo para local y visitante.</div>';
+    if (document.activeElement === $('teamHome')) {
+      $('teamHome').value = '';
+    } else {
+      $('teamAway').value = '';
+    }
+    clearTeamData(document.activeElement === $('teamHome') ? 'Home' : 'Away');
+    return false;
+  }
+  return true;
+}
+
+function clearTeamData(type) {
+  if (type === 'Home') {
+    $('posHome').value = '—';
+    $('gfHome').value = '—';
+    $('gaHome').value = '—';
+    $('formHomeTeam').textContent = 'Local: —';
+    $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
+  } else {
+    $('posAway').value = '—';
+    $('gfAway').value = '—';
+    $('gaAway').value = '—';
+    $('formAwayTeam').textContent = 'Visitante: —';
+    $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
+  }
+  $('pHome').textContent = '—';
+  $('pDraw').textContent = '—';
+  $('pAway').textContent = '—';
+  $('pBTTS').textContent = '—';
+  $('pO25').textContent = '—';
+  $('homeAdvantageFactor').textContent = '—';
+  $('strengthFactor').textContent = '—';
+  $('dixonColesFactor').textContent = '—';
+  $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
 }
 
 function findTeam(leagueCode, teamName) {
@@ -125,7 +174,9 @@ function fillTeamData(teamName, leagueCode, type) {
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
-  calculateAll();
+  if (restrictSameTeam()) {
+    calculateAll();
+  }
 }
 
 function clearAll() {
@@ -193,7 +244,7 @@ function calculateHomeAdvantage(leagueCode) {
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
-    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Valores de goles inválidos.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -222,7 +273,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 
   const total = pHome + pDraw + pAway;
   if (total <= 0) {
-    $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
 
@@ -256,6 +307,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 }
 
 function calculateAll() {
+  if (!restrictSameTeam()) return;
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
@@ -263,13 +315,13 @@ function calculateAll() {
   const teamAwayName = $('teamAway').value || 'Visitante';
 
   if (!leagueCode) {
-    $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
     return;
   }
 
   if (lambdaHome <= 0 || lambdaAway <= 0) {
-    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Valores de goles inválidos.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
     return;
   }

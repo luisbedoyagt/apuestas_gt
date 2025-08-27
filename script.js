@@ -12,7 +12,7 @@ function parseNumberString(val) {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
-  -- Selecciona liga --
+  "Selecciona una liga"
   "WC": "FIFA World Cup", 
   "CL": "UEFA Champions League", 
   "BL1": "Bundesliga", 
@@ -385,4 +385,5 @@ function calculateAll() {
     pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
   });
 }
+
 

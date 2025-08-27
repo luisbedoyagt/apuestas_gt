@@ -1,7 +1,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 12px;
   background-color: #1a1a1a;
   color: #e0e0e0;
 }
@@ -13,29 +13,29 @@ body {
 
 .header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 h1 {
-  font-size: 24px;
+  font-size: 22px;
   margin: 0;
   color: #fff;
 }
 
 h3 {
   font-size: 18px;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   color: #fff;
 }
 
 h4 {
-  font-size: 16px;
-  margin: 12px 0 6px;
+  font-size: 15px;
+  margin: 10px 0 6px;
   color: #e0e0e0;
 }
 
 p.small, div.small {
-  font-size: 12px;
+  font-size: 11px;
   color: #e0e0e0;
 }
 
@@ -43,37 +43,25 @@ p.small, div.small {
   background: #2c2c2c;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid #3a3a3a;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+  gap: 12px;
 }
 
 .table-like {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-@media (max-width: 480px) {
-  .table-like {
-    grid-template-columns: 1fr;
-  }
+  gap: 6px;
 }
 
 label {
-  font-size: 14px;
+  font-size: 13px;
   color: #e0e0e0;
   display: block;
   margin-bottom: 4px;
@@ -81,10 +69,10 @@ label {
 
 input, select {
   width: 100%;
-  padding: 8px;
+  padding: 6px;
   border: 1px solid #4a4a4a;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   box-sizing: border-box;
   background: #333;
   color: #e0e0e0;
@@ -98,16 +86,16 @@ input:focus, select:focus {
 .sep {
   height: 1px;
   background: #4a4a4a;
-  margin: 12px 0;
+  margin: 10px 0;
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
   background: #4dabf7;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
 }
 
@@ -118,13 +106,13 @@ input:focus, select:focus {
 .kpis {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .kpis-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
 }
 
@@ -134,10 +122,10 @@ input:focus, select:focus {
 
 .tile {
   flex: 1;
-  min-width: 120px;
-  max-width: 200px;
+  width: 100%;
+  max-width: 180px;
   text-align: center;
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
   background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
   border: 2px solid #4a4a4a;
@@ -157,8 +145,8 @@ input:focus, select:focus {
 .tile:nth-child(1)::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -172,8 +160,8 @@ input:focus, select:focus {
 .tile:nth-child(2)::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -187,8 +175,8 @@ input:focus, select:focus {
 .tile:nth-child(3)::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -202,8 +190,8 @@ input:focus, select:focus {
 .tile:nth-child(4)::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -217,8 +205,8 @@ input:focus, select:focus {
 .tile:nth-child(5)::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -240,26 +228,26 @@ input:focus, select:focus {
 
 .correction-factors {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 6px;
 }
 
 .correction-factor {
   display: flex;
   justify-content: space-between;
-  padding: 8px;
+  padding: 6px;
   border-radius: 4px;
   background: #333;
   border: 1px solid #4a4a4a;
 }
 
 .correction-factor .label {
-  font-size: 12px;
+  font-size: 11px;
   color: #a0a0a0;
 }
 
 .correction-factor .value {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   color: #fff;
 }
@@ -272,17 +260,17 @@ input:focus, select:focus {
 .recs .error {
   color: #fff;
   background: #ff4444;
-  padding: 10px;
+  padding: 8px;
   border-radius: 6px;
   border: 2px solid #ff6666;
   box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 15px rgba(255, 68, 68, 0.3);
   animation: pulse 1.5s ease-in-out infinite;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 
 .recs .error strong {
-  font-size: 16px;
+  font-size: 14px;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
@@ -290,12 +278,12 @@ input:focus, select:focus {
   background: #3a3a3a;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-  padding: 14px;
+  padding: 10px;
   margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-left: 5px solid;
+  gap: 8px;
+  border-left: 4px solid;
   border-color: #4dabf7;
 }
 
@@ -304,20 +292,20 @@ input:focus, select:focus {
 }
 
 .stat-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .stat-title::before {
   content: '';
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #74c0fc;
 }
@@ -327,13 +315,13 @@ input:focus, select:focus {
 }
 
 .stat-values {
-  font-size: 17px;
+  font-size: 15px;
   color: #f0f0f0;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   background: #4a4a4a;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid #5a5a5a;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
@@ -341,36 +329,36 @@ input:focus, select:focus {
 
 .stat-values span {
   display: inline-block;
-  padding: 4px 8px;
+  padding: 4px 6px;
   background: #4a4a4a;
   border-radius: 4px;
   border: 1px solid #5a5a5a;
 }
 
 .stat-legend {
-  font-size: 14px;
+  font-size: 13px;
   color: #f0f0f0;
   background: #444;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid #74c0fc;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-align: center;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
 }
 
 .bet-slip {
   background: linear-gradient(135deg, #00f4ff, #ff00ff);
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 12px;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
   color: #fff;
   font-weight: bold;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 0 15px rgba(0, 244, 255, 0.5), 0 0 25px rgba(255, 0, 255, 0.3);
+  gap: 6px;
+  box-shadow: 0 0 12px rgba(0, 244, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3);
   animation: float 2s ease-in-out infinite, fadeIn 0.5s ease-out;
   position: relative;
   overflow: hidden;
@@ -378,34 +366,34 @@ input:focus, select:focus {
 
 .bet-slip::before {
   content: '⚡️';
-  font-size: 24px;
+  font-size: 20px;
   color: #ffeb3b;
   position: absolute;
-  top: -12px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
   animation: blink 1.5s infinite;
   background: linear-gradient(135deg, #00f4ff, #ff00ff);
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 4px;
-  box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+  box-shadow: 0 0 8px rgba(255, 235, 59, 0.7);
 }
 
 .bet-slip p {
-  margin: 24px 0 0 0;
-  font-size: 18px;
+  margin: 20px 0 0 0;
+  font-size: 16px;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   text-align: center;
 }
 
 .bet-slip p strong {
-  font-size: 24px;
+  font-size: 20px;
   color: #ffeb3b;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-4px); }
 }
 
 @keyframes fadeIn {
@@ -420,21 +408,77 @@ input:focus, select:focus {
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 15px rgba(255, 68, 68, 0.3); }
-  50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 68, 68, 0.9), 0 0 20px rgba(255, 68, 68, 0.5); }
+  50% { transform: scale(1.02); box-shadow: 0 0 12px rgba(255, 68, 68, 0.9), 0 0 18px rgba(255, 68, 68, 0.5); }
 }
 
 @media (max-width: 768px) {
+  body {
+    padding: 8px;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .header {
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  h4 {
+    font-size: 14px;
+    margin: 8px 0 4px;
+  }
+
+  .card {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .table-like {
     grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  label {
+    font-size: 12px;
+  }
+
+  input, select {
+    padding: 5px;
+    font-size: 12px;
+  }
+
+  .sep {
+    margin: 8px 0;
+  }
+
+  .btn {
+    padding: 5px 10px;
+    font-size: 12px;
   }
 
   .kpis-row {
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .tile {
-    min-width: 100px;
-    max-width: 150px;
+    width: 100%;
+    max-width: none;
     padding: 8px;
   }
 
@@ -444,59 +488,83 @@ input:focus, select:focus {
 
   .tile div.small {
     font-size: 10px;
+    line-height: 1.3;
   }
 
   .tile::before {
     width: 8px;
     height: 8px;
-    top: 6px;
-    left: 6px;
+    top: 5px;
+    left: 5px;
   }
 
-  .bet-slip {
-    padding: 12px;
+  .correction-factors {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
-  .bet-slip p {
-    font-size: 16px;
+  .correction-factor {
+    padding: 5px;
   }
 
-  .bet-slip p strong {
-    font-size: 20px;
-  }
-
-  .bet-slip::before {
-    font-size: 20px;
-    top: -10px;
+  .correction-factor .label, .correction-factor .value {
+    font-size: 10px;
   }
 
   .recs .error {
+    padding: 6px;
     font-size: 12px;
   }
 
   .recs .error strong {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .stat-card {
-    padding: 12px;
+    padding: 8px;
   }
 
   .stat-title {
-    font-size: 16px;
-  }
-
-  .stat-values {
-    font-size: 15px;
+    font-size: 14px;
+    gap: 6px;
   }
 
   .stat-title::before {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .stat-values {
+    font-size: 14px;
+    padding: 5px 8px;
+    gap: 6px;
+  }
+
+  .stat-values span {
+    padding: 3px 5px;
   }
 
   .stat-legend {
-    font-size: 13px;
-    padding: 6px 10px;
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  .bet-slip {
+    padding: 10px;
+  }
+
+  .bet-slip p {
+    font-size: 14px;
+    margin: 16px 0 0 0;
+  }
+
+  .bet-slip p strong {
+    font-size: 18px;
+  }
+
+  .bet-slip::before {
+    font-size: 18px;
+    top: -8px;
+    padding: 2px 5px;
   }
 }

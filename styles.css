@@ -112,7 +112,7 @@ input:focus, select:focus {
 .kpis-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px; /* Reducido de 6px */
+  gap: 4px;
   justify-content: center;
 }
 
@@ -123,13 +123,13 @@ input:focus, select:focus {
 .tile {
   flex: 1;
   width: 100%;
-  max-width: 140px; /* Reducido de 160px */
+  max-width: 140px;
   text-align: center;
-  padding: 6px; /* Reducido de 8px */
-  border-radius: 3px; /* Reducido de 4px */
+  padding: 6px;
+  border-radius: 3px;
   background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
   border: 1px solid #4a4a4a;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.4); /* Reducido de 0 2px 4px */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   position: relative;
   transition: background 0.3s ease;
 }
@@ -145,10 +145,10 @@ input:focus, select:focus {
 .tile:nth-child(1)::before {
   content: '';
   position: absolute;
-  top: 3px; /* Reducido de 4px */
-  left: 3px; /* Reducido de 4px */
-  width: 6px; /* Reducido de 8px */
-  height: 6px; /* Reducido de 8px */
+  top: 3px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #4dabf7;
 }
@@ -214,16 +214,16 @@ input:focus, select:focus {
 }
 
 .tile strong {
-  font-size: 14px; /* Reducido de 16px */
+  font-size: 14px;
   color: #f0f0f0;
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.4); /* Sombra más ligera */
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .tile div.small {
-  font-size: 9px; /* Reducido de 10px */
+  font-size: 9px;
   color: #e0e0e0;
   white-space: normal;
-  line-height: 1.1; /* Reducido de 1.2 */
+  line-height: 1.1;
 }
 
 .correction-factors {
@@ -465,28 +465,31 @@ input:focus, select:focus {
 
   .kpis-row {
     flex-direction: column;
-    gap: 3px; /* Reducido de 4px */
+    gap: 3px;
   }
 
   .tile {
     width: 100%;
     max-width: none;
-    padding: 5px; /* Reducido de 6px */
+    padding: 5px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
 
   .tile strong {
-    font-size: 12px; /* Reducido de 14px */
+    font-size: 12px;
   }
 
   .tile div.small {
-    font-size: 8px; /* Reducido de 9px */
+    font-size: 8px;
   }
 
   .tile::before {
-    width: 5px; /* Reducido de 6px */
-    height: 5px; /* Reducido de 6px */
-    top: 2px; /* Reducido de 3px */
-    left: 2px; /* Reducido de 3px */
+    width: 5px;
+    height: 5px;
+    top: 2px;
+    left: 2px;
+    border-radius: 50%;
   }
 
   .correction-factors {

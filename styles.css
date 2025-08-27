@@ -232,3 +232,27 @@ input:focus, select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.bet-slip {
+  background: #00a650; /* Verde Bet365 */
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.bet-slip::before {
+  content: '✓';
+  font-size: 24px;
+  color: #fff;
+}
+
+.bet-slip p {
+  margin: 0;
+  font-size: 16px;
+}

@@ -1,5 +1,3 @@
-tengo este java scrip, el que esta asociado a un html y un css, el cual estan bien configurados, dime que descifras en este codigo
-
 console.log("Script.js cargado correctamente");
 
 const $ = id => document.getElementById(id);

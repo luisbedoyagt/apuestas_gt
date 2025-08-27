@@ -168,11 +168,20 @@ input:focus, select:focus {
 }
 
 .recs .error {
-  color: #f87171;
-  background: #2c2c2c;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #4a4a4a;
+  color: #fff;
+  background: #ff4444;
+  padding: 10px;
+  border-radius: 6px;
+  border: 2px solid #ff6666;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 15px rgba(255, 68, 68, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+  font-size: 14px;
+  text-align: center;
+}
+
+.recs .error strong {
+  font-size: 16px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
 .stat-card {
@@ -288,6 +297,11 @@ input:focus, select:focus {
   50% { opacity: 0.3; }
 }
 
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 15px rgba(255, 68, 68, 0.3); }
+  50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 68, 68, 0.9), 0 0 20px rgba(255, 68, 68, 0.5); }
+}
+
 @media (max-width: 768px) {
   .table-like {
     grid-template-columns: 1fr;
@@ -308,5 +322,13 @@ input:focus, select:focus {
   .bet-slip::before {
     font-size: 20px;
     top: -10px;
+  }
+
+  .recs .error {
+    font-size: 12px;
+  }
+
+  .recs .error strong {
+    font-size: 14px;
   }
 }

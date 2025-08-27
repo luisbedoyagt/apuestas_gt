@@ -7,14 +7,24 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx1SCm1ggmvcpXSTVDG9WLVFrmw44eTv4gKnPIoN1qG9kBjs2IzRACHaABc3GPvpxTXaw/exec";
 let teamsByLeague = {};
 const leagueNames = {
-  "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga",
-  "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española",
-  "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga",
-  "EC": "European Championship", "SA": "Serie A", "PL": "Premier League"
-};
+  "esp.1": "LaLiga_España",
+  "mex.1": "LigaMX",
+  "usa.1": "MLS",
+  "gua.1": "Guatemala",
+  "crc.1": "CostaRica",
+  "hon.1": "Honduras",
+  "ita.1": "SerieA",
+  "ger.1": "Bundesliga_Alemania",
+  "fra.1": "Ligue1_Francia",
+  "ned.1": "Eredivisie_PaisesBajos",
+  "eng.1": "PremierLeague_Inglaterra",
+  "por.1": "Portugal",
+  "uefa.champions": "ChampionsLeague",
+  "uefa.europa": "EuropaLeague",
+  "br
 
 function normalizeTeam(raw) {
   if (!raw) return null;
@@ -391,3 +401,4 @@ function calculateAll() {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
+

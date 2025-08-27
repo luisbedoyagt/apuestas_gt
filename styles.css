@@ -227,32 +227,72 @@ input:focus, select:focus {
   border: 1px solid #4a4a4a;
 }
 
-@media (max-width: 768px) {
-  .table-like {
-    grid-template-columns: 1fr;
-  }
-}
-
 .bet-slip {
-  background: #00a650; /* Verde Bet365 */
-  border-radius: 8px;
-  padding: 12px;
+  background: linear-gradient(135deg, #00f4ff, #ff00ff); /* Gradiente neón */
+  border-radius: 12px;
+  padding: 16px;
   margin-top: 12px;
   color: #fff;
   font-weight: bold;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 0 15px rgba(0, 244, 255, 0.5), 0 0 25px rgba(255, 0, 255, 0.3); /* Sombra neón */
+  animation: float 2s ease-in-out infinite, fadeIn 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
 }
 
 .bet-slip::before {
-  content: '✓';
+  content: '⚡️'; /* Icono de rayo */
   font-size: 24px;
-  color: #fff;
+  color: #ffeb3b; /* Amarillo neón */
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  animation: blink 1.5s infinite;
 }
 
 .bet-slip p {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.bet-slip p strong {
+  font-size: 24px; /* % de acierto más grande */
+  color: #ffeb3b; /* Amarillo neón para destacar */
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 768px) {
+  .table-like {
+    grid-template-columns: 1fr;
+  }
+
+  .bet-slip {
+    padding: 12px;
+  }
+
+  .bet-slip p {
+    font-size: 16px;
+  }
+
+  .bet-slip p strong {
+    font-size: 20px;
+  }
 }

@@ -29,15 +29,16 @@ function normalizeTeam(raw) {
     console.warn('Equipo sin nombre válido:', raw);
     return null;
   }
-  r.pos = raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || null;
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for']);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] || raw['goals_against']);
-  r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches']);
-  r.g = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w);
-  r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn);
-  r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l);
+  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || raw['Pos'] || raw['POS'] || 0);
+  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.goals_for || raw.GF || raw['GF'] || raw['goals'] || raw['goals_for'] || 0);
+  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.goals_against || raw.GC || raw['GC'] || raw['goals_against'] || 0);
+  r.pj = parseNumberString(raw.PJ || raw.pj || raw.played || raw.playedGames || raw.matches || raw['Matches'] || raw['matches'] || 0);
+  r.g = parseNumberString(raw.G || raw.g || raw.won || raw.W || raw.w || 0);
+  r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn || 0);
+  r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l || 0);
   r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
-  r.form = raw.form || raw.Form || null;
+  r.form = raw.form || raw.Form || `${r.g || 0}-${r.e || 0}-${r.p || 0}`;
+  console.log('Equipo normalizado:', r);
   return r;
 }
 
@@ -139,26 +140,33 @@ function findTeam(leagueCode, teamName) {
 }
 
 function fillTeamData(teamName, leagueCode, type) {
-  if (!teamName) return;
+  if (!teamName || !leagueCode) {
+    console.warn('teamName o leagueCode vacíos:', { teamName, leagueCode });
+    return;
+  }
   const t = findTeam(leagueCode, teamName);
-  if (!t) return;
+  if (!t) {
+    console.warn(`Equipo no encontrado: ${teamName} en liga ${leagueCode}`);
+    return;
+  }
 
   const formString = t.form || `${t.g || 0}-${t.e || 0}-${t.p || 0}`;
   if (type === 'Home') {
     $('posHome').value = t.pos || '';
-    $('gfHome').value = Number.isFinite(t.gf) && t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaHome').value = Number.isFinite(t.ga) && t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
+    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
+    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
     $('formHome').value = formString;
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   } else {
     $('posAway').value = t.pos || '';
-    $('gfAway').value = Number.isFinite(t.gf) && t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaHome').value = Number.isFinite(t.ga) && t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
+    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
+    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
     $('formAway').value = formString;
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
+  console.log(`fillTeamData ${type}:`, { teamName, formString, pos: t.pos, gf: t.gf, ga: t.ga, pj: t.pj });
   calculateAll();
 }
 
@@ -174,10 +182,11 @@ function clearAll() {
   });
   $('formHome').value = '';
   $('formAway').value = '';
+  console.log('clearAll ejecutado');
 }
 
 function poissonPMF(lambda, k) { 
-  if (k < 0) return 0;
+  if (k < 0 || !isFinite(lambda) || lambda < 0) return 0;
   return Math.pow(lambda, k) * Math.exp(-lambda) / factorial(k); 
 }
 
@@ -191,8 +200,11 @@ function factorial(n) {
 function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 
 function dixonColesAdjustment(lambdaHome, lambdaAway) {
-  const rho = -0.15; // Valor fijo basado en estudios típicos
-  if (lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
+  const rho = -0.15;
+  if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) {
+    console.warn('Valores inválidos para Dixon-Coles:', { lambdaHome, lambdaAway });
+    return 1;
+  }
   const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
   const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
   const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
@@ -208,19 +220,23 @@ function dixonColesAdjustment(lambdaHome, lambdaAway) {
 
 function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway) {
   const maxTeams = teamsByLeague[leagueCode]?.length || 20;
-  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) return 1;
+  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) {
+    console.warn('Datos insuficientes para strengthFactor:', { posHome, posAway, maxTeams, pointsHome, pointsAway });
+    return 1;
+  }
   const normalizedHome = (maxTeams - posHome + 1) / maxTeams;
   const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
   const ppgHome = pointsHome / ($('gfHome').value || 1);
   const ppgAway = pointsAway / ($('gfAway').value || 1);
   const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0);
+  const strengthFactor = Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0);
+  console.log('strengthFactor calculado:', { posHome, posAway, maxTeams, pointsHome, pointsAway, strengthFactor });
+  return strengthFactor;
 }
 
 function calculateFormFactor(formHome, formAway) {
-  if (!formHome || !formAway) return 1;
-  if (!formHome.match(/^\d+-\d+-\d+$/) || !formAway.match(/^\d+-\d+$/)) {
-    console.warn("Formato de forma reciente inválido. Usando factor 1.");
+  if (!formHome || !formAway || !formHome.match(/^\d+-\d+-\d+$/) || !formAway.match(/^\d+-\d+$/)) {
+    console.warn("Formato de forma reciente inválido. Usando factor 1.", { formHome, formAway });
     return 1;
   }
   try {
@@ -228,10 +244,15 @@ function calculateFormFactor(formHome, formAway) {
     const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
     const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL || 1);
     const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL || 1);
-    if (awayPpg === 0) return 1;
+    if (awayPpg === 0) {
+      console.warn('awayPpg es 0, usando factor 1');
+      return 1;
+    }
     const formFactor = homePpg / awayPpg;
-    const weight = 0.3; // Peso fijo
-    return Math.min(Math.max(1 + (formFactor - 1) * weight, 0.5), 2.0);
+    const weight = 0.3;
+    const result = Math.min(Math.max(1 + (formFactor - 1) * weight, 0.5), 2.0);
+    console.log('formFactor calculado:', { formHome, formAway, homePpg, awayPpg, formFactor, result });
+    return result;
   } catch (e) {
     console.error("Error parsing form data:", e);
     return 1;
@@ -240,13 +261,16 @@ function calculateFormFactor(formHome, formAway) {
 
 function calculateHomeAdvantage(leagueCode) {
   const teams = teamsByLeague[leagueCode] || [];
-  const avgGoals = teams.reduce((sum, t) => sum + (t.gf / t.pj || 0), 0) / (teams.length || 1);
-  return 1 + (avgGoals * 0.1); // Aumentar 10% del promedio de goles
+  const avgGoals = teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / (teams.length || 1);
+  const factor = 1 + (avgGoals * 0.1);
+  console.log('homeAdvantageFactor calculado:', { leagueCode, avgGoals, factor });
+  return isFinite(factor) ? factor : 1.1;
 }
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
-  if (lambdaHome <= 0 || lambdaAway <= 0) {
+  if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
     console.warn('Lambdas inválidos:', { lambdaHome, lambdaAway });
+    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -284,6 +308,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const total = pHome + pDraw + pAway;
   if (total <= 0) {
     console.warn('Suma de probabilidades inválida:', total);
+    $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   
@@ -323,15 +348,28 @@ function calculateAll() {
   const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
 
+  if (!leagueCode) {
+    console.warn('Liga no seleccionada');
+    alert('Por favor, selecciona una liga.');
+    $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
+    return;
+  }
+
   if (lambdaHome <= 0 || lambdaAway <= 0) {
+    console.warn('Goles inválidos:', { lambdaHome, lambdaAway });
     alert('Por favor, ingrese valores válidos para goles.');
+    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     return;
   }
 
   const teamHome = findTeam(leagueCode, $('teamHome').value);
   const teamAway = findTeam(leagueCode, $('teamAway').value);
   const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamHome.points : 0;
+  const pointsAway = teamAway ? teamAway.points : 0;
+
+  console.log('calculateAll inputs:', {
+    lambdaHome, lambdaAway, leagueCode, teamHome: teamHome?.name, teamAway: teamAway?.name, pointsHome, pointsAway
+  });
 
   const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode);
   $('pHome').textContent = formatPct(probs.pHome);
@@ -343,6 +381,9 @@ function calculateAll() {
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;
   details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * calculateHomeAdvantage(leagueCode))}</div>`;
   details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
-  
   $('details').innerHTML = details;
+
+  console.log('Resultados actualizados:', {
+    pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
+  });
 }

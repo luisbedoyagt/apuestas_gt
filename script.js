@@ -157,9 +157,15 @@ function findTeam(leagueCode, teamName) {
 }
 
 function fillTeamData(teamName, leagueCode, type) {
-  if (!teamName || !leagueCode) return;
+  if (!teamName || !leagueCode) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y un equipo.</div>';
+    return;
+  }
   const t = findTeam(leagueCode, teamName);
-  if (!t) return;
+  if (!t) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipo no encontrado.</div>';
+    return;
+  }
 
   if (type === 'Home') {
     $('posHome').value = t.pos || '—';
@@ -174,8 +180,15 @@ function fillTeamData(teamName, leagueCode, type) {
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
-  if (restrictSameTeam()) {
+
+  // Solo calcular si ambos equipos están seleccionados
+  const teamHome = $('teamHome').value;
+  const teamAway = $('teamAway').value;
+  if (teamHome && teamAway && restrictSameTeam()) {
     calculateAll();
+  } else {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+    $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
 
@@ -320,8 +333,14 @@ function calculateAll() {
     return;
   }
 
+  if (!teamHomeName || !teamAwayName) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+    $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
+    return;
+  }
+
   if (lambdaHome <= 0 || lambdaAway <= 0) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Valores de goles inválidos.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
     return;
   }

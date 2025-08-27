@@ -110,23 +110,14 @@ async function init() {
     $('reset').addEventListener('click', () => location.reload());
     $('clearAll').addEventListener('click', clearAll);
 
-    // Seleccionar una liga y equipos por defecto para inicializar
-    if (leagueCodes.length > 0) {
-      leagueSelect.value = leagueCodes[0]; // Seleccionar la primera liga
-      onLeagueChange(); // Llenar equipos
-      if (teamsByLeague[leagueCodes[0]]?.length >= 2) {
-        teamHomeSelect.value = teamsByLeague[leagueCodes[0]][0].name;
-        teamAwaySelect.value = teamsByLeague[leagueCodes[0]][1].name;
-        fillTeamData(teamHomeSelect.value, leagueCodes[0], 'Home');
-        fillTeamData(teamAwaySelect.value, leagueCodes[0], 'Away');
-        calculateAll(); // Calcular probabilidades iniciales
-      }
-    }
+    // Resetear todos los campos al iniciar
+    clearAll();
   } catch (err) {
     console.error("Error en init:", err);
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Error al inicializar. Selecciona una liga para continuar.</div>';
     }
+    clearAll(); // Asegurar estado limpio incluso si hay error
   }
 }
 document.addEventListener('DOMContentLoaded', init);
@@ -194,6 +185,7 @@ function clearAll() {
     if (el) el.textContent = id.includes('form') ? 
       (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
+  $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   console.log('clearAll ejecutado');
 }
 

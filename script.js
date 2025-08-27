@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
@@ -17,6 +17,7 @@ const leagueNames = {
   "FL1": "Ligue 1", "ELC": "Championship", "PPL": "Primeira Liga", 
   "EC": "European Championship", "SA": "Serie A", "PL": "Premier League" 
 };
+
 function normalizeTeam(raw) {
   if (!raw) {
     console.warn('Datos de equipo nulos:', raw);
@@ -36,7 +37,6 @@ function normalizeTeam(raw) {
   r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn || 0);
   r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l || 0);
   r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
-  console.log('Equipo normalizado:', r);
   return r;
 }
 
@@ -77,7 +77,12 @@ async function init() {
     teamsByLeague = await fetchTeams();
     const leagueCodes = Object.keys(teamsByLeague);
     console.log('Ligas disponibles:', leagueCodes);
-
+    if (leagueCodes.length === 0) {
+      if ($('details')) {
+        $('details').innerHTML = '<div><strong>Error:</strong> No se encontraron ligas para mostrar.</div>';
+      }
+      return;
+    }
     const leagueSelect = $('leagueSelect');
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
@@ -164,14 +169,14 @@ function fillTeamData(teamName, leagueCode, type) {
 
   if (type === 'Home') {
     $('posHome').value = t.pos || '';
-    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '1.0';
-    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '1.0';
+    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
+    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   } else {
     $('posAway').value = t.pos || '';
-    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '1.0';
-    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '1.0';
+    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
+    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
@@ -252,9 +257,7 @@ function calculateHomeAdvantage(leagueCode) {
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
     console.warn('Lambdas inválidos:', { lambdaHome, lambdaAway });
-    if ($('details')) {
-      $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
-    }
+    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -288,9 +291,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const total = pHome + pDraw + pAway;
   if (total <= 0) {
     console.warn('Suma de probabilidades inválida:', total);
-    if ($('details')) {
-      $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
-    }
+    $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   
@@ -326,26 +327,22 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 }
 
 function calculateAll() {
-  let lambdaHome = parseNumberString($('gfHome').value);
-  let lambdaAway = parseNumberString($('gfAway').value);
+  const lambdaHome = parseNumberString($('gfHome').value);
+  const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
-
-  // Usar valores predeterminados si los inputs están vacíos
-  if (!isFinite(lambdaHome) || lambdaHome <= 0) {
-    console.warn('lambdaHome inválido, usando 1.0:', lambdaHome);
-    lambdaHome = 1.0;
-    $('gfHome').value = '1.0';
-  }
-  if (!isFinite(lambdaAway) || lambdaAway <= 0) {
-    console.warn('lambdaAway inválido, usando 1.0:', lambdaAway);
-    lambdaAway = 1.0;
-    $('gfAway').value = '1.0';
-  }
 
   if (!leagueCode) {
     console.warn('Liga no seleccionada');
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
+    }
+    return;
+  }
+
+  if (lambdaHome <= 0 || lambdaAway <= 0) {
+    console.warn('Goles inválidos:', { lambdaHome, lambdaAway });
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     }
     return;
   }
@@ -374,13 +371,21 @@ function calculateAll() {
   console.log('Resultados actualizados:', {
     pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
   });
+
+  // Recomendación de apuesta con % de acierto
+  const recommendations = [
+    { name: 'Local', prob: probs.pHome },
+    { name: 'Empate', prob: probs.pDraw },
+    { name: 'Visitante', prob: probs.pAway },
+    { name: 'BTTS Sí', prob: probs.pBTTS },
+    { name: 'Over 2.5', prob: probs.pO25 }
+  ];
+
+  const maxProb = Math.max(...recommendations.map(r => r.prob));
+  if (maxProb > 0) {
+    const bestRecommendation = recommendations.find(r => r.prob === maxProb);
+    $('suggestion').innerHTML = `<p>Recomendación: ${bestRecommendation.name} - ${formatPct(bestRecommendation.prob)} de acierto</p>`;
+  } else {
+    $('suggestion').innerHTML = '<p>No hay recomendación disponible.</p>';
+  }
 }
-
-
-
-
-
-
-
-
-

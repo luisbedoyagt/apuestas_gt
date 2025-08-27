@@ -161,8 +161,8 @@ function clearAll() {
   $('formWeight').value = 30;
   $('dixonColesParam').value = -0.13;
   $('maxTeams').value = 20;
-  $('formHome').value = '4-1-0';
-  $('formAway').value = '0-2-3';
+  $('formHome').value = '';
+  $('formAway').value = '';
 }
 
 function poissonPMF(lambda, k) { 
@@ -303,6 +303,8 @@ function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
 }
 
 function suggestBet(probObj, odds, bankroll) {
+  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
+  const maxEV = 0.5; // Umbral máximo de EV (50%)
   let bestBet = null;
   let maxEV = -Infinity;
   let bestStake = 0;
@@ -319,7 +321,7 @@ function suggestBet(probObj, odds, bankroll) {
   
   bets.forEach(bet => {
     const ev = bet.prob * bet.odds - 1;
-    if (ev > maxEV) {
+    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
       maxEV = ev;
       bestBet = bet.name;
       bestOdds = bet.odds;
@@ -381,7 +383,7 @@ function calculateAll() {
   
   $('suggestion').textContent = suggestion.bestBet 
     ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuesta con valor esperado positivo.';
+    : 'No hay apuestas con valor esperado confiable.';
   $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;

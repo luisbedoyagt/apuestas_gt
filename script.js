@@ -161,8 +161,8 @@ function clearAll() {
   $('formWeight').value = 30;
   $('dixonColesParam').value = -0.13;
   $('maxTeams').value = 20;
-  $('formHome').value = '';
-  $('formAway').value = '';
+  $('formHome').value = '4-1-0';
+  $('formAway').value = '0-2-3';
 }
 
 function poissonPMF(lambda, k) { 
@@ -201,7 +201,7 @@ function calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsA
   const ppgHome = pointsHome / ($('gfHome').value || 1); // Evitar división por cero
   const ppgAway = pointsAway / ($('gfAway').value || 1);
   const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0); // Limitar entre 0.5 y 2.0
+  return Math.sqrt(eloFactor); // Suavizar el factor
 }
 
 function calculateFormFactor(formHome, formAway, formWeight) {
@@ -218,7 +218,7 @@ function calculateFormFactor(formHome, formAway, formWeight) {
     if (awayPpg === 0) return 1;
     const formFactor = homePpg / awayPpg;
     const weight = formWeight / 100;
-    return Math.min(Math.max(1 + (formFactor - 1) * weight, 0.5), 2.0); // Limitar entre 0.5 y 2.0
+    return 1 + (formFactor - 1) * weight;
   } catch (e) {
     console.error("Error parsing form data:", e);
     return 1;
@@ -226,10 +226,6 @@ function calculateFormFactor(formHome, formAway, formWeight) {
 }
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
-  if (lambdaHome <= 0 || lambdaAway <= 0) {
-    console.warn('Lambdas inválidos:', { lambdaHome, lambdaAway });
-    return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
-  }
   const homeAdvantageFactor = 1 + (parseNumberString($('homeAdvantage').value) / 100);
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
@@ -248,11 +244,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
   $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
   
   const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.1); // Límite inferior ajustado a 0.1
-  
-  console.log('computeProbabilities:', {
-    lambdaHome, lambdaAway, adjHome, adjAway, homeAdvantageFactor, strengthFactor, recentFormFactor, dixonColesFactor
-  }); // Depuración
+  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.05); // Límite inferior más estricto
   
   let pHome = 0, pDraw = 0, pAway = 0;
   const maxGoals = 8;
@@ -266,14 +258,11 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
   }
   
   const total = pHome + pDraw + pAway;
-  if (total <= 0) {
-    console.warn('Suma de probabilidades inválida:', total);
-    return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
+  if (total > 0) {
+    pHome /= total;
+    pDraw /= total;
+    pAway /= total;
   }
-  
-  pHome /= total;
-  pDraw /= total;
-  pAway /= total;
   
   let pBTTS = 0;
   for (let i = 1; i <= maxGoals; i++) {
@@ -290,8 +279,6 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
       }
     }
   }
-  
-  console.log('Probabilidades calculadas:', { pHome, pDraw, pAway, pBTTS, pO25 }); // Depuración
   
   return {
     pHome: clamp01(pHome),
@@ -316,8 +303,6 @@ function calculateKellyStake(probability, odds, bankroll, kellyFraction = 0.5) {
 }
 
 function suggestBet(probObj, odds, bankroll) {
-  const minProb = 0.01; // Umbral mínimo de probabilidad (1%)
-  const maxEV = 0.5; // Umbral máximo de EV (50%)
   let bestBet = null;
   let maxEV = -Infinity;
   let bestStake = 0;
@@ -334,7 +319,7 @@ function suggestBet(probObj, odds, bankroll) {
   
   bets.forEach(bet => {
     const ev = bet.prob * bet.odds - 1;
-    if (bet.prob >= minProb && ev > maxEV && ev <= maxEV) {
+    if (ev > maxEV) {
       maxEV = ev;
       bestBet = bet.name;
       bestOdds = bet.odds;
@@ -396,7 +381,7 @@ function calculateAll() {
   
   $('suggestion').textContent = suggestion.bestBet 
     ? `Apuesta sugerida → ${suggestion.bestBet} (Cuota: ${formatDec(suggestion.odds)}): ${formatDec(suggestion.stakePercent)}% de tu banca (EV: ${formatPct(suggestion.ev)})`
-    : 'No hay apuestas con valor esperado confiable.';
+    : 'No hay apuesta con valor esperado positivo.';
   $('suggestion').style.display = suggestion.bestBet ? 'block' : 'none';
   
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;

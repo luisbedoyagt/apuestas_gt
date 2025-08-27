@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
@@ -380,3 +380,4 @@ function calculateAll() {
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   }
 }
+

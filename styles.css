@@ -349,61 +349,52 @@ input:focus, select:focus {
 }
 
 .bet-slip {
-  background: linear-gradient(135deg, #00f4ff, #ff00ff);
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 10px;
-  color: #fff;
-  font-weight: bold;
+  background: #333;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 8px;
+  color: #e0e0e0;
+  font-weight: 500;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 0 12px rgba(0, 244, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3);
-  animation: float 2s ease-in-out infinite, fadeIn 0.5s ease-out;
+  gap: 4px;
+  border: 1px solid #4dabf7;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   position: relative;
   overflow: hidden;
 }
 
 .bet-slip::before {
-  content: '⚡️';
-  font-size: 20px;
-  color: #ffeb3b;
+  content: '★';
+  font-size: 14px;
+  color: #4dabf7;
   position: absolute;
-  top: -10px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  animation: blink 1.5s infinite;
-  background: linear-gradient(135deg, #00f4ff, #ff00ff);
-  padding: 3px 6px;
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(255, 235, 59, 0.7);
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
 .bet-slip p {
-  margin: 20px 0 0 0;
-  font-size: 16px;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  margin: 14px 0 0 0;
+  font-size: 14px;
   text-align: center;
 }
 
 .bet-slip p strong {
-  font-size: 20px;
-  color: #ffeb3b;
+  font-size: 16px;
+  color: #4dabf7;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-3px); }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
 }
 
 @keyframes pulse {
@@ -550,21 +541,21 @@ input:focus, select:focus {
   }
 
   .bet-slip {
-    padding: 10px;
+    padding: 8px;
   }
 
   .bet-slip p {
-    font-size: 14px;
-    margin: 16px 0 0 0;
+    font-size: 13px;
+    margin: 12px 0 0 0;
   }
 
   .bet-slip p strong {
-    font-size: 18px;
+    font-size: 15px;
   }
 
   .bet-slip::before {
-    font-size: 18px;
-    top: -8px;
-    padding: 2px 5px;
+    font-size: 12px;
+    top: 5px;
+    padding: 1px 3px;
   }
 }

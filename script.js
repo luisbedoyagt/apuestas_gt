@@ -67,29 +67,33 @@ async function fetchTeams() {
 async function init() {
   try {
     teamsByLeague = await fetchTeams();
-    Object.keys(teamsByLeague).forEach(code => {
-      const opt = document.createElement('option');
-      opt.value = code;
-      opt.textContent = leagueNames[code] || code;
-      $('leagueSelect').appendChild(opt);
+    console.log("teamsByLeague:", teamsByLeague);
+
+    const leagueSelectEl = $('leagueSelect');
+    if (leagueSelectEl) {
+      Object.keys(teamsByLeague).forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = leagueNames[code] || code;
+        leagueSelectEl.appendChild(opt);
+      });
+      leagueSelectEl.addEventListener('change', onLeagueChange);
+    }
+
+    const safeAddListener = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
+    safeAddListener('recalc', calculateAll);
+    safeAddListener('reset', () => location.reload());
+    safeAddListener('clearAll', clearAll);
+    safeAddListener('saveBank', saveBankrollToStorage);
+
+    ['homeAdvantage','formWeight','dixonColesParam','maxTeams','formHome','formAway'].forEach(id => {
+      const el = $(id);
+      if(el) el.addEventListener('change', calculateAll);
     });
+
     const saved = localStorage.getItem('bankroll');
-    if (saved) $('bankroll').value = saved;
+    if (saved && $('bankroll')) $('bankroll').value = saved;
 
-    $('leagueSelect').addEventListener('change', onLeagueChange);
-    $('teamHome').addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
-    $('teamAway').addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
-    $('recalc').addEventListener('click', calculateAll);
-    $('reset').addEventListener('click', () => location.reload());
-    $('clearAll').addEventListener('click', clearAll);
-    $('saveBank').addEventListener('click', saveBankrollToStorage);
-
-    $('homeAdvantage').addEventListener('change', calculateAll);
-    $('formWeight').addEventListener('change', calculateAll);
-    $('dixonColesParam').addEventListener('change', calculateAll);
-    $('maxTeams').addEventListener('change', calculateAll);
-    $('formHome').addEventListener('change', calculateAll);
-    $('formAway').addEventListener('change', calculateAll);
   } catch (err) {
     console.error("Error en init:", err);
     alert("Error al inicializar la aplicación.");
@@ -100,16 +104,24 @@ document.addEventListener('DOMContentLoaded', init);
 
 // Manejo de selección de liga
 function onLeagueChange() {
-  const code = $('leagueSelect').value;
-  $('teamHome').innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  $('teamAway').innerHTML = '<option value="">-- Selecciona equipo --</option>';
+  const code = $('leagueSelect')?.value;
+  if (!code) return;
+  const homeSel = $('teamHome');
+  const awaySel = $('teamAway');
+  if (!homeSel || !awaySel) return;
+
+  homeSel.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+  awaySel.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+
   if (!teamsByLeague[code]) return;
+
   teamsByLeague[code].forEach(t => {
-    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; $('teamHome').appendChild(opt1);
-    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; $('teamAway').appendChild(opt2);
+    const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; homeSel.appendChild(opt1);
+    const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; awaySel.appendChild(opt2);
   });
 }
 
+// Buscar equipo
 function findTeam(leagueCode, teamName) {
   if (!teamsByLeague[leagueCode]) return null;
   return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
@@ -212,16 +224,16 @@ function calculateFormFactor(formHome,formAway,formWeight){
 
 // Cálculo de probabilidades
 function computeProbabilities(lambdaHome,lambdaAway,pointsHome,pointsAway, gamesHome, gamesAway){
-  const homeAdvFactor=1+(parseNumberString($('homeAdvantage').value)/100);
-  const posHome=parseNumberString($('posHome').value);
-  const posAway=parseNumberString($('posAway').value);
-  const maxTeams=parseNumberString($('maxTeams').value);
+  const homeAdvFactor=1+(parseNumberString($('homeAdvantage')?.value)/100);
+  const posHome=parseNumberString($('posHome')?.value);
+  const posAway=parseNumberString($('posAway')?.value);
+  const maxTeams=parseNumberString($('maxTeams')?.value);
   const strengthFactor=calculateStrengthFactor(posHome,posAway,maxTeams,pointsHome,pointsAway,gamesHome,gamesAway);
-  const formHome=$('formHome').value;
-  const formAway=$('formAway').value;
-  const formWeight=parseNumberString($('formWeight').value);
+  const formHome=$('formHome')?.value;
+  const formAway=$('formAway')?.value;
+  const formWeight=parseNumberString($('formWeight')?.value);
   const recentFormFactor=calculateFormFactor(formHome,formAway,formWeight);
-  const rho=parseNumberString($('dixonColesParam').value);
+  const rho=parseNumberString($('dixonColesParam')?.value);
   const dixonColesFactor=dixonColesAdjustment(lambdaHome,lambdaAway,rho);
 
   $('homeAdvantageFactor').textContent=formatDec(homeAdvFactor)+'x';
@@ -298,14 +310,23 @@ function suggestBet(probObj,odds,bankroll,kellyFraction=parseNumberString($('kel
 
 // Función principal
 function calculateAll(){
-  const lambdaHome=parseNumberString($('gfHome').value);
-  const lambdaAway=parseNumberString($('gfAway').value);
-  const bankroll=parseNumberString($('bankroll').value);
+  const lambdaHome=parseNumberString($('gfHome')?.value);
+  const lambdaAway=parseNumberString($('gfAway')?.value);
+  const bankroll=parseNumberString($('bankroll')?.value);
   if(lambdaHome<=0 || lambdaAway<=0 || bankroll<=0){ alert('Ingrese valores válidos para goles y banca.'); return; }
 
-  // Probabilidades calculadas
-  const teamHome=findTeam($('leagueSelect').value,$('teamHome').value);
-  const teamAway=findTeam($('leagueSelect').value,$('teamAway').value);
+  const odds={
+    oddsHome:toDecimalOdds($('oddsHome')?.value),
+    oddsDraw:toDecimalOdds($('oddsDraw')?.value),
+    oddsAway:toDecimalOdds($('oddsAway')?.value),
+    oddsBTTS:toDecimalOdds($('oddsBTTS')?.value),
+    oddsOver25:toDecimalOdds($('oddsOver25')?.value)
+  };
+
+  if(odds.oddsHome<1||odds.oddsDraw<1||odds.oddsAway<1||odds.oddsBTTS<1||odds.oddsOver25<1){ alert('Las cuotas deben ser > 1.0'); return; }
+
+  const teamHome=findTeam($('leagueSelect')?.value,$('teamHome')?.value);
+  const teamAway=findTeam($('leagueSelect')?.value,$('teamAway')?.value);
   const pointsHome=teamHome?teamHome.points:0;
   const pointsAway=teamAway?teamAway.points:0;
   const gamesHome=teamHome?teamHome.pj:1;
@@ -318,30 +339,6 @@ function calculateAll(){
   $('pBTTS').textContent=formatPct(probs.pBTTS);
   $('pO25').textContent=formatPct(probs.pO25);
 
-  // Calcular cuotas dinámicas (decimal)
-  const odds = {
-    oddsHome: probs.pHome>0 ? 1 / probs.pHome : 1.01,
-    oddsDraw: probs.pDraw>0 ? 1 / probs.pDraw : 1.01,
-    oddsAway: probs.pAway>0 ? 1 / probs.pAway : 1.01,
-    oddsBTTS: probs.pBTTS>0 ? 1 / probs.pBTTS : 1.01,
-    oddsOver25: probs.pO25>0 ? 1 / probs.pO25 : 1.01
-  };
-
-  // Actualizar inputs de cuotas
-  $('oddsHome').value = formatDec(odds.oddsHome);
-  $('oddsDraw').value = formatDec(odds.oddsDraw);
-  $('oddsAway').value = formatDec(odds.oddsAway);
-  $('oddsBTTS').value = formatDec(odds.oddsBTTS);
-  $('oddsOver25').value = formatDec(odds.oddsOver25);
-
-  // Calcular y mostrar EV junto a cada cuota
-  $('evHome').textContent = `EV: ${formatPct(probs.pHome*odds.oddsHome-1)}`;
-  $('evDraw').textContent = `EV: ${formatPct(probs.pDraw*odds.oddsDraw-1)}`;
-  $('evAway').textContent = `EV: ${formatPct(probs.pAway*odds.oddsAway-1)}`;
-  $('evBTTS').textContent = `EV: ${formatPct(probs.pBTTS*odds.oddsBTTS-1)}`;
-  $('evO25').textContent = `EV: ${formatPct(probs.pO25*odds.oddsOver25-1)}`;
-
-  // Sugerencia de apuesta con Kelly
   const suggestion=suggestBet(probs,odds,bankroll);
   $('expectedBest').textContent=suggestion.bestBet||'Ninguna';
   $('kellyStake').textContent=formatDec(suggestion.stakePercent)+'%';
@@ -351,7 +348,7 @@ function calculateAll(){
   $('suggestion').style.display=suggestion.bestBet?'block':'none';
 
   $('details').innerHTML=`<div><strong>Detalles del cálculo:</strong></div>
-    <div>• Lambda Local ajustado: ${formatDec(lambdaHome*(parseNumberString($('homeAdvantage').value)/100+1))}</div>
+    <div>• Lambda Local ajustado: ${formatDec(lambdaHome*(parseNumberString($('homeAdvantage')?.value)/100+1))}</div>
     <div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>
     <div>• Valor Esperado (EV) máximo: ${formatPct(suggestion.ev)}</div>`;
 }

@@ -36,7 +36,7 @@ h4 {
 
 p.small, div.small {
   font-size: 12px;
-  color: #a0a0a0;
+  color: #e0e0e0;
 }
 
 .card {
@@ -117,15 +117,27 @@ input:focus, select:focus {
 
 .kpis {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kpis-row {
+  display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
+  justify-content: center;
+}
+
+.kpis-row:nth-child(2) {
+  justify-content: center;
 }
 
 .tile {
   flex: 1;
-  min-width: 80px;
+  min-width: 120px;
+  max-width: 200px;
   text-align: center;
-  padding: 10px;
+  padding: 12px;
   border-radius: 6px;
   background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
   border: 2px solid #4a4a4a;
@@ -220,11 +232,10 @@ input:focus, select:focus {
 }
 
 .tile div.small {
-  font-size: 12px;
+  font-size: 11px;
   color: #e0e0e0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .correction-factors {
@@ -417,6 +428,31 @@ input:focus, select:focus {
     grid-template-columns: 1fr;
   }
 
+  .kpis-row {
+    flex-wrap: wrap;
+  }
+
+  .tile {
+    min-width: 100px;
+    max-width: 150px;
+    padding: 8px;
+  }
+
+  .tile strong {
+    font-size: 16px;
+  }
+
+  .tile div.small {
+    font-size: 10px;
+  }
+
+  .tile::before {
+    width: 8px;
+    height: 8px;
+    top: 6px;
+    left: 6px;
+  }
+
   .bet-slip {
     padding: 12px;
   }
@@ -462,24 +498,5 @@ input:focus, select:focus {
   .stat-legend {
     font-size: 13px;
     padding: 6px 10px;
-  }
-
-  .tile {
-    padding: 8px;
-  }
-
-  .tile strong {
-    font-size: 16px;
-  }
-
-  .tile div.small {
-    font-size: 12px;
-  }
-
-  .tile::before {
-    width: 8px;
-    height: 8px;
-    top: 6px;
-    left: 6px;
   }
 }

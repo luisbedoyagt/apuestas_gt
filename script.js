@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
@@ -110,23 +110,14 @@ async function init() {
     $('reset').addEventListener('click', () => location.reload());
     $('clearAll').addEventListener('click', clearAll);
 
-    // Seleccionar una liga y equipos por defecto para inicializar
-    if (leagueCodes.length > 0) {
-      leagueSelect.value = leagueCodes[0]; // Seleccionar la primera liga
-      onLeagueChange(); // Llenar equipos
-      if (teamsByLeague[leagueCodes[0]]?.length >= 2) {
-        teamHomeSelect.value = teamsByLeague[leagueCodes[0]][0].name;
-        teamAwaySelect.value = teamsByLeague[leagueCodes[0]][1].name;
-        fillTeamData(teamHomeSelect.value, leagueCodes[0], 'Home');
-        fillTeamData(teamAwaySelect.value, leagueCodes[0], 'Away');
-        calculateAll(); // Calcular probabilidades iniciales
-      }
-    }
+    // Resetear todos los campos al iniciar
+    clearAll();
   } catch (err) {
     console.error("Error en init:", err);
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Error al inicializar. Selecciona una liga para continuar.</div>';
     }
+    clearAll(); // Asegurar estado limpio incluso si hay error
   }
 }
 document.addEventListener('DOMContentLoaded', init);
@@ -194,6 +185,7 @@ function clearAll() {
     if (el) el.textContent = id.includes('form') ? 
       (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
+  $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   console.log('clearAll ejecutado');
 }
 
@@ -330,6 +322,8 @@ function calculateAll() {
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
+  const teamHomeName = $('teamHome').value || 'Local';
+  const teamAwayName = $('teamAway').value || 'Visitante';
 
   if (!leagueCode) {
     console.warn('Liga no seleccionada');
@@ -349,8 +343,8 @@ function calculateAll() {
     return;
   }
 
-  const teamHome = findTeam(leagueCode, $('teamHome').value);
-  const teamAway = findTeam(leagueCode, $('teamAway').value);
+  const teamHome = findTeam(leagueCode, teamHomeName);
+  const teamAway = findTeam(leagueCode, teamAwayName);
   const pointsHome = teamHome ? teamHome.points : 0;
   const pointsAway = teamAway ? teamAway.points : 0;
 
@@ -376,9 +370,9 @@ function calculateAll() {
 
   // Recomendación de apuesta con % de acierto
   const recommendations = [
-    { name: 'Local', prob: probs.pHome },
+    { name: `Gana ${teamHomeName}`, prob: probs.pHome },
     { name: 'Empate', prob: probs.pDraw },
-    { name: 'Visitante', prob: probs.pAway },
+    { name: `Gana ${teamAwayName}`, prob: probs.pAway },
     { name: 'BTTS Sí', prob: probs.pBTTS },
     { name: 'Over 2.5', prob: probs.pO25 }
   ];
@@ -386,7 +380,7 @@ function calculateAll() {
   const maxProb = Math.max(...recommendations.map(r => r.prob));
   if (maxProb > 0) {
     const bestRecommendation = recommendations.find(r => r.prob === maxProb);
-    $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}</p>`;
+    $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}<br>Según el pronóstico</p>`;
   } else {
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   }

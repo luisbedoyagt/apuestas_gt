@@ -36,8 +36,8 @@
         </div>
       </div>
 
-      <div class="card">
-        <h3>Cuotas (ingresa las reales del partido)</h3>
+      <div class="card hidden">
+        <h3>Cuotas</h3>
         <div class="table-like">
           <div><label>1X2 - Local</label><input id="oddsHome" type="number" value="1.40" step="0.01" min="1"/></div>
           <div><label>1X2 - Empate</label><input id="oddsDraw" type="number" value="4.50" step="0.01" min="1"/></div>
@@ -50,7 +50,7 @@
           <div><label>Over 2.5</label><input id="oddsOver25" type="number" value="1.80" step="0.01" min="1"/></div>
           <div></div>
         </div>
-        <p class="small" style="margin-top:8px">⚠️ Importante: revisa que las cuotas sean correctas antes de calcular.</p>
+        <p class="small" style="margin-top:8px">Consejo: usa decimales. (Americana → decimal antes)</p>
       </div>
     </div>
 
@@ -104,6 +104,20 @@
 
         <div class="sep"></div>
         
+        <h4 class="hidden">Forma reciente (últimos 5 partidos)</h4>
+        <div class="table-like hidden" style="margin-top:6px">
+          <div>
+            <label>Forma Local (G-E-P)</label>
+            <input id="formHome" type="text" placeholder="4-1-0" value="4-1-0"/>
+          </div>
+          <div>
+            <label>Forma Visitante (G-E-P)</label>
+            <input id="formAway" type="text" placeholder="0-2-3" value="0-2-3"/>
+          </div>
+        </div>
+        
+        <div class="sep"></div>
+        
         <h4>Factores de Corrección</h4>
         <div class="table-like">
           <div>
@@ -125,6 +139,20 @@
             <input id="maxTeams" type="number" value="20" step="1" min="10" max="30"/>
           </div>
         </div>
+
+        <div class="sep"></div>
+
+        <h4>Forma general</h4>
+        <div class="table-like" style="margin-top:6px">
+          <div class="stat-card" id="formHomeCard">
+            <div class="stat-title" id="formHomeTeam">Local: —</div>
+            <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+          </div>
+          <div class="stat-card" id="formAwayCard">
+            <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+            <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+          </div>
+        </div>
       </div>
 
       <!-- Resultados -->
@@ -139,6 +167,28 @@
           <div class="tile"><strong id="expectedBest">—</strong><div class="small">Mejor EV</div></div>
         </div>
 
+        <div class="sep"></div>
+        
+        <h4>Factores Aplicados</h4>
+        <div class="correction-factors">
+          <div class="correction-factor">
+            <div class="label">Ventaja Local</div>
+            <div class="value" id="homeAdvantageFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Fuerza Relativa</div>
+            <div class="value" id="strengthFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Forma Reciente</div>
+            <div class="value" id="recentFormFactor">1.00x</div>
+          </div>
+          <div class="correction-factor">
+            <div class="label">Dixon-Coles</div>
+            <div class="value" id="dixonColesFactor">1.00x</div>
+          </div>
+        </div>
+        
         <div class="sep"></div>
         
         <div id="details" class="recs small"></div>
@@ -163,7 +213,7 @@
 
         <div class="sep"></div>
         <div class="abbrev">
-          <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · Stake = Monto sugerido
+          <strong>Guía abreviaturas:</strong> EV = Expected Value (Valor Esperado) · PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos · Stake = Monto sugerido
         </div>
       </div>
     </div>

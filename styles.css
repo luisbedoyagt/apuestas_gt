@@ -244,6 +244,17 @@ input:focus, select:focus {
   border: 1px solid #4a4a4a;
 }
 
+.stat-legend {
+  font-size: 12px;
+  color: #a0a0a0;
+  background: #333;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #4a4a4a;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
 .bet-slip {
   background: linear-gradient(135deg, #00f4ff, #ff00ff);
   border-radius: 12px;
@@ -352,5 +363,10 @@ input:focus, select:focus {
   .stat-title::before {
     width: 12px;
     height: 12px;
+  }
+
+  .stat-legend {
+    font-size: 11px;
+    padding: 5px 8px;
   }
 }

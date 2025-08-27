@@ -20,36 +20,39 @@
       <select id="leagueSelect"></select>
     </div>
 
-    <!-- Tarjeta de Selección de Equipo: Local -->
-    <div class="card">
-      <h3>Local</h3>
-      <label for="teamHome">Equipo:</label>
-      <select id="teamHome"></select>
-      <div class="sep"></div>
-      <div class="stat-card">
-        <div class="stat-title" id="formHomeTeam">Local: —</div>
-        <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
-        <div class="stat-legend">
-          <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
-          <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
-          <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
+    <!-- Contenedor para Local y Visitante en paralelo -->
+    <div class="grid">
+      <!-- Tarjeta de Selección de Equipo: Local -->
+      <div class="card">
+        <h3>Local</h3>
+        <label for="teamHome">Equipo:</label>
+        <select id="teamHome"></select>
+        <div class="sep"></div>
+        <div class="stat-card">
+          <div class="stat-title" id="formHomeTeam">Local: —</div>
+          <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+          <div class="stat-legend">
+            <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
+            <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
+            <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Tarjeta de Selección de Equipo: Visitante -->
-    <div class="card">
-      <h3>Visitante</h3>
-      <label for="teamAway">Equipo:</label>
-      <select id="teamAway"></select>
-      <div class="sep"></div>
-      <div class="stat-card">
-        <div class="stat-title" id="formAwayTeam">Visitante: —</div>
-        <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
-        <div class="stat-legend">
-          <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
-          <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
-          <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
+      <!-- Tarjeta de Selección de Equipo: Visitante -->
+      <div class="card">
+        <h3>Visitante</h3>
+        <label for="teamAway">Equipo:</label>
+        <select id="teamAway"></select>
+        <div class="sep"></div>
+        <div class="stat-card">
+          <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+          <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+          <div class="stat-legend">
+            <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
+            <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
+            <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
+          </div>
         </div>
       </div>
     </div>

@@ -427,7 +427,7 @@ input:focus, select:focus {
 
   h4 {
     font-size: 12px;
-    margin: 6px 0 2px;
+    margin: 8px 0 4px; /* Aumentado para más espacio en selección de equipos */
   }
 
   .card {
@@ -437,7 +437,7 @@ input:focus, select:focus {
 
   .grid {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 12px; /* Aumentado de 6px para más espacio entre local y visitante */
   }
 
   .table-like {
@@ -447,11 +447,15 @@ input:focus, select:focus {
 
   label {
     font-size: 11px;
+    margin-bottom: 4px; /* Aumentado de 0 para más espacio */
   }
 
   input, select {
     padding: 4px;
     font-size: 11px;
+    border: 1px solid #4dabf7; /* Borde sutil para más diseño */
+    background: #2c2c2c; /* Fondo más contrastado */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra ligera para resaltar */
   }
 
   .sep {
@@ -465,15 +469,16 @@ input:focus, select:focus {
 
   .kpis-row {
     flex-direction: column;
-    gap: 3px;
+    gap: 4px; /* Aumentado de 3px para que no se salgan */
   }
 
   .tile {
     width: 100%;
     max-width: none;
-    padding: 5px;
+    padding: 6px; /* Aumentado de 5px para mejor legibilidad sin salirse */
     border-radius: 3px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    box-sizing: border-box; /* Asegura que no se salga */
   }
 
   .tile strong {
@@ -516,6 +521,8 @@ input:focus, select:focus {
 
   .stat-card {
     padding: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Sombra ligera para más diseño */
+    background: #333; /* Fondo más contrastado */
   }
 
   .stat-title {

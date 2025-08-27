@@ -5,18 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora de Apuestas</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Calculadora de Apuestas</h1>
     <div class="bet-slip">
-      <select id="languageSelect">
-        <option value="es">Español</option>
-      </select>
-      <select id="leagueSelect">
-        <option value="">-- Selecciona liga --</option>
-      </select>
+      <div class="selectors">
+        <select id="languageSelect">
+          <option value="es">Español</option>
+        </select>
+        <select id="leagueSelect">
+          <option value="">-- Selecciona liga --</option>
+        </select>
+      </div>
       <div class="teams">
         <div class="team">
           <h3>Local</h3>
@@ -57,9 +58,6 @@
         <p><strong>Ajuste Dixon-Coles:</strong> <span id="dixonColesFactor">—</span></p>
       </div>
       <div id="suggestion">Esperando datos para tu apuesta estelar...</div>
-      <div class="chart-container">
-        <canvas id="probChart"></canvas>
-      </div>
       <div id="details"></div>
     </div>
   </div>

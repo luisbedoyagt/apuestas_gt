@@ -225,34 +225,40 @@ input:focus, select:focus {
 }
 
 .stat-values {
-  font-size: 15px;
-  color: #e0e0e0;
+  font-size: 16px;
+  color: #fff;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  background: #444;
-  padding: 6px 10px;
+  background: #4a4a4a;
+  padding: 8px 12px;
   border-radius: 4px;
-  border: 1px solid #4a4a4a;
+  border: 1px solid #5a5a5a;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .stat-values span {
   display: inline-block;
   padding: 4px 8px;
-  background: #444;
+  background: #4a4a4a;
   border-radius: 4px;
-  border: 1px solid #4a4a4a;
+  border: 1px solid #5a5a5a;
 }
 
 .stat-legend {
-  font-size: 12px;
-  color: #a0a0a0;
-  background: #333;
-  padding: 6px 10px;
+  font-size: 13px;
+  color: #e0e0e0;
+  background: #444;
+  padding: 8px 12px;
   border-radius: 4px;
-  border: 1px solid #4a4a4a;
+  border: 1px solid #74c0fc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   margin-bottom: 8px;
   text-align: center;
+}
+
+.stat-card:nth-child(2) + .stat-card .stat-legend {
+  border-color: #ff8787;
 }
 
 .bet-slip {
@@ -366,7 +372,7 @@ input:focus, select:focus {
   }
 
   .stat-legend {
-    font-size: 11px;
-    padding: 5px 8px;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }

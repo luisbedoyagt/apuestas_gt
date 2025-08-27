@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora de Probabilidades • Poisson + Mejoras</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,8 +13,7 @@
       <p class="small">Sistema mejorado con factores de corrección automáticos y modelo Dixon-Coles</p>
     </div>
 
-    <!-- Selección equipos -->
-    <div class="grid" style="margin-top:12px">
+    <div class="grid">
       <div class="card">
         <h3>Equipos y estadísticas</h3>
         <div class="table-like">
@@ -39,10 +38,10 @@
 
         <div class="table-like">
           <div>
-            <label>Pos Local</label><input id="posHome" type="number" value="-" min="1" step="1"/>
+            <label>Pos Local</label><input id="posHome" type="text" value="—" readonly>
           </div>
           <div>
-            <label>Pos Visitante</label><input id="posAway" type="number" value="-" min="1" step="1"/>
+            <label>Pos Visitante</label><input id="posAway" type="text" value="—" readonly>
           </div>
         </div>
 
@@ -50,18 +49,18 @@
 
         <div class="table-like">
           <div>
-            <label>GF local</label><input id="gfHome" type="number" value="-" step="-" min="0"/>
+            <label>GF local</label><input id="gfHome" type="text" value="—" readonly>
           </div>
           <div>
-            <label>GC local</label><input id="gaHome" type="number" value="-" step="-" min="0"/>
+            <label>GC local</label><input id="gaHome" type="text" value="—" readonly>
           </div>
         </div>
         <div class="table-like" style="margin-top:8px">
           <div>
-            <label>GF visitante</label><input id="gfAway" type="number" value="-" step="-" min="0"/>
+            <label>GF visitante</label><input id="gfAway" type="text" value="—" readonly>
           </div>
           <div>
-            <label>GC visitante</label><input id="gaAway" type="number" value="-" step="-" min="0"/>
+            <label>GC visitante</label><input id="gaAway" type="text" value="—" readonly>
           </div>
         </div>
 
@@ -83,12 +82,10 @@
 
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <button id="recalc" class="btn">Calcular</button>
-          <button id="reset" class="btn">Reset valores</button>
-          <button id="clearAll" class="btn">Resetear todo</button>
+          <button id="reset" class="btn">Resetear</button>
         </div>
       </div>
 
-      <!-- Resultados -->
       <div class="card">
         <h3>Probabilidades</h3>
         <div class="kpis" style="margin-top:6px">
@@ -105,15 +102,15 @@
         <div class="correction-factors">
           <div class="correction-factor">
             <div class="label">Ventaja Local</div>
-            <div class="value" id="homeAdvantageFactor">1.00x</div>
+            <div class="value" id="homeAdvantageFactor">—</div>
           </div>
           <div class="correction-factor">
             <div class="label">Fuerza Relativa</div>
-            <div class="value" id="strengthFactor">1.00x</div>
+            <div class="value" id="strengthFactor">—</div>
           </div>
           <div class="correction-factor">
             <div class="label">Dixon-Coles</div>
-            <div class="value" id="dixonColesFactor">1.00x</div>
+            <div class="value" id="dixonColesFactor">—</div>
           </div>
         </div>
         
@@ -123,17 +120,10 @@
 
         <div class="sep"></div>
 
-        <div class="abbrev">
-          <strong>Guía abreviaturas:</strong> PJ = Partidos Jugados · G = Ganados · E = Empatados · P = Perdidos
-        </div>
-
-        <div class="sep"></div>
-
-        <div id="suggestion" class="bet-slip"></div>
+        <div id="suggestion" class="bet-slip">Esperando datos para tu apuesta estelar...</div>
       </div>
     </div>
   </div>
   <script src="script.js"></script>
 </body>
 </html>
-

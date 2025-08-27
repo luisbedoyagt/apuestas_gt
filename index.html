@@ -3,130 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de Pronósticos de Fútbol</title>
+  <title>Pronósticos de Fútbol</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Calculadora de Pronósticos de Fútbol</h1>
+      <h1>Pronósticos de Fútbol</h1>
+      <p class="small">Datos en tiempo real de ligas y estadísticas avanzadas.</p>
     </div>
-
     <div class="card">
-      <h3>Selección de Equipos</h3>
-      <div class="grid">
-        <div>
-          <label for="leagueSelect">Liga</label>
-          <select id="leagueSelect"></select>
-        </div>
-      </div>
+      <h3>Selecciona Liga y Equipos</h3>
+      <label for="leagueSelect">Liga:</label>
+      <select id="leagueSelect"></select>
       <div class="grid">
         <div>
           <h4>Local</h4>
-          <div class="table-like">
-            <div>
-              <label for="teamHome">Equipo</label>
-              <select id="teamHome"></select>
-            </div>
-            <div>
-              <label for="posHome">Posición</label>
-              <input id="posHome" type="text" readonly value="—">
-            </div>
-            <div>
-              <label for="gfHome">Goles a favor</label>
-              <input id="gfHome" type="text" readonly value="—">
-            </div>
-            <div>
-              <label for="gaHome">Goles en contra</label>
-              <input id="gaHome" type="text" readonly value="—">
+          <label for="teamHome">Equipo:</label>
+          <select id="teamHome"></select>
+          <div class="stat-card">
+            <div class="stat-title" id="formHomeTeam">Local: —</div>
+            <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+            <div class="stat-legend">
+              <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
+              <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
+              <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
             </div>
           </div>
         </div>
         <div>
           <h4>Visitante</h4>
-          <div class="table-like">
-            <div>
-              <label for="teamAway">Equipo</label>
-              <select id="teamAway"></select>
-            </div>
-            <div>
-              <label for="posAway">Posición</label>
-              <input id="posAway" type="text" readonly value="—">
-            </div>
-            <div>
-              <label for="gfAway">Goles a favor</label>
-              <input id="gfAway" type="text" readonly value="—">
-            </div>
-            <div>
-              <label for="gaAway">Goles en contra</label>
-              <input id="gaAway" type="text" readonly value="—">
+          <label for="teamAway">Equipo:</label>
+          <select id="teamAway"></select>
+          <div class="stat-card">
+            <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+            <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+            <div class="stat-legend">
+              <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
+              <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
+              <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="sep"></div>
-      <button id="recalc" class="btn" disabled>Calcular</button>
-      <button id="reset" class="btn">Resetear</button>
-    </div>
-
-    <div class="card">
-      <h3>Probabilidades</h3>
-      <div class="kpis">
-        <div class="kpis-row">
-          <div class="tile"><strong id="pHome">—</strong><div class="small">Probabilidad: —</div></div>
-          <div class="tile"><strong id="pDraw">—</strong><div class="small">Probabilidad: Empate</div></div>
-          <div class="tile"><strong id="pAway">—</strong><div class="small">Probabilidad: —</div></div>
-        </div>
-        <div class="kpis-row">
-          <div class="tile"><strong id="pBTTS">—</strong><div class="small">Probabilidad: Ambos anotan</div></div>
-          <div class="tile"><strong id="pO25">—</strong><div class="small">Probabilidad: Más de 2.5 goles</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Factores de corrección</h3>
       <div class="correction-factors">
         <div class="correction-factor">
-          <span class="label">Ventaja local</span>
+          <span class="label">Ventaja local:</span>
           <span class="value" id="homeAdvantageFactor">—</span>
         </div>
         <div class="correction-factor">
-          <span class="label">Fuerza relativa</span>
+          <span class="label">Fuerza relativa:</span>
           <span class="value" id="strengthFactor">—</span>
         </div>
         <div class="correction-factor">
-          <span class="label">Dixon-Coles</span>
+          <span class="label">Dixon-Coles:</span>
           <span class="value" id="dixonColesFactor">—</span>
         </div>
       </div>
-    </div>
-
-    <div class="card">
-      <h3>Forma general</h3>
-      <div class="grid">
-        <div class="stat-card">
-          <div class="stat-title" id="formHomeTeam">Local: </div>
-          <div class="stat-legend">PJ = Partidos Jugados, G = Ganados, E = Empates, P = Perdidos</div>
-          <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+      <div class="table-like">
+        <button id="recalc" class="btn" disabled>Calcular</button>
+        <button id="reset" class="btn">Resetear</button>
+      </div>
+      <div class="sep"></div>
+      <h3>Pronósticos</h3>
+      <div class="kpis">
+        <div class="kpis-row">
+          <div class="tile">
+            <strong id="pHome">—</strong>
+            <div class="small">Probabilidad: —</div>
+          </div>
+          <div class="tile">
+            <strong id="pDraw">—</strong>
+            <div class="small">Probabilidad: Empate</div>
+          </div>
+          <div class="tile">
+            <strong id="pAway">—</strong>
+            <div class="small">Probabilidad: —</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-title" id="formAwayTeam">Visitante: </div>
-          <div class="stat-legend">PJ = Partidos Jugados, G = Ganados, E = Empates, P = Perdidos</div>
-          <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+        <div class="kpis-row">
+          <div class="tile">
+            <strong id="pBTTS">—</strong>
+            <div class="small">Probabilidad: Ambos anotan</div>
+          </div>
+          <div class="tile">
+            <strong id="pO25">—</strong>
+            <div class="small">Probabilidad: Más de 2.5 goles</div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="card recs">
+      <div class="sep"></div>
       <h3>Recomendación</h3>
-      <div id="details">
-        <div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>
-      </div>
+      <div class="recs" id="details">—</div>
       <div class="bet-slip" id="suggestion">Esperando datos para tu apuesta estelar...</div>
     </div>
   </div>
   <script src="script.js"></script>
 </body>
 </html>
-

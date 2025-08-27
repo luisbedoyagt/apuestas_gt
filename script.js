@@ -37,7 +37,6 @@ function normalizeTeam(raw) {
   r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || raw.drawn || 0);
   r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || raw.l || 0);
   r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
-  r.form = raw.form || raw.Form || `${r.g || 0}-${r.e || 0}-${r.p || 0}`;
   console.log('Equipo normalizado:', r);
   return r;
 }
@@ -65,8 +64,8 @@ async function fetchTeams() {
     alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
     return {
       "BSA": [
-        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46, form: "4-1-0" },
-        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10, form: "0-2-3" }
+        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46 },
+        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10 }
       ]
     };
   }
@@ -107,8 +106,6 @@ async function init() {
     $('recalc').addEventListener('click', calculateAll);
     $('reset').addEventListener('click', () => location.reload());
     $('clearAll').addEventListener('click', clearAll);
-    $('formHome').addEventListener('change', calculateAll);
-    $('formAway').addEventListener('change', calculateAll);
   } catch (err) {
     console.error("Error en init:", err);
     alert("Error al inicializar la aplicación. Por favor, recarga la página.");
@@ -150,23 +147,20 @@ function fillTeamData(teamName, leagueCode, type) {
     return;
   }
 
-  const formString = t.form || `${t.g || 0}-${t.e || 0}-${t.p || 0}`;
   if (type === 'Home') {
     $('posHome').value = t.pos || '';
     $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
     $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
-    $('formHome').value = formString;
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   } else {
     $('posAway').value = t.pos || '';
     $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
     $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
-    $('formAway').value = formString;
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
-  console.log(`fillTeamData ${type}:`, { teamName, formString, pos: t.pos, gf: t.gf, ga: t.ga, pj: t.pj });
+  console.log(`fillTeamData ${type}:`, { teamName, pos: t.pos, gf: t.gf, ga: t.ga, pj: t.pj });
   calculateAll();
 }
 
@@ -175,13 +169,11 @@ function clearAll() {
   document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
   ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25', 'details', 
    'formHomeTeam', 'formAwayTeam', 'formHomeBox', 'formAwayBox', 
-   'homeAdvantageFactor', 'strengthFactor', 'recentFormFactor', 'dixonColesFactor'].forEach(id => {
+   'homeAdvantageFactor', 'strengthFactor', 'dixonColesFactor'].forEach(id => {
     const el = $(id);
     if (el) el.textContent = id.includes('form') ? 
       (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
-  $('formHome').value = '';
-  $('formAway').value = '';
   console.log('clearAll ejecutado');
 }
 
@@ -234,31 +226,6 @@ function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, point
   return strengthFactor;
 }
 
-function calculateFormFactor(formHome, formAway) {
-  if (!formHome || !formAway || !formHome.match(/^\d+-\d+-\d+$/) || !formAway.match(/^\d+-\d+$/)) {
-    console.warn("Formato de forma reciente inválido. Usando factor 1.", { formHome, formAway });
-    return 1;
-  }
-  try {
-    const [homeW, homeD, homeL] = formHome.split('-').map(x => parseInt(x) || 0);
-    const [awayW, awayD, awayL] = formAway.split('-').map(x => parseInt(x) || 0);
-    const homePpg = (homeW * 3 + homeD) / (homeW + homeD + homeL || 1);
-    const awayPpg = (awayW * 3 + awayD) / (awayW + awayD + awayL || 1);
-    if (awayPpg === 0) {
-      console.warn('awayPpg es 0, usando factor 1');
-      return 1;
-    }
-    const formFactor = homePpg / awayPpg;
-    const weight = 0.3;
-    const result = Math.min(Math.max(1 + (formFactor - 1) * weight, 0.5), 2.0);
-    console.log('formFactor calculado:', { formHome, formAway, homePpg, awayPpg, formFactor, result });
-    return result;
-  } catch (e) {
-    console.error("Error parsing form data:", e);
-    return 1;
-  }
-}
-
 function calculateHomeAdvantage(leagueCode) {
   const teams = teamsByLeague[leagueCode] || [];
   const avgGoals = teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / (teams.length || 1);
@@ -277,21 +244,17 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
   const strengthFactor = calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway);
-  const formHome = $('formHome').value;
-  const formAway = $('formAway').value;
-  const recentFormFactor = calculateFormFactor(formHome, formAway);
   const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway);
   
   $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
   $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
-  $('recentFormFactor').textContent = formatDec(recentFormFactor) + 'x';
   $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
   
-  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.1);
+  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor, 3.0);
+  const adjAway = Math.max(lambdaAway / strengthFactor, 0.1);
   
   console.log('computeProbabilities:', {
-    lambdaHome, lambdaAway, adjHome, adjAway, homeAdvantageFactor, strengthFactor, recentFormFactor, dixonColesFactor
+    lambdaHome, lambdaAway, adjHome, adjAway, homeAdvantageFactor, strengthFactor, dixonColesFactor
   });
   
   let pHome = 0, pDraw = 0, pAway = 0;

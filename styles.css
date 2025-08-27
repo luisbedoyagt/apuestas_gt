@@ -2,8 +2,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
   padding: 20px;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
 }
 
 .container {
@@ -19,29 +19,33 @@ body {
 h1 {
   font-size: 24px;
   margin: 0;
+  color: #fff;
 }
 
 h3 {
   font-size: 18px;
   margin: 0 0 12px;
+  color: #fff;
 }
 
 h4 {
   font-size: 16px;
   margin: 12px 0 6px;
+  color: #e0e0e0;
 }
 
 p.small, div.small {
   font-size: 12px;
-  color: #666;
+  color: #a0a0a0;
 }
 
 .card {
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   padding: 16px;
   margin-bottom: 16px;
+  border: 1px solid #3a3a3a;
 }
 
 .grid {
@@ -70,7 +74,7 @@ p.small, div.small {
 
 label {
   font-size: 14px;
-  color: #333;
+  color: #e0e0e0;
   display: block;
   margin-bottom: 4px;
 }
@@ -78,15 +82,22 @@ label {
 input, select {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #4a4a4a;
   border-radius: 4px;
   font-size: 14px;
   box-sizing: border-box;
+  background: #333;
+  color: #e0e0e0;
+}
+
+input:focus, select:focus {
+  border-color: #4dabf7;
+  outline: none;
 }
 
 .sep {
   height: 1px;
-  background: #ddd;
+  background: #4a4a4a;
   margin: 12px 0;
 }
 
@@ -94,14 +105,14 @@ input, select {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background: #007bff;
+  background: #4dabf7;
   color: #fff;
   font-size: 14px;
   cursor: pointer;
 }
 
 .btn:hover {
-  background: #0056b3;
+  background: #74c0fc;
 }
 
 .kpis {
@@ -116,12 +127,13 @@ input, select {
   text-align: center;
   padding: 8px;
   border-radius: 4px;
-  background: #f8f9fa;
+  background: #333;
+  border: 1px solid #4a4a4a;
 }
 
 .tile strong {
   font-size: 16px;
-  color: #333;
+  color: #fff;
 }
 
 .correction-factors {
@@ -135,50 +147,52 @@ input, select {
   justify-content: space-between;
   padding: 8px;
   border-radius: 4px;
-  background: #f8f9fa;
+  background: #333;
+  border: 1px solid #4a4a4a;
 }
 
 .correction-factor .label {
   font-size: 12px;
-  color: #666;
+  color: #a0a0a0;
 }
 
 .correction-factor .value {
   font-size: 12px;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 
 .recs div {
   margin: 4px 0;
+  color: #e0e0e0;
 }
 
 .abbrev {
   font-size: 12px;
-  color: #666;
+  color: #a0a0a0;
 }
 
 .stat-card {
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   padding: 12px;
   margin-bottom: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   border-left: 4px solid;
-  border-color: #007bff; /* Azul para Local */
+  border-color: #4dabf7; /* Azul para Local */
 }
 
 .stat-card:nth-child(2) {
-  border-color: #dc3545; /* Rojo para Visitante */
+  border-color: #f87171; /* Rojo para Visitante */
 }
 
 .stat-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: #fff;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -190,16 +204,16 @@ input, select {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #007bff; /* Azul para Local */
+  background: #4dabf7; /* Azul para Local */
 }
 
 .stat-card:nth-child(2) .stat-title::before {
-  background: #dc3545; /* Rojo para Visitante */
+  background: #f87171; /* Rojo para Visitante */
 }
 
 .stat-values {
   font-size: 14px;
-  color: #555;
+  color: #e0e0e0;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -208,8 +222,9 @@ input, select {
 .stat-values span {
   display: inline-block;
   padding: 4px 8px;
-  background: #f8f9fa;
+  background: #333;
   border-radius: 4px;
+  border: 1px solid #4a4a4a;
 }
 
 @media (max-width: 768px) {

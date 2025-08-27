@@ -1,57 +1,57 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
-  padding: 12px;
+  padding: 8px;
   background-color: #1a1a1a;
   color: #e0e0e0;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1000px; /* Reducido de 1200px para no estirar tanto */
   margin: 0 auto;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 h1 {
-  font-size: 22px;
+  font-size: 20px; /* Reducido de 22px */
   margin: 0;
   color: #fff;
 }
 
 h3 {
-  font-size: 18px;
-  margin: 0 0 10px;
+  font-size: 16px; /* Reducido de 18px */
+  margin: 8px 0 6px; /* Ajustado para menos espacio */
   color: #fff;
 }
 
 h4 {
-  font-size: 15px;
-  margin: 10px 0 6px;
+  font-size: 14px; /* Reducido de 15px */
+  margin: 8px 0 4px; /* Menos espacio vertical */
   color: #e0e0e0;
 }
 
 p.small, div.small {
-  font-size: 11px;
+  font-size: 10px; /* Reducido de 11px */
   color: #e0e0e0;
 }
 
 .card {
   background: #2c2c2c;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  padding: 12px;
-  margin-bottom: 12px;
+  border-radius: 6px; /* Reducido de 8px */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3); /* Sombra más ligera */
+  padding: 10px; /* Reducido de 12px */
+  margin-bottom: 10px; /* Reducido de 12px */
   border: 1px solid #3a3a3a;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px; /* Reducido de 12px */
 }
 
 .table-like {
@@ -61,18 +61,18 @@ p.small, div.small {
 }
 
 label {
-  font-size: 13px;
+  font-size: 12px; /* Reducido de 13px */
   color: #e0e0e0;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px; /* Reducido de 4px */
 }
 
 input, select {
   width: 100%;
-  padding: 6px;
+  padding: 5px; /* Reducido de 6px */
   border: 1px solid #4a4a4a;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: 3px; /* Reducido de 4px */
+  font-size: 12px; /* Reducido de 13px */
   box-sizing: border-box;
   background: #333;
   color: #e0e0e0;
@@ -86,16 +86,16 @@ input:focus, select:focus {
 .sep {
   height: 1px;
   background: #4a4a4a;
-  margin: 10px 0;
+  margin: 6px 0; /* Reducido de 10px */
 }
 
 .btn {
-  padding: 6px 12px;
+  padding: 5px 10px; /* Reducido de 6px 12px */
   border: none;
-  border-radius: 4px;
+  border-radius: 3px; /* Reducido de 4px */
   background: #4dabf7;
   color: #fff;
-  font-size: 13px;
+  font-size: 12px; /* Reducido de 13px */
   cursor: pointer;
 }
 
@@ -106,7 +106,7 @@ input:focus, select:focus {
 .kpis {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px; /* Reducido de 10px */
 }
 
 .kpis-row {
@@ -123,13 +123,13 @@ input:focus, select:focus {
 .tile {
   flex: 1;
   width: 100%;
-  max-width: 180px;
+  max-width: 160px; /* Reducido de 180px */
   text-align: center;
-  padding: 10px;
-  border-radius: 6px;
+  padding: 8px; /* Reducido de 10px */
+  border-radius: 4px; /* Reducido de 6px */
   background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
-  border: 2px solid #4a4a4a;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  border: 1px solid #4a4a4a; /* Reducido de 2px */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Sombra más ligera */
   position: relative;
   transition: background 0.3s ease;
 }
@@ -145,10 +145,10 @@ input:focus, select:focus {
 .tile:nth-child(1)::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 4px; /* Reducido de 6px */
+  left: 4px; /* Reducido de 6px */
+  width: 8px; /* Reducido de 10px */
+  height: 8px; /* Reducido de 10px */
   border-radius: 50%;
   background: #4dabf7;
 }
@@ -160,10 +160,10 @@ input:focus, select:focus {
 .tile:nth-child(2)::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #f0c05a;
 }
@@ -175,10 +175,10 @@ input:focus, select:focus {
 .tile:nth-child(3)::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #f87171;
 }
@@ -190,10 +190,10 @@ input:focus, select:focus {
 .tile:nth-child(4)::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #a855f7;
 }
@@ -205,22 +205,22 @@ input:focus, select:focus {
 .tile:nth-child(5)::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #34c759;
 }
 
 .tile strong {
-  font-size: 18px;
+  font-size: 16px; /* Reducido de 18px */
   color: #f0f0f0;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.4); /* Sombra más ligera */
 }
 
 .tile div.small {
-  font-size: 11px;
+  font-size: 10px; /* Reducido de 11px */
   color: #e0e0e0;
   white-space: normal;
   line-height: 1.2;
@@ -228,62 +228,62 @@ input:focus, select:focus {
 
 .correction-factors {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Reducido de 100px */
+  gap: 4px; /* Reducido de 6px */
 }
 
 .correction-factor {
   display: flex;
   justify-content: space-between;
-  padding: 6px;
-  border-radius: 4px;
+  padding: 4px; /* Reducido de 6px */
+  border-radius: 3px; /* Reducido de 4px */
   background: #333;
   border: 1px solid #4a4a4a;
 }
 
 .correction-factor .label {
-  font-size: 11px;
+  font-size: 10px; /* Reducido de 11px */
   color: #a0a0a0;
 }
 
 .correction-factor .value {
-  font-size: 11px;
+  font-size: 10px; /* Reducido de 11px */
   font-weight: bold;
   color: #fff;
 }
 
 .recs div {
-  margin: 4px 0;
+  margin: 2px 0; /* Reducido de 4px */
   color: #e0e0e0;
 }
 
 .recs .error {
   color: #e0e0e0;
   background: #3a3a3a;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 4px 8px; /* Reducido de 6px 10px */
+  border-radius: 3px; /* Reducido de 4px */
   border: 1px solid #ff6666;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  font-size: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra más ligera */
+  font-size: 11px; /* Reducido de 12px */
   text-align: center;
   order: -1;
 }
 
 .recs .error strong {
-  font-size: 13px;
+  font-size: 12px; /* Reducido de 13px */
   color: #ff6666;
 }
 
 .stat-card {
   background: #3a3a3a;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-  padding: 10px;
-  margin-bottom: 8px;
+  border-radius: 6px; /* Reducido de 8px */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Sombra más ligera */
+  padding: 8px; /* Reducido de 10px */
+  margin-bottom: 6px; /* Reducido de 8px */
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-left: 4px solid;
+  gap: 4px; /* Reducido de 8px */
+  border-left: 3px solid; /* Reducido de 4px */
   border-color: #4dabf7;
 }
 
@@ -292,20 +292,18 @@ input:focus, select:focus {
 }
 
 .stat-title {
-  font-size: 16px;
+  font-size: 14px; /* Reducido de 16px */
   font-weight: 600;
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 8px;
-  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+  gap: 6px; /* Reducido de 8px */
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.3); /* Sombra más ligera */
 }
 
 .stat-title::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px; /* Reducido de 12px */
+  height: 10px; /* Reducido de 12px */
   border-radius: 50%;
   background: #74c0fc;
 }
@@ -315,51 +313,50 @@ input:focus, select:focus {
 }
 
 .stat-values {
-  font-size: 15px;
+  font-size: 13px; /* Reducido de 15px */
   color: #f0f0f0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px; /* Reducido de 8px */
   background: #4a4a4a;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 4px 8px; /* Reducido de 6px 10px */
+  border-radius: 3px; /* Reducido de 4px */
   border: 1px solid #5a5a5a;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.4); /* Sombra más ligera */
 }
 
 .stat-values span {
-  display: inline-block;
-  padding: 4px 6px;
+  padding: 3px 5px; /* Reducido de 4px 6px */
   background: #4a4a4a;
-  border-radius: 4px;
+  border-radius: 3px; /* Reducido de 4px */
   border: 1px solid #5a5a5a;
 }
 
 .stat-legend {
-  font-size: 13px;
+  font-size: 11px; /* Reducido de 13px */
   color: #f0f0f0;
   background: #444;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 4px 8px; /* Reducido de 6px 10px */
+  border-radius: 3px; /* Reducido de 4px */
   border: 1px solid #74c0fc;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  margin-bottom: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra más ligera */
+  margin-bottom: 4px; /* Reducido de 6px */
   text-align: center;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.4); /* Sombra más ligera */
 }
 
 .bet-slip {
   background: linear-gradient(135deg, #2a3a4a, #3a4a5a);
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 8px;
+  border-radius: 6px; /* Reducido de 8px */
+  padding: 10px; /* Reducido de 12px */
+  margin-top: 6px; /* Reducido de 8px */
   color: #f0f0f0;
   font-weight: 600;
   display: flex;
   flex-direction: column;
   gap: 4px;
   border: 2px solid #4dabf7;
-  box-shadow: 0 3px 8px rgba(77, 171, 247, 0.3), 0 0 12px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(77, 171, 247, 0.2), 0 0 8px rgba(0,0,0,0.2); /* Sombra más ligera */
   position: relative;
   overflow: hidden;
   animation: float 2s ease-in-out infinite, fadeIn 0.5s ease-out;
@@ -367,33 +364,33 @@ input:focus, select:focus {
 
 .bet-slip::before {
   content: '★';
-  font-size: 16px;
+  font-size: 14px; /* Reducido de 16px */
   color: #ffffff;
   background: #4dabf7;
   position: absolute;
-  top: 6px;
+  top: 4px; /* Reducido de 6px */
   left: 50%;
   transform: translateX(-50%);
-  padding: 2px 6px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  padding: 1px 4px; /* Reducido de 2px 6px */
+  border-radius: 3px; /* Reducido de 4px */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra más ligera */
 }
 
 .bet-slip p {
-  margin: 16px 0 0 0;
-  font-size: 15px;
+  margin: 12px 0 0 0; /* Reducido de 16px */
+  font-size: 14px; /* Reducido de 15px */
   text-align: center;
 }
 
 .bet-slip p strong {
-  font-size: 17px;
+  font-size: 16px; /* Reducido de 17px */
   color: #4dabf7;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); /* Sombra más ligera */
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-2px); } /* Reducido de -3px */
 }
 
 @keyframes fadeIn {
@@ -402,13 +399,13 @@ input:focus, select:focus {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-  50% { transform: scale(1.01); box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
+  0%, 100% { transform: scale(1); box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  50% { transform: scale(1.01); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 }
 
 @media (max-width: 768px) {
   body {
-    padding: 8px;
+    padding: 6px; /* Reducido de 8px */
   }
 
   .container {
@@ -416,150 +413,149 @@ input:focus, select:focus {
   }
 
   .header {
-    margin-bottom: 12px;
+    margin-bottom: 10px; /* Reducido de 12px */
   }
 
   h1 {
-    font-size: 20px;
+    font-size: 18px; /* Reducido de 20px */
   }
 
   h3 {
-    font-size: 16px;
-    margin-bottom: 8px;
+    font-size: 14px; /* Reducido de 16px */
+    margin-bottom: 6px; /* Reducido de 8px */
   }
 
   h4 {
-    font-size: 14px;
-    margin: 8px 0 4px;
+    font-size: 12px; /* Reducido de 14px */
+    margin: 6px 0 2px; /* Menos espacio vertical */
   }
 
   .card {
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 8px; /* Reducido de 10px */
+    margin-bottom: 8px; /* Reducido de 10px */
   }
 
   .grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 6px; /* Reducido de 10px */
   }
 
   .table-like {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 4px; /* Reducido de 4px */
   }
 
   label {
-    font-size: 12px;
+    font-size: 11px; /* Reducido de 12px */
   }
 
   input, select {
-    padding: 5px;
-    font-size: 12px;
+    padding: 4px; /* Reducido de 5px */
+    font-size: 11px; /* Reducido de 12px */
   }
 
   .sep {
-    margin: 8px 0;
+    margin: 4px 0; /* Reducido de 8px */
   }
 
   .btn {
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 4px 8px; /* Reducido de 5px 10px */
+    font-size: 11px; /* Reducido de 12px */
   }
 
   .kpis-row {
     flex-direction: column;
-    gap: 4px;
+    gap: 4px; /* Reducido de 4px */
   }
 
   .tile {
     width: 100%;
     max-width: none;
-    padding: 8px;
+    padding: 6px; /* Reducido de 8px */
   }
 
   .tile strong {
-    font-size: 16px;
+    font-size: 14px; /* Reducido de 16px */
   }
 
   .tile div.small {
-    font-size: 10px;
-    line-height: 1.3;
+    font-size: 9px; /* Reducido de 10px */
   }
 
   .tile::before {
-    width: 8px;
-    height: 8px;
-    top: 5px;
-    left: 5px;
+    width: 6px; /* Reducido de 8px */
+    height: 6px; /* Reducido de 8px */
+    top: 3px; /* Reducido de 5px */
+    left: 3px; /* Reducido de 5px */
   }
 
   .correction-factors {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 3px; /* Reducido de 4px */
   }
 
   .correction-factor {
-    padding: 5px;
+    padding: 3px; /* Reducido de 5px */
   }
 
   .correction-factor .label, .correction-factor .value {
-    font-size: 10px;
+    font-size: 9px; /* Reducido de 10px */
   }
 
   .recs .error {
-    padding: 5px 8px;
-    font-size: 11px;
+    padding: 3px 6px; /* Reducido de 5px 8px */
+    font-size: 10px; /* Reducido de 11px */
   }
 
   .recs .error strong {
-    font-size: 12px;
+    font-size: 11px; /* Reducido de 12px */
   }
 
   .stat-card {
-    padding: 8px;
+    padding: 6px; /* Reducido de 8px */
   }
 
   .stat-title {
-    font-size: 14px;
-    gap: 6px;
+    font-size: 12px; /* Reducido de 14px */
+    gap: 4px; /* Reducido de 6px */
   }
 
   .stat-title::before {
-    width: 10px;
-    height: 10px;
+    width: 8px; /* Reducido de 10px */
+    height: 8px; /* Reducido de 10px */
   }
 
   .stat-values {
-    font-size: 14px;
-    padding: 5px 8px;
-    gap: 6px;
+    font-size: 12px; /* Reducido de 14px */
+    padding: 3px 6px; /* Reducido de 5px 8px */
+    gap: 4px; /* Reducido de 6px */
   }
 
   .stat-values span {
-    padding: 3px 5px;
+    padding: 2px 4px; /* Reducido de 3px 5px */
   }
 
   .stat-legend {
-    font-size: 12px;
-    padding: 5px 8px;
+    font-size: 10px; /* Reducido de 12px */
+    padding: 3px 6px; /* Reducido de 5px 8px */
   }
 
   .bet-slip {
-    padding: 10px;
+    padding: 8px; /* Reducido de 10px */
   }
 
   .bet-slip p {
-    font-size: 14px;
-    margin: 14px 0 0 0;
+    font-size: 13px; /* Reducido de 14px */
+    margin: 10px 0 0 0; /* Reducido de 14px */
   }
 
   .bet-slip p strong {
-    font-size: 16px;
+    font-size: 15px; /* Reducido de 16px */
   }
 
   .bet-slip::before {
-    font-size: 14px;
-    top: 5px;
-    padding: 1px 4px;
+    font-size: 12px; /* Reducido de 14px */
+    top: 3px; /* Reducido de 5px */
+    padding: 1px 3px; /* Reducido de 1px 4px */
   }
 }

@@ -61,7 +61,9 @@ async function fetchTeams() {
     return normalized;
   } catch (err) { 
     console.error('Error fetching teams:', err); 
-    alert('No se pudieron cargar los datos de equipos desde la API. Usando datos mockeados para pruebas.');
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> No se pudieron cargar los datos de la API. Usando datos de prueba.</div>';
+    }
     return {
       "BSA": [
         { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46 },
@@ -76,16 +78,19 @@ async function init() {
     teamsByLeague = await fetchTeams();
     const leagueCodes = Object.keys(teamsByLeague);
     console.log('Ligas disponibles:', leagueCodes);
-    if (leagueCodes.length === 0) {
-      alert('No se encontraron ligas para mostrar.');
-      return;
-    }
+
     const leagueSelect = $('leagueSelect');
-    if (!leagueSelect) {
-      console.error('Elemento #leagueSelect no encontrado');
-      alert('Error: No se encontró el selector de ligas.');
+    const teamHomeSelect = $('teamHome');
+    const teamAwaySelect = $('teamAway');
+    
+    if (!leagueSelect || !teamHomeSelect || !teamAwaySelect) {
+      console.error('Elementos DOM no encontrados:', { leagueSelect: !!leagueSelect, teamHomeSelect: !!teamHomeSelect, teamAwaySelect: !!teamAwaySelect });
+      if ($('details')) {
+        $('details').innerHTML = '<div><strong>Error:</strong> Problema con la interfaz. Por favor, recarga la página.</div>';
+      }
       return;
     }
+
     leagueSelect.innerHTML = '<option value="">-- Selecciona liga --</option>';
     leagueCodes.forEach(code => { 
       const opt = document.createElement('option'); 
@@ -93,22 +98,31 @@ async function init() {
       opt.textContent = leagueNames[code] || code; 
       leagueSelect.appendChild(opt); 
     });
-    const teamHomeSelect = $('teamHome');
-    const teamAwaySelect = $('teamAway');
-    if (!teamHomeSelect || !teamAwaySelect) {
-      console.error('Elementos #teamHome o #teamAway no encontrados');
-      alert('Error: No se encontraron los selectores de equipos.');
-      return;
-    }
-    $('leagueSelect').addEventListener('change', onLeagueChange);
+
+    leagueSelect.addEventListener('change', onLeagueChange);
     teamHomeSelect.addEventListener('change', () => fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home'));
     teamAwaySelect.addEventListener('change', () => fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away'));
     $('recalc').addEventListener('click', calculateAll);
     $('reset').addEventListener('click', () => location.reload());
     $('clearAll').addEventListener('click', clearAll);
+
+    // Seleccionar una liga y equipos por defecto para inicializar
+    if (leagueCodes.length > 0) {
+      leagueSelect.value = leagueCodes[0]; // Seleccionar la primera liga
+      onLeagueChange(); // Llenar equipos
+      if (teamsByLeague[leagueCodes[0]]?.length >= 2) {
+        teamHomeSelect.value = teamsByLeague[leagueCodes[0]][0].name;
+        teamAwaySelect.value = teamsByLeague[leagueCodes[0]][1].name;
+        fillTeamData(teamHomeSelect.value, leagueCodes[0], 'Home');
+        fillTeamData(teamAwaySelect.value, leagueCodes[0], 'Away');
+        calculateAll(); // Calcular probabilidades iniciales
+      }
+    }
   } catch (err) {
     console.error("Error en init:", err);
-    alert("Error al inicializar la aplicación. Por favor, recarga la página.");
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> Error al inicializar. Selecciona una liga para continuar.</div>';
+    }
   }
 }
 document.addEventListener('DOMContentLoaded', init);
@@ -122,7 +136,9 @@ function onLeagueChange() {
   teamAwaySelect.innerHTML = '<option value="">-- Selecciona equipo --</option>';
   if (!code || !teamsByLeague[code]) {
     console.warn(`No se encontraron equipos para la liga ${code}`);
-    alert(`No hay equipos disponibles para la liga seleccionada (${code}).`);
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> No hay equipos disponibles para la liga seleccionada.</div>';
+    }
     return;
   }
   teamsByLeague[code].forEach(t => {
@@ -149,14 +165,14 @@ function fillTeamData(teamName, leagueCode, type) {
 
   if (type === 'Home') {
     $('posHome').value = t.pos || '';
-    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
+    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '1.0';
+    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '1.0';
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   } else {
     $('posAway').value = t.pos || '';
-    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '';
-    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '';
+    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '1.0';
+    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '1.0';
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
   }
@@ -237,7 +253,9 @@ function calculateHomeAdvantage(leagueCode) {
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
     console.warn('Lambdas inválidos:', { lambdaHome, lambdaAway });
-    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
+    }
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -271,7 +289,9 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const total = pHome + pDraw + pAway;
   if (total <= 0) {
     console.warn('Suma de probabilidades inválida:', total);
-    $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
+    }
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   
@@ -307,21 +327,27 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 }
 
 function calculateAll() {
-  const lambdaHome = parseNumberString($('gfHome').value);
-  const lambdaAway = parseNumberString($('gfAway').value);
+  let lambdaHome = parseNumberString($('gfHome').value);
+  let lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
+
+  // Usar valores predeterminados si los inputs están vacíos
+  if (!isFinite(lambdaHome) || lambdaHome <= 0) {
+    console.warn('lambdaHome inválido, usando 1.0:', lambdaHome);
+    lambdaHome = 1.0;
+    $('gfHome').value = '1.0';
+  }
+  if (!isFinite(lambdaAway) || lambdaAway <= 0) {
+    console.warn('lambdaAway inválido, usando 1.0:', lambdaAway);
+    lambdaAway = 1.0;
+    $('gfAway').value = '1.0';
+  }
 
   if (!leagueCode) {
     console.warn('Liga no seleccionada');
-    alert('Por favor, selecciona una liga.');
-    $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
-    return;
-  }
-
-  if (lambdaHome <= 0 || lambdaAway <= 0) {
-    console.warn('Goles inválidos:', { lambdaHome, lambdaAway });
-    alert('Por favor, ingrese valores válidos para goles.');
-    $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
+    if ($('details')) {
+      $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
+    }
     return;
   }
 

@@ -244,24 +244,30 @@ input:focus, select:focus {
 }
 
 .bet-slip::before {
-  content: ''; /* Icono de rayo */
+  content: '⚡️'; /* Icono de rayo */
   font-size: 24px;
   color: #ffeb3b; /* Amarillo neón */
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
   animation: blink 1.5s infinite;
+  background: linear-gradient(135deg, #00f4ff, #ff00ff);
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
 }
 
 .bet-slip p {
-  margin: 0;
+  margin: 24px 0 0 0; /* Espacio para el rayo */
   font-size: 18px;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  text-align: center;
 }
 
 .bet-slip p strong {
   font-size: 24px; /* % de acierto más grande */
-  color: #ffeb3b; /* Amarillo neón para destacar */
+  color: #ffeb3b; /* Amarillo neón */
 }
 
 @keyframes float {
@@ -295,5 +301,9 @@ input:focus, select:focus {
   .bet-slip p strong {
     font-size: 20px;
   }
-}
 
+  .bet-slip::before {
+    font-size: 20px;
+    top: -10px;
+  }
+}

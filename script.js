@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
@@ -61,14 +61,9 @@ async function fetchTeams() {
   } catch (err) { 
     console.error('Error fetching teams:', err); 
     if ($('details')) {
-      $('details').innerHTML = '<div><strong>Error:</strong> No se pudieron cargar los datos de la API. Usando datos de prueba.</div>';
+      $('details').innerHTML = '<div><strong>Error:</strong> No se pudieron cargar los datos de la API. Por favor, intenta de nuevo.</div>';
     }
-    return {
-      "BSA": [
-        { name: "CR Flamengo", pos: 1, gf: 44, ga: 9, pj: 20, g: 14, e: 4, p: 2, points: 46 },
-        { name: "SC Recife", pos: 20, gf: 12, ga: 30, pj: 19, g: 1, e: 7, p: 11, points: 10 }
-      ]
-    };
+    return {};
   }
 }
 
@@ -110,14 +105,13 @@ async function init() {
     $('reset').addEventListener('click', () => location.reload());
     $('clearAll').addEventListener('click', clearAll);
 
-    // Resetear todos los campos al iniciar
     clearAll();
   } catch (err) {
     console.error("Error en init:", err);
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Error al inicializar. Selecciona una liga para continuar.</div>';
     }
-    clearAll(); // Asegurar estado limpio incluso si hay error
+    clearAll();
   }
 }
 document.addEventListener('DOMContentLoaded', init);
@@ -203,8 +197,9 @@ function factorial(n) {
 
 function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 
-function dixonColesAdjustment(lambdaHome, lambdaAway) {
-  const rho = -0.15;
+function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
+  const leagueRhoFactors = { BSA: -0.15, SA: -0.2, PL: -0.1, CL: -0.12 };
+  const rho = leagueRhoFactors[leagueCode] || -0.15;
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) {
     console.warn('Valores inválidos para Dixon-Coles:', { lambdaHome, lambdaAway });
     return 1;
@@ -239,11 +234,12 @@ function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, point
 }
 
 function calculateHomeAdvantage(leagueCode) {
+  const leagueHomeFactors = { BSA: 1.15, CL: 1.1, PL: 1.05, SA: 1.1 };
   const teams = teamsByLeague[leagueCode] || [];
   const avgGoals = teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / (teams.length || 1);
-  const factor = 1 + (avgGoals * 0.1);
-  console.log('homeAdvantageFactor calculado:', { leagueCode, avgGoals, factor });
-  return isFinite(factor) ? factor : 1.1;
+  const baseFactor = 1 + (avgGoals * 0.1);
+  console.log('homeAdvantageFactor calculado:', { leagueCode, avgGoals, factor: leagueHomeFactors[leagueCode] || baseFactor });
+  return leagueHomeFactors[leagueCode] || baseFactor;
 }
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
@@ -256,7 +252,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
   const strengthFactor = calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway);
-  const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway);
+  const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode);
   
   $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
   $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
@@ -368,7 +364,6 @@ function calculateAll() {
     pHome: probs.pHome, pDraw: probs.pDraw, pAway: probs.pAway, pBTTS: probs.pBTTS, pO25: probs.pO25
   });
 
-  // Recomendación de apuesta con % de acierto
   const recommendations = [
     { name: `Gana ${teamHomeName}`, prob: probs.pHome },
     { name: 'Empate', prob: probs.pDraw },
@@ -380,9 +375,8 @@ function calculateAll() {
   const maxProb = Math.max(...recommendations.map(r => r.prob));
   if (maxProb > 0) {
     const bestRecommendation = recommendations.find(r => r.prob === maxProb);
-    $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}<br>Según el pronóstico</p>`;
+    $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}<br>Según el pronóstico<br><small>El fútbol es impredecible, ¡apuesta con cautela!</small></p>`;
   } else {
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   }
 }
-

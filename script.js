@@ -9,7 +9,7 @@ function parseNumberString(val) {
   return isFinite(n) ? n : 0; 
 }
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
@@ -336,6 +336,7 @@ function calculateAll() {
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
     }
+    $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
     return;
   }
 
@@ -344,6 +345,7 @@ function calculateAll() {
     if ($('details')) {
       $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     }
+    $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
     return;
   }
 
@@ -384,9 +386,8 @@ function calculateAll() {
   const maxProb = Math.max(...recommendations.map(r => r.prob));
   if (maxProb > 0) {
     const bestRecommendation = recommendations.find(r => r.prob === maxProb);
-    $('suggestion').innerHTML = `<p>Recomendación: ${bestRecommendation.name} - ${formatPct(bestRecommendation.prob)} de acierto</p>`;
+    $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}</p>`;
   } else {
-    $('suggestion').innerHTML = '<p>No hay recomendación disponible.</p>';
+    $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
   }
 }
-

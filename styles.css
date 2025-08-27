@@ -185,15 +185,15 @@ input:focus, select:focus {
 }
 
 .stat-card {
-  background: #2c2c2c;
+  background: #3a3a3a;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  padding: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  padding: 14px;
   margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-left: 4px solid;
+  gap: 10px;
+  border-left: 5px solid;
   border-color: #4dabf7;
 }
 
@@ -202,39 +202,44 @@ input:focus, select:focus {
 }
 
 .stat-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .stat-title::before {
   content: '';
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: #4dabf7;
+  background: #74c0fc;
 }
 
 .stat-card:nth-child(2) .stat-title::before {
-  background: #f87171;
+  background: #ff8787;
 }
 
 .stat-values {
-  font-size: 14px;
+  font-size: 15px;
   color: #e0e0e0;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  background: #444;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #4a4a4a;
 }
 
 .stat-values span {
   display: inline-block;
   padding: 4px 8px;
-  background: #333;
+  background: #444;
   border-radius: 4px;
   border: 1px solid #4a4a4a;
 }
@@ -330,5 +335,22 @@ input:focus, select:focus {
 
   .recs .error strong {
     font-size: 14px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-title {
+    font-size: 16px;
+  }
+
+  .stat-values {
+    font-size: 14px;
+  }
+
+  .stat-title::before {
+    width: 12px;
+    height: 12px;
   }
 }

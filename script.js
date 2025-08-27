@@ -303,16 +303,7 @@ function calculateAll(){
   const bankroll=parseNumberString($('bankroll').value);
   if(lambdaHome<=0 || lambdaAway<=0 || bankroll<=0){ alert('Ingrese valores válidos para goles y banca.'); return; }
 
-  const odds={
-    oddsHome:toDecimalOdds($('oddsHome').value),
-    oddsDraw:toDecimalOdds($('oddsDraw').value),
-    oddsAway:toDecimalOdds($('oddsAway').value),
-    oddsBTTS:toDecimalOdds($('oddsBTTS').value),
-    oddsOver25:toDecimalOdds($('oddsOver25').value)
-  };
-
-  if(odds.oddsHome<1||odds.oddsDraw<1||odds.oddsAway<1||odds.oddsBTTS<1||odds.oddsOver25<1){ alert('Las cuotas deben ser > 1.0'); return; }
-
+  // Probabilidades calculadas
   const teamHome=findTeam($('leagueSelect').value,$('teamHome').value);
   const teamAway=findTeam($('leagueSelect').value,$('teamAway').value);
   const pointsHome=teamHome?teamHome.points:0;
@@ -327,6 +318,30 @@ function calculateAll(){
   $('pBTTS').textContent=formatPct(probs.pBTTS);
   $('pO25').textContent=formatPct(probs.pO25);
 
+  // Calcular cuotas dinámicas (decimal)
+  const odds = {
+    oddsHome: probs.pHome>0 ? 1 / probs.pHome : 1.01,
+    oddsDraw: probs.pDraw>0 ? 1 / probs.pDraw : 1.01,
+    oddsAway: probs.pAway>0 ? 1 / probs.pAway : 1.01,
+    oddsBTTS: probs.pBTTS>0 ? 1 / probs.pBTTS : 1.01,
+    oddsOver25: probs.pO25>0 ? 1 / probs.pO25 : 1.01
+  };
+
+  // Actualizar inputs de cuotas
+  $('oddsHome').value = formatDec(odds.oddsHome);
+  $('oddsDraw').value = formatDec(odds.oddsDraw);
+  $('oddsAway').value = formatDec(odds.oddsAway);
+  $('oddsBTTS').value = formatDec(odds.oddsBTTS);
+  $('oddsOver25').value = formatDec(odds.oddsOver25);
+
+  // Calcular y mostrar EV junto a cada cuota
+  $('evHome').textContent = `EV: ${formatPct(probs.pHome*odds.oddsHome-1)}`;
+  $('evDraw').textContent = `EV: ${formatPct(probs.pDraw*odds.oddsDraw-1)}`;
+  $('evAway').textContent = `EV: ${formatPct(probs.pAway*odds.oddsAway-1)}`;
+  $('evBTTS').textContent = `EV: ${formatPct(probs.pBTTS*odds.oddsBTTS-1)}`;
+  $('evO25').textContent = `EV: ${formatPct(probs.pO25*odds.oddsOver25-1)}`;
+
+  // Sugerencia de apuesta con Kelly
   const suggestion=suggestBet(probs,odds,bankroll);
   $('expectedBest').textContent=suggestion.bestBet||'Ninguna';
   $('kellyStake').textContent=formatDec(suggestion.stakePercent)+'%';

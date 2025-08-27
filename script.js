@@ -257,7 +257,7 @@ function calculateHomeAdvantage(leagueCode) {
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Valores de goles inválidos.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -334,7 +334,7 @@ function calculateAll() {
   }
 
   if (!teamHomeName || !teamAwayName) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+    $('details').innerHTML = '<div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
     return;
   }
@@ -348,7 +348,7 @@ function calculateAll() {
   const teamHome = findTeam(leagueCode, teamHomeName);
   const teamAway = findTeam(leagueCode, teamAwayName);
   const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamAway.points : 0;
+  const pointsAway = teamAway ? teamHome.points : 0;
 
   const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode);
   $('pHome').textContent = formatPct(probs.pHome);
@@ -378,4 +378,3 @@ function calculateAll() {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
-

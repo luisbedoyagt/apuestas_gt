@@ -201,7 +201,7 @@ function calculateStrengthFactor(posHome, posAway, maxTeams, pointsHome, pointsA
   const ppgHome = pointsHome / ($('gfHome').value || 1); // Evitar división por cero
   const ppgAway = pointsAway / ($('gfAway').value || 1);
   const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.sqrt(eloFactor); // Suavizar el factor
+  return Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0); // Limitar entre 0.5 y 2.0
 }
 
 function calculateFormFactor(formHome, formAway, formWeight) {
@@ -218,7 +218,7 @@ function calculateFormFactor(formHome, formAway, formWeight) {
     if (awayPpg === 0) return 1;
     const formFactor = homePpg / awayPpg;
     const weight = formWeight / 100;
-    return 1 + (formFactor - 1) * weight;
+    return Math.min(Math.max(1 + (formFactor - 1) * weight, 0.5), 2.0); // Limitar entre 0.5 y 2.0
   } catch (e) {
     console.error("Error parsing form data:", e);
     return 1;
@@ -226,6 +226,10 @@ function calculateFormFactor(formHome, formAway, formWeight) {
 }
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
+  if (lambdaHome <= 0 || lambdaAway <= 0) {
+    console.warn('Lambdas inválidos:', { lambdaHome, lambdaAway });
+    return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
+  }
   const homeAdvantageFactor = 1 + (parseNumberString($('homeAdvantage').value) / 100);
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
@@ -244,7 +248,11 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
   $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
   
   const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * recentFormFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.05); // Límite inferior más estricto
+  const adjAway = Math.max(lambdaAway / strengthFactor / recentFormFactor, 0.1); // Límite inferior ajustado a 0.1
+  
+  console.log('computeProbabilities:', {
+    lambdaHome, lambdaAway, adjHome, adjAway, homeAdvantageFactor, strengthFactor, recentFormFactor, dixonColesFactor
+  }); // Depuración
   
   let pHome = 0, pDraw = 0, pAway = 0;
   const maxGoals = 8;
@@ -258,11 +266,14 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
   }
   
   const total = pHome + pDraw + pAway;
-  if (total > 0) {
-    pHome /= total;
-    pDraw /= total;
-    pAway /= total;
+  if (total <= 0) {
+    console.warn('Suma de probabilidades inválida:', total);
+    return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
+  
+  pHome /= total;
+  pDraw /= total;
+  pAway /= total;
   
   let pBTTS = 0;
   for (let i = 1; i <= maxGoals; i++) {
@@ -279,6 +290,8 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway) {
       }
     }
   }
+  
+  console.log('Probabilidades calculadas:', { pHome, pDraw, pAway, pBTTS, pO25 }); // Depuración
   
   return {
     pHome: clamp01(pHome),

@@ -10,21 +10,22 @@ const parseNumberString = val => {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxz9HnkyD4sWsElH_taD77mIn29dJHuT-mJVmvZ0fOpWZeNwOzeQgqYop2d6_EH7HSt0A/exec";
 let teamsByLeague = {};
 const leagueNames = {
-  "esp.1": "LaLiga_España",
-  "mex.1": "LigaMX",
-  "usa.1": "MLS",
-  "gua.1": "Guatemala",
-  "crc.1": "CostaRica",
-  "hon.1": "Honduras",
-  "ita.1": "SerieA",
-  "ger.1": "Bundesliga_Alemania",
-  "fra.1": "Ligue1_Francia",
-  "ned.1": "Eredivisie_PaisesBajos",
-  "eng.1": "PremierLeague_Inglaterra",
-  "por.1": "Portugal",
-  "uefa.champions": "ChampionsLeague",
-  "uefa.europa": "EuropaLeague",
-  "br
+  "esp.1": "LaLiga España",
+  "mex.1": "Liga MX México",
+  "usa.1": "MLS Estados Unidos",
+  "gua.1": "Liga Nacional Guatemala",
+  "crc.1": "Liga Promerica Costa Rica",
+  "hon.1": "Liga Nacional Honduras",
+  "ita.1": "Serie A Italia",
+  "ger.1": "Bundesliga Alemania",
+  "fra.1": "Ligue 1 Francia",
+  "ned.1": "Eredivisie Países Bajos",
+  "eng.1": "Premier League Inglaterra",
+  "por.1": "Liga Portugal",
+  "uefa.champions": "UEFA Champions League",
+  "uefa.europa": "UEFA Europa League",
+  "bra.1": "Brasileirão Brasil"
+};
 
 function normalizeTeam(raw) {
   if (!raw) return null;
@@ -53,6 +54,9 @@ async function fetchTeams() {
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
+      if (normalized[key].length === 0) {
+        console.warn(`No se encontraron equipos válidos para la liga ${key}`);
+      }
     }
     return normalized;
   } catch (err) {
@@ -84,11 +88,13 @@ async function init() {
   teamHomeSelect.addEventListener('change', () => {
     if (restrictSameTeam()) {
       fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home');
+      updateCalcButton();
     }
   });
   teamAwaySelect.addEventListener('change', () => {
     if (restrictSameTeam()) {
       fillTeamData($('teamAway').value, $('leagueSelect').value, 'Away');
+      updateCalcButton();
     }
   });
   $('recalc').addEventListener('click', calculateAll);
@@ -104,8 +110,11 @@ function onLeagueChange() {
   const teamAwaySelect = $('teamAway');
   teamHomeSelect.innerHTML = '<option value="">-- Selecciona equipo --</option>';
   teamAwaySelect.innerHTML = '<option value="">-- Selecciona equipo --</option>';
-  if (!code || !teamsByLeague[code]) {
+  if (!code || !teamsByLeague[code] || teamsByLeague[code].length === 0) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> No hay equipos disponibles para la liga seleccionada.</div>';
+    clearTeamData('Home');
+    clearTeamData('Away');
+    updateCalcButton();
     return;
   }
   teamsByLeague[code].forEach(t => {
@@ -118,6 +127,16 @@ function onLeagueChange() {
     opt2.textContent = t.name;
     teamAwaySelect.appendChild(opt2);
   });
+  clearTeamData('Home');
+  clearTeamData('Away');
+  updateCalcButton();
+}
+
+function updateCalcButton() {
+  const teamHome = $('teamHome').value;
+  const teamAway = $('teamAway').value;
+  const leagueCode = $('leagueSelect').value;
+  $('recalc').disabled = !(leagueCode && teamHome && teamAway && teamHome !== teamAway);
 }
 
 function restrictSameTeam() {
@@ -131,6 +150,7 @@ function restrictSameTeam() {
       $('teamAway').value = '';
     }
     clearTeamData(document.activeElement === $('teamHome') ? 'Home' : 'Away');
+    updateCalcButton();
     return false;
   }
   return true;
@@ -199,16 +219,6 @@ function fillTeamData(teamName, leagueCode, type) {
   $('pDraw').parentElement.querySelector('.small').textContent = 'Probabilidad: Empate';
   $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
   $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
-
-  // Solo calcular si ambos equipos están seleccionados
-  const teamHome = $('teamHome').value;
-  const teamAway = $('teamAway').value;
-  if (teamHome && teamAway && restrictSameTeam()) {
-    calculateAll();
-  } else {
-    $('details').innerHTML = '<div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
-    $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
-  }
 }
 
 function clearAll() {
@@ -225,6 +235,7 @@ function clearAll() {
   $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
   $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
   $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
+  updateCalcButton();
 }
 
 function poissonPMF(lambda, k) {
@@ -244,7 +255,12 @@ function clamp01(x) {
 }
 
 function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
-  const leagueRhoFactors = { BSA: -0.15, SA: -0.2, PL: -0.1, CL: -0.12 };
+  const leagueRhoFactors = {
+    "bra.1": -0.15, // Brasileirão
+    "ita.1": -0.2,  // Serie A
+    "eng.1": -0.1,  // Premier League
+    "uefa.champions": -0.12 // Champions League
+  };
   const rho = leagueRhoFactors[leagueCode] || -0.15;
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
   const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
@@ -272,7 +288,12 @@ function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, point
 }
 
 function calculateHomeAdvantage(leagueCode) {
-  const leagueHomeFactors = { BSA: 1.15, CL: 1.1, PL: 1.05, SA: 1.1 };
+  const leagueHomeFactors = {
+    "bra.1": 1.15, // Brasileirão
+    "uefa.champions": 1.1, // Champions League
+    "eng.1": 1.05, // Premier League
+    "ita.1": 1.1 // Serie A
+  };
   const teams = teamsByLeague[leagueCode] || [];
   const avgGoals = teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / (teams.length || 1);
   return leagueHomeFactors[leagueCode] || 1 + (avgGoals * 0.1);
@@ -401,5 +422,3 @@ function calculateAll() {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
-
-

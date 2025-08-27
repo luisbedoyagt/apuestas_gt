@@ -11,6 +11,7 @@ function parseNumberString(val) {
 
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyP6dc9ww4I9kw26fQCc0gAyEtYbQVg6DsoAtlnxqhFFJClOrHoudM8PdnBnT9YBopSlA/exec";
 let teamsByLeague = {};
+let probChart = null; // Para almacenar la instancia del gráfico
 const leagueNames = { 
   "WC": "FIFA World Cup", "CL": "UEFA Champions League", "BL1": "Bundesliga", 
   "DED": "Eredivisie", "BSA": "Campeonato Brasileiro", "PD": "Liga Española", 
@@ -180,6 +181,11 @@ function clearAll() {
       (id.includes('Team') ? (id.includes('Home') ? 'Local: —' : 'Visitante: —') : 'PJ: — | G: — | E: — | P: —') : '—';
   });
   $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
+  // Destruir el gráfico si existe
+  if (probChart) {
+    probChart.destroy();
+    probChart = null;
+  }
   console.log('clearAll ejecutado');
 }
 
@@ -327,6 +333,10 @@ function calculateAll() {
       $('details').innerHTML = '<div><strong>Error:</strong> Selecciona una liga.</div>';
     }
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
+    if (probChart) {
+      probChart.destroy();
+      probChart = null;
+    }
     return;
   }
 
@@ -336,6 +346,10 @@ function calculateAll() {
       $('details').innerHTML = '<div><strong>Error:</strong> Valores de goles inválidos.</div>';
     }
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
+    if (probChart) {
+      probChart.destroy();
+      probChart = null;
+    }
     return;
   }
 
@@ -376,7 +390,55 @@ function calculateAll() {
   if (maxProb > 0) {
     const bestRecommendation = recommendations.find(r => r.prob === maxProb);
     $('suggestion').innerHTML = `<p><strong>${formatPct(bestRecommendation.prob)}</strong> de acierto<br>Recomendación: ${bestRecommendation.name}<br>Según el pronóstico<br><small>El fútbol es impredecible, ¡apuesta con cautela!</small></p>`;
+    
+    // Renderizar gráfico de barras
+    if (probChart) {
+      probChart.destroy();
+    }
+    const ctx = $('probChart').getContext('2d');
+    probChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [`Gana ${teamHomeName}`, 'Empate', `Gana ${teamAwayName}`],
+        datasets: [{
+          label: 'Probabilidades',
+          data: [probs.pHome * 100, probs.pDraw * 100, probs.pAway * 100],
+          backgroundColor: ['#00f4ff', '#ffeb3b', '#ff00ff'],
+          borderColor: ['#00f4ff', '#ffeb3b', '#ff00ff'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: { display: true, text: 'Probabilidad (%)', color: '#fff' },
+            ticks: { color: '#fff' },
+            grid: { color: 'rgba(255, 255, 255, 0.2)' }
+          },
+          x: {
+            ticks: { color: '#fff' },
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => `${context.raw.toFixed(1)}%`
+            }
+          }
+        },
+        maintainAspectRatio: false,
+        responsive: true
+      }
+    });
   } else {
     $('suggestion').innerHTML = '<p>Esperando datos para tu apuesta estelar...</p>';
+    if (probChart) {
+      probChart.destroy();
+      probChart = null;
+    }
   }
 }

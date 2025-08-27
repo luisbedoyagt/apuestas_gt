@@ -3,126 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de Probabilidades • Poisson + Mejoras</title>
+  <title>Calculadora de Pronósticos de Fútbol</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Calculadora de Probabilidades • Modelo Mejorado</h1>
-      <p class="small">Sistema mejorado con factores de corrección automáticos y modelo Dixon-Coles</p>
+      <h1>Calculadora de Pronósticos de Fútbol</h1>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h3>Equipos y estadísticas</h3>
-        <div class="table-like">
-          <div>
-            <label>Liga</label>
-            <select id="leagueSelect"><option value="">-- Selecciona liga --</option></select>
-          </div>
-        </div>
-
-        <div class="table-like" style="margin-top:8px">
-          <div>
-            <label>Equipo Local</label>
-            <select id="teamHome"><option value="">-- Selecciona equipo --</option></select>
-          </div>
-          <div>
-            <label>Equipo Visitante</label>
-            <select id="teamAway"><option value="">-- Selecciona equipo --</option></select>
-          </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <div class="table-like">
-          <div>
-            <label>Pos Local</label><input id="posHome" type="text" value="—" readonly>
-          </div>
-          <div>
-            <label>Pos Visitante</label><input id="posAway" type="text" value="—" readonly>
-          </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <div class="table-like">
-          <div>
-            <label>GF local</label><input id="gfHome" type="text" value="—" readonly>
-          </div>
-          <div>
-            <label>GC local</label><input id="gaHome" type="text" value="—" readonly>
-          </div>
-        </div>
-        <div class="table-like" style="margin-top:8px">
-          <div>
-            <label>GF visitante</label><input id="gfAway" type="text" value="—" readonly>
-          </div>
-          <div>
-            <label>GC visitante</label><input id="gaAway" type="text" value="—" readonly>
-          </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <h4>Forma general</h4>
-        <div class="stat-legend small">PJ = Partidos Jugados, G = Ganados, E = Empates, P = Perdidos</div>
-        <div class="table-like" style="margin-top:6px">
-          <div class="stat-card" id="formHomeCard">
-            <div class="stat-title" id="formHomeTeam">Local: —</div>
-            <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
-          </div>
-          <div class="stat-card" id="formAwayCard">
-            <div class="stat-title" id="formAwayTeam">Visitante: —</div>
-            <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
-          </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button id="recalc" class="btn">Calcular</button>
-          <button id="reset" class="btn">Resetear</button>
+    <div class="card">
+      <h3>Selección de Equipos</h3>
+      <div class="grid">
+        <div>
+          <label for="leagueSelect">Liga</label>
+          <select id="leagueSelect"></select>
         </div>
       </div>
-
-      <div class="card">
-        <h3>Probabilidades</h3>
-        <div class="kpis" style="margin-top:6px">
-          <div class="tile"><strong id="pHome">—</strong><div class="small">Prob. Local</div></div>
-          <div class="tile"><strong id="pDraw">—</strong><div class="small">Prob. Empate</div></div>
-          <div class="tile"><strong id="pAway">—</strong><div class="small">Prob. Visitante</div></div>
-          <div class="tile"><strong id="pBTTS">—</strong><div class="small">Prob. BTTS</div></div>
-          <div class="tile"><strong id="pO25">—</strong><div class="small">Prob. Over 2.5</div></div>
-        </div>
-
-        <div class="sep"></div>
-        
-        <h4>Factores Aplicados</h4>
-        <div class="correction-factors">
-          <div class="correction-factor">
-            <div class="label">Ventaja Local</div>
-            <div class="value" id="homeAdvantageFactor">—</div>
-          </div>
-          <div class="correction-factor">
-            <div class="label">Fuerza Relativa</div>
-            <div class="value" id="strengthFactor">—</div>
-          </div>
-          <div class="correction-factor">
-            <div class="label">Dixon-Coles</div>
-            <div class="value" id="dixonColesFactor">—</div>
+      <div class="grid">
+        <div>
+          <h4>Local</h4>
+          <div class="table-like">
+            <div>
+              <label for="teamHome">Equipo</label>
+              <select id="teamHome"></select>
+            </div>
+            <div>
+              <label for="posHome">Posición</label>
+              <input id="posHome" type="text" readonly value="—">
+            </div>
+            <div>
+              <label for="gfHome">Goles a favor</label>
+              <input id="gfHome" type="text" readonly value="—">
+            </div>
+            <div>
+              <label for="gaHome">Goles en contra</label>
+              <input id="gaHome" type="text" readonly value="—">
+            </div>
           </div>
         </div>
-        
-        <div class="sep"></div>
-        
-        <div id="details" class="recs small"></div>
-
-        <div class="sep"></div>
-
-        <div id="suggestion" class="bet-slip">Esperando datos para tu apuesta estelar...</div>
+        <div>
+          <h4>Visitante</h4>
+          <div class="table-like">
+            <div>
+              <label for="teamAway">Equipo</label>
+              <select id="teamAway"></select>
+            </div>
+            <div>
+              <label for="posAway">Posición</label>
+              <input id="posAway" type="text" readonly value="—">
+            </div>
+            <div>
+              <label for="gfAway">Goles a favor</label>
+              <input id="gfAway" type="text" readonly value="—">
+            </div>
+            <div>
+              <label for="gaAway">Goles en contra</label>
+              <input id="gaAway" type="text" readonly value="—">
+            </div>
+          </div>
+        </div>
       </div>
+      <div class="sep"></div>
+      <button id="recalc" class="btn" disabled>Calcular</button>
+      <button id="reset" class="btn">Resetear</button>
+    </div>
+
+    <div class="card">
+      <h3>Probabilidades</h3>
+      <div class="kpis">
+        <div class="kpis-row">
+          <div class="tile"><strong id="pHome">—</strong><div class="small">Probabilidad: —</div></div>
+          <div class="tile"><strong id="pDraw">—</strong><div class="small">Probabilidad: Empate</div></div>
+          <div class="tile"><strong id="pAway">—</strong><div class="small">Probabilidad: —</div></div>
+        </div>
+        <div class="kpis-row">
+          <div class="tile"><strong id="pBTTS">—</strong><div class="small">Probabilidad: Ambos anotan</div></div>
+          <div class="tile"><strong id="pO25">—</strong><div class="small">Probabilidad: Más de 2.5 goles</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Factores de corrección</h3>
+      <div class="correction-factors">
+        <div class="correction-factor">
+          <span class="label">Ventaja local</span>
+          <span class="value" id="homeAdvantageFactor">—</span>
+        </div>
+        <div class="correction-factor">
+          <span class="label">Fuerza relativa</span>
+          <span class="value" id="strengthFactor">—</span>
+        </div>
+        <div class="correction-factor">
+          <span class="label">Dixon-Coles</span>
+          <span class="value" id="dixonColesFactor">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Forma general</h3>
+      <div class="grid">
+        <div class="stat-card">
+          <div class="stat-title" id="formHomeTeam">Local: —</div>
+          <div class="stat-legend">PJ = Partidos Jugados, G = Ganados, E = Empates, P = Perdidos</div>
+          <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+          <div class="stat-legend">PJ = Partidos Jugados, G = Ganados, E = Empates, P = Perdidos</div>
+          <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card recs">
+      <h3>Recomendación</h3>
+      <div id="details">
+        <div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>
+      </div>
+      <div class="bet-slip" id="suggestion">Esperando datos para tu apuesta estelar...</div>
     </div>
   </div>
   <script src="script.js"></script>

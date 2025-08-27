@@ -187,7 +187,7 @@ function fillTeamData(teamName, leagueCode, type) {
   if (teamHome && teamAway && restrictSameTeam()) {
     calculateAll();
   } else {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+    $('details').innerHTML = '<div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
@@ -378,3 +378,4 @@ function calculateAll() {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
+

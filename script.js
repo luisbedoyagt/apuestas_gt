@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let leagueData = null;
 
   // Cargar ligas desde la API
-  fetch('https://api.football-data-api.com/league-list?key=example')
+  fetch('https://script.google.com/macros/s/AKfycbxMy0n4GbjzkGxC8NksxW5xX700jhzWERVNhSY5FXjJHHzyYAlikq56c30Zl689Ecsy1Q/exec')
     .then(response => response.json())
     .then(data => {
       data.data.forEach(league => {

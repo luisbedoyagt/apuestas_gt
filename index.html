@@ -12,40 +12,49 @@
       <h1>Pronósticos de Fútbol</h1>
       <p class="small">Datos en tiempo real de ligas y estadísticas avanzadas.</p>
     </div>
+
+    <!-- Tarjeta de Selección de Liga -->
     <div class="card">
-      <h3>Selecciona Liga y Equipos</h3>
+      <h3>Selecciona Liga</h3>
       <label for="leagueSelect">Liga:</label>
       <select id="leagueSelect"></select>
-      <div class="grid">
-        <div>
-          <h4>Local</h4>
-          <label for="teamHome">Equipo:</label>
-          <select id="teamHome"></select>
-          <div class="stat-card">
-            <div class="stat-title" id="formHomeTeam">Local: —</div>
-            <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
-            <div class="stat-legend">
-              <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
-              <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
-              <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h4>Visitante</h4>
-          <label for="teamAway">Equipo:</label>
-          <select id="teamAway"></select>
-          <div class="stat-card">
-            <div class="stat-title" id="formAwayTeam">Visitante: —</div>
-            <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
-            <div class="stat-legend">
-              <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
-              <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
-              <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
-            </div>
-          </div>
+    </div>
+
+    <!-- Tarjeta de Selección de Equipo: Local -->
+    <div class="card">
+      <h3>Local</h3>
+      <label for="teamHome">Equipo:</label>
+      <select id="teamHome"></select>
+      <div class="stat-card">
+        <div class="stat-title" id="formHomeTeam">Local: —</div>
+        <div class="stat-values" id="formHomeBox">PJ: — | G: — | E: — | P: —</div>
+        <div class="stat-legend">
+          <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
+          <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
+          <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Tarjeta de Selección de Equipo: Visitante -->
+    <div class="card">
+      <h3>Visitante</h3>
+      <label for="teamAway">Equipo:</label>
+      <select id="teamAway"></select>
+      <div class="stat-card">
+        <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+        <div class="stat-values" id="formAwayBox">PJ: — | G: — | E: — | P: —</div>
+        <div class="stat-legend">
+          <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
+          <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
+          <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta de Factores de Corrección y Botones -->
+    <div class="card">
+      <h3>Factores de Corrección y Acciones</h3>
       <div class="correction-factors">
         <div class="correction-factor">
           <span class="label">Ventaja local:</span>
@@ -60,11 +69,15 @@
           <span class="value" id="dixonColesFactor">—</span>
         </div>
       </div>
+      <div class="sep"></div>
       <div class="table-like">
         <button id="recalc" class="btn" disabled>Calcular</button>
         <button id="reset" class="btn">Resetear</button>
       </div>
-      <div class="sep"></div>
+    </div>
+
+    <!-- Tarjeta de Pronósticos -->
+    <div class="card">
       <h3>Pronósticos</h3>
       <div class="kpis">
         <div class="kpis-row">

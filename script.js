@@ -31,29 +31,10 @@ const leagueNames = {
   "gua.1": "Liga Nacional Guatemala",
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
-  "ksa.1": "Pro League Arabia Saudita"
+  "ksa.1": "Pro League Arabia Saudita",
+  "uefa.champions": "UEFA Champions League",
+  "uefa.europa": "UEFA Europa League"
 };
-
-const sheetToLeagueCode = {
-  "España_LaLiga": "esp.1",
-  "España_Segunda": "esp.2",
-  "Inglaterra_PremierLeague": "eng.1",
-  "Inglaterra_Championship": "eng.2",
-  "Italia_SerieA": "ita.1",
-  "Alemania_Bundesliga": "ger.1",
-  "Francia_Ligue1": "fra.1",
-  "PaísesBajos_Eredivisie": "ned.1",
-  "PaísesBajos_EersteDivisie": "ned.2",
-  "Portugal_LigaPortugal": "por.1",
-  "México_LigaMX": "mex.1",
-  "EstadosUnidos_MLS": "usa.1",
-  "Brasil_Brasileirao": "bra.1",
-  "Guatemala_LigaNacional": "gua.1",
-  "CostaRica_LigaPromerica": "crc.1",
-  "Honduras_LigaNacional": "hon.1",
-  "Arabia_Saudi_ProLeague": "ksa.1"
-};
-
 function normalizeTeam(raw) {
   if (!raw || !raw.Equipo) {
     console.warn('Equipo inválido:', raw);
@@ -702,3 +683,4 @@ function calculateAll() {
   console.log('Calculation completed:', recommendations);
   console.timeEnd('calculateAll');
 }
+

@@ -229,12 +229,14 @@ function clearTeamData(type) {
     $('posHome').value = '—';
     $('gfHome').value = '—';
     $('gaHome').value = '—';
+    $('possessionHome') && ($('possessionHome').value = '—');
     $('formHomeTeam').textContent = 'Local: —';
     $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
+    $('possessionAway') && ($('possessionAway').value = '—');
     $('formAwayTeam').textContent = 'Visitante: —';
     $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
   }
@@ -267,16 +269,18 @@ function fillTeamData(teamName, leagueCode, type) {
   const lambda = t.recentMatches > 0 ? t.recentGoals / t.recentMatches : (type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1));
   const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
 
-  if(type==='Home') {
+  if(type === 'Home') {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
+    $('possessionHome') && ($('possessionHome').value = formatPct(t.possession / 100));
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
+    $('possessionAway') && ($('possessionAway').value = formatPct(t.possession / 100));
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
   }
@@ -315,20 +319,20 @@ function calculateAll() {
   let totalGfHome = 0;
   let totalGaHome = 0;
   teams.forEach(t => {
-    totalGames += t.pjHome;
-    totalGfHome += t.gfHome;
-    totalGaHome += t.gaHome;
+    totalGames += t.pjHome || t.pj || 0;
+    totalGfHome += t.gfHome || t.gf || 0;
+    totalGaHome += t.gaHome || t.ga || 0;
   });
   const avgGh = totalGames > 0 ? totalGfHome / totalGames : 1.2; // Promedio goles home
   const avgGa = totalGames > 0 ? totalGaHome / totalGames : 1.0; // Promedio goles away (gaHome = goles de away teams)
 
   // Ataque y defensa ajustados
-  const attackH = tH.pjHome > 0 ? (tH.gfHome / tH.pjHome) / avgGh : 1;
-  const defenseA = tA.pjAway > 0 ? (tA.gaAway / tA.pjAway) / avgGh : 1;
+  const attackH = (tH.pjHome || tH.pj) > 0 ? (tH.gfHome || tH.gf) / (tH.pjHome || tH.pj) / avgGh : 1;
+  const defenseA = (tA.pjAway || tA.pj) > 0 ? (tA.gaAway || tA.ga) / (tA.pjAway || tA.pj) / avgGh : 1;
   const lambdaH = attackH * defenseA * avgGh;
 
-  const attackA = tA.pjAway > 0 ? (tA.gfAway / tA.pjAway) / avgGa : 1;
-  const defenseH = tH.pjHome > 0 ? (tH.gaHome / tH.pjHome) / avgGa : 1;
+  const attackA = (tA.pjAway || tA.pj) > 0 ? (tA.gfAway || tA.gf) / (tA.pjAway || tA.pj) / avgGa : 1;
+  const defenseH = (tH.pjHome || tH.pj) > 0 ? (tH.gaHome || tH.ga) / (tH.pjHome || tH.pj) / avgGa : 1;
   const lambdaA = attackA * defenseH * avgGa;
 
   // Calcular probabilidades usando Poisson
@@ -358,8 +362,8 @@ function calculateAll() {
   $('pO25').textContent = formatPct(pO25);
 
   // Factores de corrección
-  const homeAdvantage = formatDec(avgGh / avgGa);
-  const strengthDiff = formatDec((tH.points / tH.pj - tA.points / tA.pj));
+  const homeAdvantage = formatDec(avgGh / (avgGa || 1));
+  const strengthDiff = formatDec((tH.points / (tH.pj || 1)) - (tA.points / (tA.pj || 1)));
   const dixonColes = '0.00'; // Placeholder, ya que no se implementa Dixon-Coles por ahora
 
   $('homeAdvantageFactor').textContent = homeAdvantage;
@@ -374,10 +378,17 @@ function calculateAll() {
   ];
   const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
 
-  let suggestionText = `Apuesta recomendada: ${maxOutcome.name} con probabilidad ${formatPct(maxOutcome.prob)}.`;
-  if (pBTTS > 0.5) suggestionText += ` También considera Ambos anotan (${formatPct(pBTTS)}).`;
-  if (pO25 > 0.5) suggestionText += ` Y Más de 2.5 goles (${formatPct(pO25)}).`;
+  let suggestionText = `Apuesta: <strong>${maxOutcome.name}</strong> (${formatPct(maxOutcome.prob)}).`;
+  const others = [];
+  if (pBTTS > 0.5) others.push(`Ambos anotan (${formatPct(pBTTS)})`);
+  if (pO25 > 0.5) others.push(`+2.5 goles (${formatPct(pO25)})`);
+  if (others.length > 0) suggestionText += ` Otras: ${others.join(', ')}.`;
 
-  $('details').textContent = `Basado en modelo Poisson con datos ajustados por rendimiento local/visitante y promedios de liga.`;
-  $('suggestion').textContent = suggestionText;
+  $('details').textContent = `Basado en modelo Poisson con datos ajustados por rendimiento local/visitante.`;
+  $('suggestion').innerHTML = suggestionText;
+
+  // Añadir clase de animación al actualizar la recomendación
+  const suggestionEl = $('suggestion');
+  suggestionEl.classList.add('pulse');
+  setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }

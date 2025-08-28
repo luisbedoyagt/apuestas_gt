@@ -40,6 +40,11 @@ function normalizeTeam(raw) {
   r.e = parseNumberString(raw.E || raw.e || raw.draw || raw.D || raw.draws || 0);
   r.p = parseNumberString(raw.P || raw.p || raw.lost || raw.L || 0);
   r.points = parseNumberString(raw.points || raw.Points || (r.g * 3 + r.e) || 0);
+  r.gfHome = parseNumberString(raw.gfHome || raw.goalsForHome || 0); // Goles en casa
+  r.gfAway = parseNumberString(raw.gfAway || raw.goalsForAway || 0); // Goles fuera
+  r.recentGoals = parseNumberString(raw.recentGoals || 0); // Goles en últimos 5 partidos
+  r.recentMatches = parseNumberString(raw.recentMatches || 0); // Partidos recientes
+  r.possession = parseNumberString(raw.possession || 50); // Posesión promedio
   return r;
 }
 
@@ -253,17 +258,19 @@ function fillTeamData(teamName, leagueCode, type) {
   }
 
   console.log(`Llenando datos para ${type}:`, t);
+  const lambda = t.recentMatches > 0 ? t.recentGoals / t.recentMatches : (type === 'Home' && t.gfHome ? t.gfHome / t.pj : t.gfAway ? t.gfAway / t.pj : t.gf / t.pj) || 0;
+  const gaAvg = t.pj > 0 ? t.ga / t.pj : 0;
   if (type === 'Home') {
     $('posHome').value = t.pos || '—';
-    $('gfHome').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '—';
-    $('gaHome').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '—';
+    $('gfHome').value = formatDec(lambda);
+    $('gaHome').value = formatDec(gaAvg);
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
     $('pHome').parentElement.querySelector('.small').textContent = `Probabilidad: ${t.name}`;
   } else {
     $('posAway').value = t.pos || '—';
-    $('gfAway').value = t.pj > 0 ? (t.gf / t.pj).toFixed(2) : '—';
-    $('gaAway').value = t.pj > 0 ? (t.ga / t.pj).toFixed(2) : '—';
+    $('gfAway').value = formatDec(lambda);
+    $('gaAway').value = formatDec(gaAvg);
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj || 0} | G: ${t.g || 0} | E: ${t.e || 0} | P: ${t.p || 0}`;
     $('pAway').parentElement.querySelector('.small').textContent = `Probabilidad: ${t.name}`;
@@ -309,7 +316,7 @@ function clamp01(x) {
 function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
   const teams = teamsByLeague[leagueCode] || [];
   const avgGoals = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / teams.length : 2.5;
-  const rho = -0.1 * (avgGoals / 2.5); // Ajuste dinámico basado en promedio de goles
+  const rho = Math.min(-0.05, Math.max(-0.2, -0.1 * (avgGoals / 2.5))); // Rango dinámico
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) {
     console.warn('Datos inválidos para Dixon-Coles:', { lambdaHome, lambdaAway });
     return 1;
@@ -329,7 +336,7 @@ function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
   return factor;
 }
 
-function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway) {
+function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway, recentWinsHome, recentWinsAway) {
   const maxTeams = teamsByLeague[leagueCode]?.length || 20;
   if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) {
     console.warn('Datos insuficientes para calcular strengthFactor:', { posHome, posAway, maxTeams, pointsHome, pointsAway });
@@ -339,21 +346,24 @@ function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, point
   const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
   const ppgHome = pointsHome / (parseNumberString($('gfHome').value) || 1);
   const ppgAway = pointsAway / (parseNumberString($('gfAway').value) || 1);
-  const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
+  const recentFormFactor = (recentWinsHome / 5) / (recentWinsAway / 5 || 1) || 1;
+  const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1) * recentFormFactor;
   const strengthFactor = Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0);
-  console.log('Strength factor calculation:', { normalizedHome, normalizedAway, ppgHome, ppgAway, eloFactor, strengthFactor });
+  console.log('Strength factor calculation:', { normalizedHome, normalizedAway, ppgHome, ppgAway, recentFormFactor, eloFactor, strengthFactor });
   return strengthFactor;
 }
 
 function calculateHomeAdvantage(leagueCode) {
   const teams = teamsByLeague[leagueCode] || [];
   const avgGoals = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / teams.length : 2.5;
-  const factor = 1 + (avgGoals * 0.1); // Dinámico basado en promedio de goles
-  console.log('Home advantage calculation:', { leagueCode, avgGoals, factor });
+  const avgGoalsHome = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gfHome || t.gf * 1.2) / (t.pj || 1), 0) / teams.length : avgGoals * 1.2;
+  const avgGoalsAway = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gfAway || t.gf * 0.8) / (t.pj || 1), 0) / teams.length : avgGoals * 0.8;
+  const factor = 1 + (avgGoalsHome - avgGoalsAway) * 0.2;
+  console.log('Home advantage calculation:', { leagueCode, avgGoals, avgGoalsHome, avgGoalsAway, factor });
   return factor;
 }
 
-function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
+function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode, recentWinsHome, recentWinsAway, possessionHome, possessionAway) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
     console.error('Datos de goles inválidos:', { lambdaHome, lambdaAway });
@@ -362,15 +372,18 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
   const posHome = parseNumberString($('posHome').value);
   const posAway = parseNumberString($('posAway').value);
-  const strengthFactor = calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway);
+  const strengthFactor = calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway, recentWinsHome, recentWinsAway);
   const dixonColesFactor = dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode);
+
+  const possessionAdjustmentHome = possessionHome / 50;
+  const possessionAdjustmentAway = possessionAway / 50;
 
   $('homeAdvantageFactor').textContent = formatDec(homeAdvantageFactor) + 'x';
   $('strengthFactor').textContent = formatDec(strengthFactor) + 'x';
   $('dixonColesFactor').textContent = formatDec(dixonColesFactor) + 'x';
 
-  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor, 3.0);
-  const adjAway = Math.max(lambdaAway / strengthFactor, 0.1);
+  const adjHome = Math.min(lambdaHome * homeAdvantageFactor * strengthFactor * possessionAdjustmentHome, 3.0);
+  const adjAway = Math.max(lambdaAway / strengthFactor * possessionAdjustmentAway, 0.1);
 
   let pHome = 0, pDraw = 0, pAway = 0;
   const maxGoals = 8;
@@ -426,11 +439,11 @@ function calculateAll() {
     console.timeEnd('calculateAll');
     return;
   }
-  const lambdaHome = parseNumberString($('gfHome').value);
-  const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
   const teamHomeName = $('teamHome').value || 'Local';
   const teamAwayName = $('teamAway').value || 'Visitante';
+  const teamHome = findTeam(leagueCode, teamHomeName);
+  const teamAway = findTeam(leagueCode, teamAwayName);
 
   if (!leagueCode) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga válida.</div>';
@@ -439,12 +452,19 @@ function calculateAll() {
     return;
   }
 
-  if (!teamHomeName || !teamAwayName) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+  if (!teamHome || !teamAway) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos válidos para calcular las probabilidades.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
     console.timeEnd('calculateAll');
     return;
   }
+
+  if (teamHome.pj < 5 || teamAway.pj < 5) {
+    $('details').innerHTML = '<div class="error"><strong>Advertencia:</strong> Uno o ambos equipos tienen menos de 5 partidos jugados, lo que puede reducir la precisión de las probabilidades.</div>';
+  }
+
+  const lambdaHome = teamHome.recentMatches > 0 ? teamHome.recentGoals / teamHome.recentMatches : (teamHome.gfHome ? teamHome.gfHome / teamHome.pj : teamHome.gf / teamHome.pj) || 0;
+  const lambdaAway = teamAway.recentMatches > 0 ? teamAway.recentGoals / teamAway.recentMatches : (teamAway.gfAway ? teamAway.gfAway / teamAway.pj : teamAway.gf / teamAway.pj) || 0;
 
   if (lambdaHome <= 0 || lambdaAway <= 0) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
@@ -453,12 +473,14 @@ function calculateAll() {
     return;
   }
 
-  const teamHome = findTeam(leagueCode, teamHomeName);
-  const teamAway = findTeam(leagueCode, teamAwayName);
-  const pointsHome = teamHome ? teamHome.points : 0;
-  const pointsAway = teamAway ? teamAway.points : 0;
+  const pointsHome = teamHome.points;
+  const pointsAway = teamAway.points;
+  const recentWinsHome = teamHome.g || 0; // Aproximación si no hay datos recientes
+  const recentWinsAway = teamAway.g || 0;
+  const possessionHome = teamHome.possession || 50;
+  const possessionAway = teamAway.possession || 50;
 
-  const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode);
+  const probs = computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode, recentWinsHome, recentWinsAway, possessionHome, possessionAway);
   $('pHome').textContent = formatPct(probs.pHome);
   $('pDraw').textContent = formatPct(probs.pDraw);
   $('pAway').textContent = formatPct(probs.pAway);
@@ -466,10 +488,11 @@ function calculateAll() {
   $('pO25').textContent = formatPct(probs.pO25);
 
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;
+  details += `<div>• Equipo Local: ${teamHomeName} (Lambda: ${formatDec(lambdaHome)})</div>`;
+  details += `<div>• Equipo Visitante: ${teamAwayName} (Lambda: ${formatDec(lambdaAway)})</div>`;
   details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * calculateHomeAdvantage(leagueCode))}</div>`;
   details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
-  details += `<div>• Equipo Local: ${teamHomeName}</div>`;
-  details += `<div>• Equipo Visitante: ${teamAwayName}</div>`;
+  details += `<div>• Posesión Local: ${possessionHome}% | Visitante: ${possessionAway}%</div>`;
   $('details').innerHTML = details;
 
   const recommendations = [

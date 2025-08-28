@@ -340,27 +340,48 @@ input[type="number"] {
   color: #f0f0f0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: #2c2c2c;
-  padding: 8px 10px;
+  padding: 10px;
   border-radius: 4px;
   border: 1px solid #4a4a4a;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
-.stat-values br {
-  display: none; /* Ocultar <br> para usar divs */
-}
-
-.stat-values div {
-  padding: 4px 6px;
+.stat-section {
   background: #3a3a3a;
-  border-radius: 3px;
+  border-radius: 4px;
+  padding: 8px;
   border: 1px solid #5a5a5a;
 }
 
-.stat-values div:not(:last-child) {
+.section-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4dabf7;
   margin-bottom: 6px;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.stat-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 6px;
+}
+
+.stat-metrics span {
+  background: #444;
+  padding: 4px 8px;
+  border-radius: 3px;
+  border: 1px solid #666;
+  font-size: 11px;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.stat-metrics span:hover {
+  background: #555;
 }
 
 .stat-legend {

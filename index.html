@@ -5,27 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora para Pronósticos de Fútbol / LMB</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body { font-family: Arial, sans-serif; background:#f0f0f0; color:#222; margin:0; padding:0; }
-    .container { max-width:1200px; margin:20px auto; padding:10px; }
-    .header { text-align:center; margin-bottom:20px; }
-    .small { font-size:0.85em; color:#555; }
-    .card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.1); }
-    .grid { display:flex; gap:10px; flex-wrap:wrap; }
-    .stat-card { background:#f9f9f9; padding:10px; margin-top:10px; border-radius:5px; }
-    .stat-title { font-weight:bold; margin-bottom:5px; }
-    .stat-values { font-size:0.9em; margin-bottom:5px; }
-    .stat-legend { display:flex; gap:10px; font-size:0.85em; }
-    .stat-legend input { width:50px; text-align:center; }
-    .sep { height:1px; background:#ddd; margin:10px 0; }
-    .btn { padding:8px 15px; margin-right:5px; border:none; border-radius:5px; cursor:pointer; background:#007bff; color:white; }
-    .btn:disabled { background:#aaa; cursor:not-allowed; }
-    .kpis { display:flex; flex-direction:column; gap:10px; }
-    .kpis-row { display:flex; gap:10px; }
-    .tile { background:#f0f0f0; flex:1; text-align:center; padding:10px; border-radius:5px; }
-    .recs, .bet-slip { margin-top:10px; padding:10px; background:#fff3cd; border:1px solid #ffeeba; border-radius:5px; }
-    select { padding:5px; width:100%; }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -53,6 +32,7 @@
             <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
             <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
             <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
+            <div>Posesión (%): <input type="number" id="possessionHome" value="50" class="small"></div>
           </div>
         </div>
       </div>
@@ -69,6 +49,7 @@
             <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
             <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
             <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
+            <div>Posesión (%): <input type="number" id="possessionAway" value="50" class="small"></div>
           </div>
         </div>
       </div>

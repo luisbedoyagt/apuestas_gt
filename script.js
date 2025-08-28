@@ -34,6 +34,7 @@ const leagueNames = {
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
   "ksa.1": "Pro League Arabia Saudita"
+ 
 };
 
 // ----------------------
@@ -381,3 +382,4 @@ function calculateAll() {
   $('details').textContent = `Basado en modelo Poisson con datos ajustados por rendimiento local/visitante y promedios de liga.`;
   $('suggestion').textContent = suggestionText;
 }
+

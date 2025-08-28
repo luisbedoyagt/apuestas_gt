@@ -7,26 +7,25 @@ const n = Number(s);
 return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzwunZZXmvchjXKs6Wkh3XHOIzRKzRqsH8U6XtOIqrOGWYOdM0AWGW-56zXrDAmhlUedQ/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxU_lVAprIelInF7lBffqogTsQhyRlxmk0gjDEqa7VGR9OzxdJ50QQnrAX5r30IeXWN-Q/exec";
 let teamsByLeague = {};
-const leagueNames = {
-"esp.1": "LaLiga España",
-"mex.1": "Liga MX México",
-"usa.1": "MLS Estados Unidos",
-"gua.1": "Liga Nacional Guatemala",
-"crc.1": "Liga Promerica Costa Rica",
-"hon.1": "Liga Nacional Honduras",
-"ita.1": "Serie A Italia",
-"ger.1": "Bundesliga Alemania",
-"fra.1": "Ligue 1 Francia",
-"ned.1": "Eredivisie Países Bajos",
-"eng.1": "Premier League Inglaterra",
-"por.1": "Liga Portugal",
-"uefa.champions": "UEFA Champions League",
-"uefa.europa": "UEFA Europa League",
-"bra.1": "Brasileirão Brasil"
+const sheetNames = {
+  "LaLiga España": "España_LaLiga",
+  "Liga MX México": "México_LigaMX",
+  "MLS Estados Unidos": "EstadosUnidos_MLS",
+  "Liga Nacional Guatemala": "Guatemala_LigaNacional",
+  "Liga Promerica Costa Rica": "CostaRica_LigaPromerica",
+  "Liga Nacional Honduras": "Honduras_LigaNacional",
+  "Serie A Italia": "Italia_SerieA",
+  "Bundesliga Alemania": "Alemania_Bundesliga",
+  "Ligue 1 Francia": "Francia_Ligue1",
+  "Eredivisie Países Bajos": "PaísesBajos_Eredivisie",
+  "Premier League Inglaterra": "Inglaterra_PremierLeague",
+  "Liga Portugal": "Portugal_LigaPortugal",
+  "UEFA Champions League": "UEFA_Champions",
+  "UEFA Europa League": "UEFA_Europa",
+  "Brasileirão Brasil": "Brasil_Brasileirao"
 };
-
 function normalizeTeam(raw) {
 if (!raw) return null;
 const r = {};
@@ -513,3 +512,4 @@ $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
 console.log('Calculation completed:', recommendations);
 console.timeEnd('calculateAll');
 }
+

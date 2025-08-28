@@ -41,28 +41,29 @@ const leagueNames = {
 // ----------------------
 function normalizeTeam(raw) {
   if (!raw) return null;
+  console.log('Datos crudos del equipo:', raw);
   const r = {};
-  r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || '';
+  r.name = raw.name || raw['Equipo'] || '';
   if (!r.name) return null;
-  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || 0);
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || 0);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || 0);
-  r.pj = parseNumberString(raw.pj || raw.played || 0);
-  r.g = parseNumberString(raw.g || raw.won || 0);
-  r.e = parseNumberString(raw.e || raw.draw || 0);
-  r.p = parseNumberString(raw.p || raw.lost || 0);
+  r.pos = parseNumberString(raw.rank || raw.pos || 0);
+  r.gf = parseNumberString(raw.goalsFor || raw.gf || 0);
+  r.ga = parseNumberString(raw.goalsAgainst || raw.ga || 0);
+  r.pj = parseNumberString(raw.gamesPlayed || raw.pj || 0);
+  r.g = parseNumberString(raw.wins || raw.g || 0);
+  r.e = parseNumberString(raw.ties || raw.e || 0);
+  r.p = parseNumberString(raw.losses || raw.p || 0);
   r.points = parseNumberString(raw.points || (r.g*3 + r.e) || 0);
-  r.gfHome = parseNumberString(raw.gfHome || 0);
-  r.gfAway = parseNumberString(raw.gfAway || 0);
-  r.gaHome = parseNumberString(raw.gaHome || 0);
-  r.gaAway = parseNumberString(raw.gaAway || 0);
-  r.pjHome = parseNumberString(raw.pjHome || 0);
-  r.pjAway = parseNumberString(raw.pjAway || 0);
-  r.winsHome = parseNumberString(raw.winsHome || 0);
-  r.winsAway = parseNumberString(raw.winsAway || 0);
+  r.gfHome = parseNumberString(raw.goalsForHome || raw.gfHome || 0);
+  r.gfAway = parseNumberString(raw.goalsForAway || raw.gfAway || 0);
+  r.gaHome = parseNumberString(raw.goalsAgainstHome || raw.gaHome || 0);
+  r.gaAway = parseNumberString(raw.goalsAgainstAway || raw.gaAway || 0);
+  r.pjHome = parseNumberString(raw.gamesPlayedHome || raw.pjHome || 0);
+  r.pjAway = parseNumberString(raw.gamesPlayedAway || raw.pjAway || 0);
+  r.winsHome = parseNumberString(raw.winsHome || raw.gHome || 0);
+  r.winsAway = parseNumberString(raw.winsAway || raw.gAway || 0);
   r.recentGoals = parseNumberString(raw.recentGoals || 0);
   r.recentMatches = parseNumberString(raw.recentMatches || 0);
-  r.possession = parseNumberString(raw.possession || 50);
+  console.log('Equipo normalizado:', r);
   return r;
 }
 
@@ -74,31 +75,18 @@ async function fetchTeams() {
   const leagueSelect = $('leagueSelect');
   if (leagueSelect) leagueSelect.innerHTML = '<option value="">Cargando ligas...</option>';
 
-  const cachedData = localStorage.getItem('teamsByLeague');
-  if (cachedData) {
-    try {
-      teamsByLeague = JSON.parse(cachedData);
-      if (Object.keys(teamsByLeague).length > 0) {
-        console.log('Datos cargados desde caché:', Object.keys(teamsByLeague));
-        console.timeEnd('fetchTeams');
-        return teamsByLeague;
-      }
-    } catch (e) {
-      console.warn('Error al leer caché:', e);
-    }
-  }
-
   try {
     const res = await fetch(WEBAPP_URL);
     if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
+    console.log('Datos crudos de la API:', data);
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
     }
     teamsByLeague = normalized;
     localStorage.setItem('teamsByLeague', JSON.stringify(normalized));
-    console.log('Datos obtenidos de la API:', Object.keys(teamsByLeague));
+    console.log('Datos normalizados:', Object.keys(teamsByLeague));
     console.timeEnd('fetchTeams');
     return normalized;
   } catch (err) {
@@ -233,26 +221,26 @@ function clearTeamData(type) {
     $('gaHome').value = '—';
     $('winRateHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
-    $('formHomeBox').textContent = 'PJ: — | Victorias: — | GF: — | GC: —';
+    $('formHomeBox').textContent = 'General: PJ: — | Victorias: — | GF: — | GC: —<br>Local: PJ: — | Victorias: — | GF: — | GC: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
     $('winRateAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
-    $('formAwayBox').textContent = 'PJ: — | Victorias: — | GF: — | GC: —';
+    $('formAwayBox').textContent = 'General: PJ: — | Victorias: — | GF: — | GC: —<br>Visitante: PJ: — | Victorias: — | GF: — | GC: —';
   }
 }
 
 function clearAll() {
   document.querySelectorAll('input').forEach(i => i.value = '—');
   document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-  ['pHome','pDraw','pAway','pBTTS','pO25','details','homeAdvantageFactor','strengthFactor','dixonColesFactor','suggestion'].forEach(id => {
+  ['pHome','pDraw','pAway','pBTTS','pO25','pHome2','pDraw2','pAway2','pHome3','pDraw3','pAway3','details','homeAdvantageFactor','strengthFactor','dixonColesFactor','suggestion'].forEach(id => {
     const el = $(id);
-    if(el) el.textContent = '—';
+    if (el) el.textContent = '—';
   });
   ['formHomeTeam','formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
-  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'PJ: — | Victorias: — | GF: — | GC: —');
+  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'General: PJ: — | Victorias: — | GF: — | GC: —<br>' + (id.includes('Home') ? 'Local' : 'Visitante') + ': PJ: — | Victorias: — | GF: — | GC: —');
   updateCalcButton();
 }
 
@@ -260,36 +248,50 @@ function clearAll() {
 // BÚSQUEDA Y LLENADO DE EQUIPO
 // ----------------------
 function findTeam(leagueCode, teamName) {
-  if(!teamsByLeague[leagueCode]) return null;
+  if (!teamsByLeague[leagueCode]) return null;
   return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
 }
 
 function fillTeamData(teamName, leagueCode, type) {
   const t = findTeam(leagueCode, teamName);
-  if(!t) return;
+  if (!t) return;
 
   const lambda = t.recentMatches > 0 ? t.recentGoals / t.recentMatches : (type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1));
   const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
 
-  if(type === 'Home') {
+  console.log(`fillTeamData (${type}, ${teamName}):`, {
+    winsHome: t.winsHome,
+    pjHome: t.pjHome,
+    winsAway: t.winsAway,
+    pjAway: t.pjAway,
+    winRateHome: t.winsHome / (t.pjHome || 1),
+    winRateAway: t.winsAway / (t.pjAway || 1),
+    gfHome: t.gfHome,
+    gaHome: t.gaHome,
+    gfAway: t.gfAway,
+    gaAway: t.gaAway,
+    totalWins: t.g
+  });
+
+  if (type === 'Home') {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('possessionHome') && ($('possessionHome').value = formatPct(t.possession / 100));
+    $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
     $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
+    $('formHomeBox').textContent = `General: PJ: ${t.pj} | Victorias: ${t.g} | GF: ${t.gf} | GC: ${t.ga}<br>Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('possessionAway') && ($('possessionAway').value = formatPct(t.possession / 100));
+    $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
+    $('formAwayBox').textContent = `General: PJ: ${t.pj} | Victorias: ${t.g} | GF: ${t.gf} | GC: ${t.ga}<br>Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   }
 }
 
 // ----------------------
-// FUNCIONES PARA POISSON
+// FUNCIONES PARA CÁLCULOS
 // ----------------------
 function factorial(n) {
   if (n === 0 || n === 1) return 1;
@@ -302,6 +304,14 @@ function poissonProb(lambda, k) {
   return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
 }
 
+function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
+  if (h === 0 && a === 0) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 0);
+  if (h === 0 && a === 1) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 1);
+  if (h === 1 && a === 0) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 0);
+  if (h === 1 && a === 1) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 1);
+  return poissonProb(lambdaH, h) * poissonProb(lambdaA, a);
+}
+
 // ----------------------
 // CÁLCULO PRINCIPAL
 // ----------------------
@@ -309,11 +319,11 @@ function calculateAll() {
   const teamHome = $('teamHome').value;
   const teamAway = $('teamAway').value;
   const league = $('leagueSelect').value;
-  if(!teamHome || !teamAway || !league) return;
+  if (!teamHome || !teamAway || !league) return;
 
   const tH = findTeam(league, teamHome);
   const tA = findTeam(league, teamAway);
-  if(!tH || !tA) return;
+  if (!tH || !tA) return;
 
   // Calcular promedios de la liga
   const teams = teamsByLeague[league];
@@ -325,8 +335,8 @@ function calculateAll() {
     totalGfHome += t.gfHome || t.gf || 0;
     totalGaHome += t.gaHome || t.ga || 0;
   });
-  const avgGh = totalGames > 0 ? totalGfHome / totalGames : 1.2; // Promedio goles home
-  const avgGa = totalGames > 0 ? totalGaHome / totalGames : 1.0; // Promedio goles away (gaHome = goles de away teams)
+  const avgGh = totalGames > 0 ? totalGfHome / totalGames : 1.2;
+  const avgGa = totalGames > 0 ? totalGaHome / totalGames : 1.0;
 
   // Ataque y defensa ajustados
   const attackH = (tH.pjHome || tH.pj) > 0 ? (tH.gfHome || tH.gf) / (tH.pjHome || tH.pj) / avgGh : 1;
@@ -337,7 +347,7 @@ function calculateAll() {
   const defenseH = (tH.pjHome || tH.pj) > 0 ? (tH.gaHome || tH.ga) / (tH.pjHome || tH.pj) / avgGa : 1;
   const lambdaA = attackA * defenseH * avgGa;
 
-  // Calcular probabilidades usando Poisson
+  // Método 1: Poisson
   let pHome = 0;
   let pDraw = 0;
   let pAway = 0;
@@ -357,41 +367,37 @@ function calculateAll() {
     }
   }
 
-  $('pHome').textContent = formatPct(pHome);
-  $('pAway').textContent = formatPct(pAway);
-  $('pDraw').textContent = formatPct(pDraw);
-  $('pBTTS').textContent = formatPct(pBTTS);
-  $('pO25').textContent = formatPct(pO25);
+  // Método 2: Elo
+  const ppgH = tH.points / (tH.pj || 1);
+  const ppgA = tA.points / (tA.pj || 1);
+  const eloH = 1500 + 100 * (ppgH - 1.5);
+  const eloA = 1500 + 100 * (ppgA - 1.5);
+  const homeAdv = 100; // Ventaja local estándar
+  const expectedH = 1 / (1 + Math.pow(10, (eloA - (eloH + homeAdv)) / 400));
+  const expectedA = 1 - expectedH;
+  const pHomeElo = expectedH * 0.7; // Ajuste para empate
+  const pAwayElo = expectedA * 0.7;
+  const pDrawElo = 0.3; // Empate estimado
 
-  // Factores de corrección
-  const homeAdvantage = formatDec(avgGh / (avgGa || 1));
-  const strengthDiff = formatDec((tH.points / (tH.pj || 1)) - (tA.points / (tA.pj || 1)));
-  const dixonColes = '0.00'; // Placeholder, ya que no se implementa Dixon-Coles por ahora
+  // Método 3: Dixon-Coles
+  let pHomeDC = 0;
+  let pDrawDC = 0;
+  let pAwayDC = 0;
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      const prob = dixonColesAdjustment(lambdaH, lambdaA, h, a, 0.9);
+      if (h > a) pHomeDC += prob;
+      else if (h === a) pDrawDC += prob;
+      else pAwayDC += prob;
+    }
+  }
 
-  $('homeAdvantageFactor').textContent = homeAdvantage;
-  $('strengthFactor').textContent = strengthDiff;
-  $('dixonColesFactor').textContent = dixonColes;
+  // Normalizar Dixon-Coles (para asegurar que sumen ~1)
+  const totalDC = pHomeDC + pDrawDC + pAwayDC;
+  if (totalDC > 0) {
+    pHomeDC /= totalDC;
+    pDrawDC /= totalDC;
+    pAwayDC /= totalDC;
+  }
 
-  // Recomendación
-  const outcomes = [
-    { name: `${teamHome} gana`, prob: pHome },
-    { name: 'Empate', prob: pDraw },
-    { name: `${teamAway} gana`, prob: pAway }
-  ];
-  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
-
-  let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
-  const others = [
-    `✔ Ambos anotan (${formatPct(pBTTS)})`,
-    `✔ +2.5 goles (${formatPct(pO25)})`
-  ];
-  suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
-
-  $('details').textContent = `Basado en modelo Poisson con datos ajustados por rendimiento local/visitante.`;
-  $('suggestion').innerHTML = suggestionText;
-
-  // Añadir clase de animación al actualizar la recomendación
-  const suggestionEl = $('suggestion');
-  suggestionEl.classList.add('pulse');
-  setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
-}
+  // Most

@@ -41,27 +41,25 @@ const leagueNames = {
 // ----------------------
 function normalizeTeam(raw) {
   if (!raw) return null;
-  console.log('Datos crudos del equipo:', raw); // Depuración
   const r = {};
-  r.name = raw.name || raw['Equipo'] || '';
+  r.name = raw.name || raw.Equipo || '';
   if (!r.name) return null;
   r.pos = parseNumberString(raw.rank || raw.pos || 0);
-  r.gf = parseNumberString(raw.goalsFor || raw.gf || raw.GF || 0);
-  r.ga = parseNumberString(raw.goalsAgainst || raw.ga || raw.GC || 0);
-  r.dg = r.gf - r.ga; // Diferencia de goles
+  r.gf = parseNumberString(raw.pointsFor || raw.gf || raw.GF || 0);
+  r.ga = parseNumberString(raw.pointsAgainst || raw.ga || raw.GC || 0);
   r.pj = parseNumberString(raw.gamesPlayed || raw.pj || raw.PJ || 0);
   r.g = parseNumberString(raw.wins || raw.g || raw.Victorias || 0);
   r.e = parseNumberString(raw.ties || raw.e || raw.Empates || 0);
   r.p = parseNumberString(raw.losses || raw.p || raw.Derrotas || 0);
   r.points = parseNumberString(raw.points || raw.Puntos || (r.g*3 + r.e) || 0);
-  r.gfHome = parseNumberString(raw.goalsForHome || raw.gfHome || raw['GF Local'] || 0);
-  r.gfAway = parseNumberString(raw.goalsForAway || raw.gfAway || raw['GF Visitante'] || 0);
-  r.gaHome = parseNumberString(raw.goalsAgainstHome || raw.gaHome || raw['GC Local'] || 0);
-  r.gaAway = parseNumberString(raw.goalsAgainstAway || raw.gaAway || raw['GC Visitante'] || 0);
-  r.pjHome = parseNumberString(raw.gamesPlayedHome || raw.pjHome || raw['PJ Local'] || 0);
-  r.pjAway = parseNumberString(raw.gamesPlayedAway || raw.pjAway || raw['PJ Visitante'] || 0);
-  r.winsHome = parseNumberString(raw.winsHome || raw.gHome || raw['Victorias Local'] || 0);
-  r.winsAway = parseNumberString(raw.winsAway || raw.gAway || raw['Victorias Visitante'] || 0);
+  r.gfHome = parseNumberString(raw.homePointsFor || raw.gfHome || raw['GF Local'] || 0);
+  r.gfAway = parseNumberString(raw.awayPointsFor || raw.gfAway || raw['GF Visitante'] || 0);
+  r.gaHome = parseNumberString(raw.homePointsAgainst || raw.gaHome || raw['GC Local'] || 0);
+  r.gaAway = parseNumberString(raw.awayPointsAgainst || raw.gaAway || raw['GC Visitante'] || 0);
+  r.pjHome = parseNumberString(raw.homeGamesPlayed || raw.pjHome || raw['PJ Local'] || 0);
+  r.pjAway = parseNumberString(raw.awayGamesPlayed || raw.pjAway || raw['PJ Visitante'] || 0);
+  r.winsHome = parseNumberString(raw.homeWins || raw.gHome || raw['Victorias Local'] || 0);
+  r.winsAway = parseNumberString(raw.awayWins || raw.gAway || raw['Victorias Visitante'] || 0);
   console.log('Equipo normalizado:', r); // Depuración
   return r;
 }
@@ -78,7 +76,6 @@ async function fetchTeams() {
     const res = await fetch(WEBAPP_URL);
     if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
-    console.log('Datos crudos de la API:', data);
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
@@ -218,16 +215,16 @@ function clearTeamData(type) {
     $('posHome').value = '—';
     $('gfHome').value = '—';
     $('gaHome').value = '—';
-    $('dgHome').value = '—';
+    $('winRateHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
-    $('formHomeBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —';
+    $('formHomeBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
-    $('dgAway').value = '—';
+    $('winRateAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
-    $('formAwayBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —';
+    $('formAwayBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —';
   }
 }
 
@@ -239,7 +236,7 @@ function clearAll() {
     if (el) el.textContent = '—';
   });
   ['formHomeTeam','formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
-  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>' + (id.includes('Home') ? 'Rendimiento de Local' : 'Rendimiento de Visitante') + ': PJ: — | Victorias: — | GF: — | GC: —');
+  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —');
   updateCalcButton();
 }
 
@@ -258,33 +255,20 @@ function fillTeamData(teamName, leagueCode, type) {
   const lambda = type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1);
   const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
 
-  console.log(`fillTeamData (${type}, ${teamName}):`, {
-    winsHome: t.winsHome,
-    pjHome: t.pjHome,
-    winsAway: t.winsAway,
-    pjAway: t.pjAway,
-    dg: t.dg,
-    gfHome: t.gfHome,
-    gaHome: t.gaHome,
-    gfAway: t.gfAway,
-    gaAway: t.gaAway,
-    totalWins: t.g
-  });
-
   if (type === 'Home') {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('dgHome').value = t.dg;
+    $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
     $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}`;
+    $('formHomeBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}<br>Rendimiento de Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('dgAway').value = t.dg;
+    $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
+    $('formAwayBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}<br>Rendimiento de Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   }
 }
 
@@ -370,12 +354,12 @@ function calculateAll() {
   const ppgA = tA.points / (tA.pj || 1);
   const eloH = 1500 + 100 * (ppgH - 1.5);
   const eloA = 1500 + 100 * (ppgA - 1.5);
-  const homeAdv = 100; // Ventaja local estándar
+  const homeAdv = 100;
   const expectedH = 1 / (1 + Math.pow(10, (eloA - (eloH + homeAdv)) / 400));
   const expectedA = 1 - expectedH;
-  const pHomeElo = expectedH * 0.7; // Ajuste para empate
+  const pHomeElo = expectedH * 0.7;
   const pAwayElo = expectedA * 0.7;
-  const pDrawElo = 0.3; // Empate estimado
+  const pDrawElo = 0.3;
 
   // Método 3: Dixon-Coles
   let pHomeDC = 0;
@@ -413,7 +397,7 @@ function calculateAll() {
   // Factores de corrección
   const homeAdvantage = formatDec(avgGh / (avgGa || 1));
   const strengthDiff = formatDec(ppgH - ppgA);
-  const dixonColes = '0.90'; // Tau fijo para Dixon-Coles
+  const dixonColes = '0.90';
 
   $('homeAdvantageFactor').textContent = homeAdvantage;
   $('strengthFactor').textContent = strengthDiff;

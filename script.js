@@ -44,23 +44,25 @@ function normalizeTeam(raw) {
   const r = {};
   r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || '';
   if (!r.name) return null;
-  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || raw.Rank || 0);
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.GF || 0);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.GC || 0);
-  r.dg = r.gf - r.ga; // Diferencia de goles
-  r.pj = parseNumberString(raw.pj || raw.played || raw.PJ || 0);
-  r.g = parseNumberString(raw.g || raw.won || raw.Victorias || 0);
-  r.e = parseNumberString(raw.e || raw.draw || raw.Empates || 0);
-  r.p = parseNumberString(raw.p || raw.lost || raw.Derrotas || 0);
-  r.points = parseNumberString(raw.points || raw.Puntos || (r.g*3 + r.e) || 0);
+  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || raw['Rank'] || 0);
+  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw['GF'] || 0);
+  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw['GC'] || 0);
+  r.pj = parseNumberString(raw.pj || raw.played || raw['PJ'] || 0);
+  r.g = parseNumberString(raw.g || raw.won || raw['Victorias'] || 0);
+  r.e = parseNumberString(raw.e || raw.draw || raw['Empates'] || 0);
+  r.p = parseNumberString(raw.p || raw.lost || raw['Derrotas'] || 0);
+  r.points = parseNumberString(raw.points || raw['Puntos'] || (r.g*3 + r.e) || 0);
   r.gfHome = parseNumberString(raw.gfHome || raw['GF Local'] || 0);
   r.gfAway = parseNumberString(raw.gfAway || raw['GF Visitante'] || 0);
   r.gaHome = parseNumberString(raw.gaHome || raw['GC Local'] || 0);
   r.gaAway = parseNumberString(raw.gaAway || raw['GC Visitante'] || 0);
   r.pjHome = parseNumberString(raw.pjHome || raw['PJ Local'] || 0);
   r.pjAway = parseNumberString(raw.pjAway || raw['PJ Visitante'] || 0);
+  r.winsHome = parseNumberString(raw.winsHome || raw['Victorias Local'] || 0);
+  r.winsAway = parseNumberString(raw.winsAway || raw['Victorias Visitante'] || 0);
   r.recentGoals = parseNumberString(raw.recentGoals || 0);
   r.recentMatches = parseNumberString(raw.recentMatches || 0);
+  // Quitamos possession, ya que no está en la tabla
   return r;
 }
 
@@ -229,16 +231,16 @@ function clearTeamData(type) {
     $('posHome').value = '—';
     $('gfHome').value = '—';
     $('gaHome').value = '—';
-    $('dgHome').value = '—';
+    $('winRateHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
-    $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
+    $('formHomeBox').textContent = 'PJ: — | Victorias: — | GF: — | GC: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
-    $('dgAway').value = '—';
+    $('winRateAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
-    $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
+    $('formAwayBox').textContent = 'PJ: — | Victorias: — | GF: — | GC: —';
   }
 }
 
@@ -250,7 +252,7 @@ function clearAll() {
     if(el) el.textContent = '—';
   });
   ['formHomeTeam','formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
-  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'PJ: — | G: — | E: — | P: —');
+  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'PJ: — | Victorias: — | GF: — | GC: —');
   updateCalcButton();
 }
 
@@ -273,16 +275,16 @@ function fillTeamData(teamName, leagueCode, type) {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('dgHome').value = t.dg;
+    $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
     $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
+    $('formHomeBox').textContent = `PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('dgAway').value = t.dg;
+    $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
+    $('formAwayBox').textContent = `PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   }
 }
 

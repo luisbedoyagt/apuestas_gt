@@ -217,11 +217,8 @@ function clearTeamData(type) {
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
         <span>PJ: —</span>
-        <span>PG: —</span>
-        <span>PE: —</span>
-        <span>PP: —</span>
-        <span>GF: —</span>
-        <span>GC: —</span>
+        <span>Puntos: —</span>
+        <span>DG: —</span>
       </div>
     </div>
     <div class="stat-section">
@@ -229,8 +226,7 @@ function clearTeamData(type) {
       <div class="stat-metrics">
         <span>PJ: —</span>
         <span>PG: —</span>
-        <span>GF: —</span>
-        <span>GC: —</span>
+        <span>DG: —</span>
       </div>
     </div>
     <div class="stat-section">
@@ -238,11 +234,10 @@ function clearTeamData(type) {
       <div class="stat-metrics">
         <span>PJ: —</span>
         <span>PG: —</span>
-        <span>GF: —</span>
-        <span>GC: —</span>
+        <span>DG: —</span>
       </div>
     </div>
-    <div class="stat-legend-text">PJ: Partidos Jugados, PG: Partidos Ganados, PE: Partidos Empatados, PP: Partidos Perdidos, GF: Goles a Favor, GC: Goles en Contra</div>
+    <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
   `;
   if (type === 'Home') {
     $('posHome').value = '—';
@@ -253,7 +248,7 @@ function clearTeamData(type) {
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
-    $('gaHome').value = '—';
+    $('gaAway').value = '—';
     $('winRateAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
   }
@@ -286,6 +281,9 @@ function fillTeamData(teamName, leagueCode, type) {
 
   const lambda = type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1);
   const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
+  const dg = t.gf - t.ga;
+  const dgHome = t.gfHome - t.gaHome;
+  const dgAway = t.gfAway - t.gaAway;
 
   const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
   box.innerHTML = `
@@ -293,11 +291,8 @@ function fillTeamData(teamName, leagueCode, type) {
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
         <span>PJ: ${t.pj}</span>
-        <span>PG: ${t.g}</span>
-        <span>PE: ${t.e}</span>
-        <span>PP: ${t.p}</span>
-        <span>GF: ${t.gf}</span>
-        <span>GC: ${t.ga}</span>
+        <span>Puntos: ${t.points}</span>
+        <span>DG: ${dg >= 0 ? '+' + dg : dg}</span>
       </div>
     </div>
     <div class="stat-section">
@@ -305,8 +300,7 @@ function fillTeamData(teamName, leagueCode, type) {
       <div class="stat-metrics">
         <span>PJ: ${t.pjHome}</span>
         <span>PG: ${t.winsHome}</span>
-        <span>GF: ${t.gfHome}</span>
-        <span>GC: ${t.gaHome}</span>
+        <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome}</span>
       </div>
     </div>
     <div class="stat-section">
@@ -314,11 +308,10 @@ function fillTeamData(teamName, leagueCode, type) {
       <div class="stat-metrics">
         <span>PJ: ${t.pjAway}</span>
         <span>PG: ${t.winsAway}</span>
-        <span>GF: ${t.gfAway}</span>
-        <span>GC: ${t.gaAway}</span>
+        <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway}</span>
       </div>
     </div>
-    <div class="stat-legend-text">PJ: Partidos Jugados, PG: Partidos Ganados, PE: Partidos Empatados, PP: Partidos Perdidos, GF: Goles a Favor, GC: Goles en Contra</div>
+    <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
   `;
 
   if (type === 'Home') {

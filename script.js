@@ -372,19 +372,18 @@ function calculateAll() {
 
   // Recomendación
   const outcomes = [
-    { name: 'Local gana', prob: pHome },
+    { name: `${teamHome} gana`, prob: pHome },
     { name: 'Empate', prob: pDraw },
-    { name: 'Visitante gana', prob: pAway }
+    { name: `${teamAway} gana`, prob: pAway }
   ];
   const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
 
-  let suggestionText = `<span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
-  const others = [];
-  if (pBTTS > 0.5) others.push(`✔ Ambos anotan (${formatPct(pBTTS)})`);
-  if (pO25 > 0.5) others.push(`✔ +2.5 goles (${formatPct(pO25)})`);
-  if (others.length > 0) {
-    suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
-  }
+  let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
+  const others = [
+    `✔ Ambos anotan (${formatPct(pBTTS)})`,
+    `✔ +2.5 goles (${formatPct(pO25)})`
+  ];
+  suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
 
   $('details').textContent = `Basado en modelo Poisson con datos ajustados por rendimiento local/visitante.`;
   $('suggestion').innerHTML = suggestionText;

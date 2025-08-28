@@ -7,7 +7,7 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxz9HnkyD4sWsElH_taD77mIn29dJHuT-mJVmvZ0fOpWZeNwOzeQgqYop2d6_EH7HSt0A/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwd4dIOaYAU4a23YkqAAUtug-yjNlhq33cknHc5RiBkv_hi3AdvXzaDkGoFBtWYjKWpMQ/exec";
 let teamsByLeague = {};
 const leagueNames = {
   "esp.1": "LaLiga España",
@@ -468,3 +468,4 @@ function calculateAll() {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
 }
+

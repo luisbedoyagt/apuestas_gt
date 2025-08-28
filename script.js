@@ -31,10 +31,29 @@ const leagueNames = {
   "gua.1": "Liga Nacional Guatemala",
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
-  "ksa.1": "Pro League Arabia Saudita",
-  "uefa.champions": "UEFA Champions League",
-  "uefa.europa": "UEFA Europa League"
+  "ksa.1": "Pro League Arabia Saudita"
 };
+
+const sheetToLeagueCode = {
+  "España_LaLiga": "esp.1",
+  "España_Segunda": "esp.2",
+  "Inglaterra_PremierLeague": "eng.1",
+  "Inglaterra_Championship": "eng.2",
+  "Italia_SerieA": "ita.1",
+  "Alemania_Bundesliga": "ger.1",
+  "Francia_Ligue1": "fra.1",
+  "PaísesBajos_Eredivisie": "ned.1",
+  "PaísesBajos_EersteDivisie": "ned.2",
+  "Portugal_LigaPortugal": "por.1",
+  "México_LigaMX": "mex.1",
+  "EstadosUnidos_MLS": "usa.1",
+  "Brasil_Brasileirao": "bra.1",
+  "Guatemala_LigaNacional": "gua.1",
+  "CostaRica_LigaPromerica": "crc.1",
+  "Honduras_LigaNacional": "hon.1",
+  "Arabia_Saudi_ProLeague": "ksa.1"
+};
+
 function normalizeTeam(raw) {
   if (!raw || !raw.Equipo) {
     console.warn('Equipo inválido:', raw);
@@ -71,8 +90,13 @@ async function fetchTeams() {
     leagueSelect.disabled = true;
   }
 
-  const cachedData = localStorage.getItem('teamsByLeague');
-  if (cachedData) {
+  const CACHE_KEY = 'teamsByLeague';
+  const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+  const cachedData = localStorage.getItem(CACHE_KEY);
+  const cachedTime = localStorage.getItem(`${CACHE_KEY}_time`);
+  const now = Date.now();
+
+  if (cachedData && cachedTime && (now - parseInt(cachedTime) < CACHE_EXPIRY)) {
     try {
       teamsByLeague = JSON.parse(cachedData);
       if (Object.keys(teamsByLeague).length > 0) {
@@ -119,7 +143,8 @@ async function fetchTeams() {
     }
 
     teamsByLeague = normalized;
-    localStorage.setItem('teamsByLeague', JSON.stringify(normalized));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(normalized));
+    localStorage.setItem(`${CACHE_KEY}_time`, now.toString());
     console.log('Ligas disponibles:', Object.keys(teamsByLeague));
     console.timeEnd('fetchTeams');
     return normalized;
@@ -622,8 +647,8 @@ function calculateAll() {
 
   const lambdaHome = teamHome.pjHome > 0 ? teamHome.gfHome / teamHome.pjHome : teamHome.gf / teamHome.pj || 0;
   const lambdaAway = teamAway.pjAway > 0 ? teamAway.gfAway / teamAway.pjAway : teamAway.gf / teamAway.pj || 0;
-  const possessionHome = parseNumberString($('possessionHome')?.value) || 50;
-  const possessionAway = parseNumberString($('possessionAway')?.value) || 50;
+  const possessionHome = parseNumberString($('possessionHome')?.value || 50);
+  const possessionAway = parseNumberString($('possessionAway')?.value || 50);
 
   if (lambdaHome <= 0 || lambdaAway <= 0) {
     const details = $('details');
@@ -637,7 +662,7 @@ function calculateAll() {
   }
 
   const pointsHome = teamHome.points;
-  const pointsAway = teamHome.points;
+  const pointsAway = teamAway.points;
   const winsHome = teamHome.gHome || teamHome.g;
   const winsAway = teamAway.gAway || teamAway.g;
 
@@ -683,4 +708,3 @@ function calculateAll() {
   console.log('Calculation completed:', recommendations);
   console.timeEnd('calculateAll');
 }
-

@@ -41,7 +41,7 @@ const leagueNames = {
 // ----------------------
 function normalizeTeam(raw) {
   if (!raw) return null;
-  console.log('Datos crudos del equipo:', raw);
+  console.log('Datos crudos del equipo:', raw); // Depuración
   const r = {};
   r.name = raw.name || raw['Equipo'] || '';
   if (!r.name) return null;
@@ -63,7 +63,7 @@ function normalizeTeam(raw) {
   r.winsAway = parseNumberString(raw.winsAway || raw.gAway || 0);
   r.recentGoals = parseNumberString(raw.recentGoals || 0);
   r.recentMatches = parseNumberString(raw.recentMatches || 0);
-  console.log('Equipo normalizado:', r);
+  console.log('Equipo normalizado:', r); // Depuración
   return r;
 }
 
@@ -392,7 +392,7 @@ function calculateAll() {
     }
   }
 
-  // Normalizar Dixon-Coles (para asegurar que sumen ~1)
+  // Normalizar Dixon-Coles
   const totalDC = pHomeDC + pDrawDC + pAwayDC;
   if (totalDC > 0) {
     pHomeDC /= totalDC;
@@ -400,4 +400,51 @@ function calculateAll() {
     pAwayDC /= totalDC;
   }
 
-  // Most
+  // Mostrar probabilidades
+  $('pHome').textContent = formatPct(pHome);
+  $('pDraw').textContent = formatPct(pDraw);
+  $('pAway').textContent = formatPct(pAway);
+  $('pHome2').textContent = formatPct(pHomeElo);
+  $('pDraw2').textContent = formatPct(pDrawElo);
+  $('pAway2').textContent = formatPct(pAwayElo);
+  $('pHome3').textContent = formatPct(pHomeDC);
+  $('pDraw3').textContent = formatPct(pDrawDC);
+  $('pAway3').textContent = formatPct(pAwayDC);
+  $('pBTTS').textContent = formatPct(pBTTS);
+  $('pO25').textContent = formatPct(pO25);
+
+  // Factores de corrección
+  const homeAdvantage = formatDec(avgGh / (avgGa || 1));
+  const strengthDiff = formatDec(ppgH - ppgA);
+  const dixonColes = '0.90'; // Tau fijo para Dixon-Coles
+
+  $('homeAdvantageFactor').textContent = homeAdvantage;
+  $('strengthFactor').textContent = strengthDiff;
+  $('dixonColesFactor').textContent = dixonColes;
+
+  // Recomendación (combinando los tres métodos)
+  const avgHome = (pHome + pHomeElo + pHomeDC) / 3;
+  const avgDraw = (pDraw + pDrawElo + pDrawDC) / 3;
+  const avgAway = (pAway + pAwayElo + pAwayDC) / 3;
+  const outcomes = [
+    { name: `${teamHome} gana`, prob: avgHome },
+    { name: 'Empate', prob: avgDraw },
+    { name: `${teamAway} gana`, prob: avgAway }
+  ];
+  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
+
+  let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
+  const others = [
+    `✔ Ambos anotan (${formatPct(pBTTS)})`,
+    `✔ +2.5 goles (${formatPct(pO25)})`
+  ];
+  suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
+
+  $('details').textContent = `Basado en datos ajustados por rendimiento local/visitante y múltiples métodos predictivos.`;
+  $('suggestion').innerHTML = suggestionText;
+
+  // Animación
+  const suggestionEl = $('suggestion');
+  suggestionEl.classList.add('pulse');
+  setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
+}

@@ -53,7 +53,7 @@ async function fetchTeams() {
     try {
       teamsByLeague = JSON.parse(cachedData);
       if (Object.keys(teamsByLeague).length > 0) {
-        console.log('Datos cargados desde caché:', teamsByLeague);
+        console.log('Datos cargados desde caché:', Object.keys(teamsByLeague));
         console.timeEnd('fetchTeams');
         return teamsByLeague;
       }
@@ -64,10 +64,10 @@ async function fetchTeams() {
 
   try {
     const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error(`Error ${res.status}`);
+    if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
     if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-      throw new Error('Datos vacíos');
+      throw new Error('Datos vacíos o inválidos de la API');
     }
     const normalized = {};
     for (const key in data) {
@@ -78,12 +78,12 @@ async function fetchTeams() {
     }
     teamsByLeague = normalized;
     localStorage.setItem('teamsByLeague', JSON.stringify(normalized));
-    console.log('Datos obtenidos de la API:', teamsByLeague);
+    console.log('Datos obtenidos de la API:', Object.keys(teamsByLeague));
     console.timeEnd('fetchTeams');
     return normalized;
   } catch (err) {
     console.error('Error en fetchTeams:', err);
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Verifica la conexión o la URL.</div>';
     return {};
   }
 }
@@ -95,7 +95,7 @@ async function init() {
   const teamAwaySelect = $('teamAway');
 
   if (!leagueSelect || !teamHomeSelect || !teamAwaySelect) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Problema con la interfaz.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Problema con la interfaz. Verifica los elementos HTML.</div>';
     return;
   }
 
@@ -173,7 +173,7 @@ function onLeagueChange() {
   clearTeamData('Home');
   clearTeamData('Away');
   updateCalcButton();
-  console.log(`Equipos cargados para la liga ${code}:`, teamsByLeague[code]);
+  console.log(`Equipos cargados para la liga ${code}:`, teamsByLeague[code].map(t => t.name));
   console.timeEnd('onLeagueChange');
 }
 
@@ -191,10 +191,11 @@ function restrictSameTeam() {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> No puedes seleccionar el mismo equipo para local y visitante.</div>';
     if (document.activeElement === $('teamHome')) {
       $('teamHome').value = '';
+      clearTeamData('Home');
     } else {
       $('teamAway').value = '';
+      clearTeamData('Away');
     }
-    clearTeamData(document.activeElement === $('teamHome') ? 'Home' : 'Away');
     updateCalcButton();
     return false;
   }
@@ -214,14 +215,14 @@ function clearTeamData(type) {
     $('gfAway').value = '—';
     $('gaAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
-    $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
+    $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
     $('pAway').parentElement.querySelector('.small').textContent = 'Probabilidad: —';
   }
-  $('pHome').textContent = '—';
-  $('pDraw').textContent = '—';
-  $('pAway').textContent = '—';
-  $('pBTTS').textContent = '—';
-  $('pO25').textContent = '—';
+  ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25'].forEach(id => {
+    const el = $(id);
+    if (el) el.textContent = '—';
+  });
+  $('pDraw').parentElement.querySelector('.small').textContent = 'Probabilidad: Empate';
   $('pBTTS').parentElement.querySelector('.small').textContent = 'Probabilidad: Ambos anotan';
   $('pO25').parentElement.querySelector('.small').textContent = 'Probabilidad: Más de 2.5 goles';
   $('homeAdvantageFactor').textContent = '—';
@@ -231,18 +232,23 @@ function clearTeamData(type) {
 }
 
 function findTeam(leagueCode, teamName) {
-  if (!teamsByLeague[leagueCode]) return null;
-  return teamsByLeague[leagueCode].find(t => t.name === teamName) || null;
+  if (!teamsByLeague[leagueCode]) {
+    console.warn(`Liga ${leagueCode} no encontrada en teamsByLeague`);
+    return null;
+  }
+  const team = teamsByLeague[leagueCode].find(t => t.name === teamName);
+  if (!team) console.warn(`Equipo ${teamName} no encontrado en la liga ${leagueCode}`);
+  return team || null;
 }
 
 function fillTeamData(teamName, leagueCode, type) {
   if (!teamName || !leagueCode) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y un equipo.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y un equipo válidos.</div>';
     return;
   }
   const t = findTeam(leagueCode, teamName);
   if (!t) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipo no encontrado.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipo no encontrado en los datos de la liga.</div>';
     return;
   }
 
@@ -301,14 +307,13 @@ function clamp01(x) {
 }
 
 function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
-  const leagueRhoFactors = {
-    "bra.1": -0.15,
-    "ita.1": -0.2,
-    "eng.1": -0.1,
-    "uefa.champions": -0.12
-  };
-  const rho = leagueRhoFactors[leagueCode] || -0.15;
-  if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) return 1;
+  const teams = teamsByLeague[leagueCode] || [];
+  const avgGoals = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / teams.length : 2.5;
+  const rho = -0.1 * (avgGoals / 2.5); // Ajuste dinámico basado en promedio de goles
+  if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome < 0.01 || lambdaAway < 0.01) {
+    console.warn('Datos inválidos para Dixon-Coles:', { lambdaHome, lambdaAway });
+    return 1;
+  }
   const prob00 = poissonPMF(lambdaHome, 0) * poissonPMF(lambdaAway, 0);
   const adjustedProb00 = prob00 * (1 - (lambdaHome * lambdaAway * rho));
   const prob10 = poissonPMF(lambdaHome, 1) * poissonPMF(lambdaAway, 0);
@@ -319,35 +324,39 @@ function dixonColesAdjustment(lambdaHome, lambdaAway, leagueCode) {
   const adjustedProb11 = prob11 * (1 - rho);
   const originalProbs = prob00 + prob10 + prob01 + prob11;
   const adjustedProbs = adjustedProb00 + adjustedProb10 + adjustedProb01 + adjustedProb11;
-  return originalProbs > 0 ? adjustedProbs / originalProbs : 1;
+  const factor = originalProbs > 0 ? adjustedProbs / originalProbs : 1;
+  console.log('Dixon-Coles adjustment:', { prob00, adjustedProb00, prob10, adjustedProb10, prob01, adjustedProb01, prob11, adjustedProb11, factor, rho });
+  return factor;
 }
 
 function calculateStrengthFactor(posHome, posAway, leagueCode, pointsHome, pointsAway) {
   const maxTeams = teamsByLeague[leagueCode]?.length || 20;
-  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) return 1;
+  if (!posHome || !posAway || !maxTeams || !pointsHome || !pointsAway) {
+    console.warn('Datos insuficientes para calcular strengthFactor:', { posHome, posAway, maxTeams, pointsHome, pointsAway });
+    return 1;
+  }
   const normalizedHome = (maxTeams - posHome + 1) / maxTeams;
   const normalizedAway = (maxTeams - posAway + 1) / maxTeams;
-  const ppgHome = pointsHome / ($('gfHome').value || 1);
-  const ppgAway = pointsAway / ($('gfAway').value || 1);
+  const ppgHome = pointsHome / (parseNumberString($('gfHome').value) || 1);
+  const ppgAway = pointsAway / (parseNumberString($('gfAway').value) || 1);
   const eloFactor = (normalizedHome / normalizedAway) * (ppgHome / ppgAway || 1);
-  return Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0);
+  const strengthFactor = Math.min(Math.max(Math.sqrt(eloFactor), 0.5), 2.0);
+  console.log('Strength factor calculation:', { normalizedHome, normalizedAway, ppgHome, ppgAway, eloFactor, strengthFactor });
+  return strengthFactor;
 }
 
 function calculateHomeAdvantage(leagueCode) {
-  const leagueHomeFactors = {
-    "bra.1": 1.15,
-    "uefa.champions": 1.1,
-    "eng.1": 1.05,
-    "ita.1": 1.1
-  };
   const teams = teamsByLeague[leagueCode] || [];
-  const avgGoals = teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / (teams.length || 1);
-  return leagueHomeFactors[leagueCode] || 1 + (avgGoals * 0.1);
+  const avgGoals = teams.length > 0 ? teams.reduce((sum, t) => sum + (t.gf / (t.pj || 1)), 0) / teams.length : 2.5;
+  const factor = 1 + (avgGoals * 0.1); // Dinámico basado en promedio de goles
+  console.log('Home advantage calculation:', { leagueCode, avgGoals, factor });
+  return factor;
 }
 
 function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, leagueCode) {
   if (!isFinite(lambdaHome) || !isFinite(lambdaAway) || lambdaHome <= 0 || lambdaAway <= 0) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
+    console.error('Datos de goles inválidos:', { lambdaHome, lambdaAway });
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
   const homeAdvantageFactor = calculateHomeAdvantage(leagueCode);
@@ -376,7 +385,8 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 
   const total = pHome + pDraw + pAway;
   if (total <= 0) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Cálculo de probabilidades falló.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Cálculo de probabilidades falló debido a datos inválidos.</div>';
+    console.error('Cálculo de probabilidades falló:', { pHome, pDraw, pAway, total });
     return { pHome: 0, pDraw: 0, pAway: 0, pBTTS: 0, pO25: 0 };
   }
 
@@ -400,6 +410,7 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
     }
   }
 
+  console.log('Probabilities calculated:', { pHome, pDraw, pAway, pBTTS, pO25, adjHome, adjAway });
   return {
     pHome: clamp01(pHome),
     pDraw: clamp01(pDraw),
@@ -410,7 +421,11 @@ function computeProbabilities(lambdaHome, lambdaAway, pointsHome, pointsAway, le
 }
 
 function calculateAll() {
-  if (!restrictSameTeam()) return;
+  console.time('calculateAll');
+  if (!restrictSameTeam()) {
+    console.timeEnd('calculateAll');
+    return;
+  }
   const lambdaHome = parseNumberString($('gfHome').value);
   const lambdaAway = parseNumberString($('gfAway').value);
   const leagueCode = $('leagueSelect').value;
@@ -418,20 +433,23 @@ function calculateAll() {
   const teamAwayName = $('teamAway').value || 'Visitante';
 
   if (!leagueCode) {
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga válida.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
+    console.timeEnd('calculateAll');
     return;
   }
 
   if (!teamHomeName || !teamAwayName) {
-    $('details').innerHTML = '<div class="error"><strong>ALERTA:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona ambos equipos para calcular las probabilidades.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
+    console.timeEnd('calculateAll');
     return;
   }
 
   if (lambdaHome <= 0 || lambdaAway <= 0) {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Los datos de goles no son válidos. Verifica las estadísticas de los equipos.</div>';
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
+    console.timeEnd('calculateAll');
     return;
   }
 
@@ -450,6 +468,8 @@ function calculateAll() {
   let details = `<div><strong>Detalles del cálculo:</strong></div>`;
   details += `<div>• Lambda Local ajustado: ${formatDec(lambdaHome * calculateHomeAdvantage(leagueCode))}</div>`;
   details += `<div>• Lambda Visitante ajustado: ${formatDec(lambdaAway)}</div>`;
+  details += `<div>• Equipo Local: ${teamHomeName}</div>`;
+  details += `<div>• Equipo Visitante: ${teamAwayName}</div>`;
   $('details').innerHTML = details;
 
   const recommendations = [
@@ -467,5 +487,6 @@ function calculateAll() {
   } else {
     $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
   }
+  console.log('Calculation completed:', recommendations);
+  console.timeEnd('calculateAll');
 }
-

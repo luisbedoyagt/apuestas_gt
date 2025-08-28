@@ -11,7 +11,7 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby861rsgXrB7mi1-e3mzVQHIltJDvn-xKVdepECl3Y_CPG88ZwP4wwARdMpJ2WpWcJ6-w/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzwunZZXmvchjXKs6Wkh3XHOIzRKzRqsH8U6XtOIqrOGWYOdM0AWGW-56zXrDAmhlUedQ/exec";
 let teamsByLeague = {};
 const leagueNames = {
   "esp.1": "LaLiga España",
@@ -697,3 +697,4 @@ function calculateAll() {
   console.log('Calculation completed:', recommendations);
   console.timeEnd('calculateAll');
 }
+

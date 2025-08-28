@@ -9,7 +9,7 @@ return isFinite(n) ? n : 0;
 
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxU_lVAprIelInF7lBffqogTsQhyRlxmk0gjDEqa7VGR9OzxdJ50QQnrAX5r30IeXWN-Q/exec";
 let teamsByLeague = {};
-const leagueNames = {
+const sheetNames = {
   "LaLiga España": "España_LaLiga",
   "Liga MX México": "México_LigaMX",
   "MLS Estados Unidos": "EstadosUnidos_MLS",
@@ -512,5 +512,6 @@ $('suggestion').innerHTML = 'Esperando datos para tu apuesta estelar...';
 console.log('Calculation completed:', recommendations);
 console.timeEnd('calculateAll');
 }
+
 
 

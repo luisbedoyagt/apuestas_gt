@@ -7,7 +7,7 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby861rsgXrB7mi1-e3mzVQHIltJDvn-xKVdepECl3Y_CPG88ZwP4wwARdMpJ2WpWcJ6-w/exec"; // Actualiza con tu URL
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby861rsgXrB7mi1-e3mzVQHIltJDvn-xKVdepECl3Y_CPG88ZwP4wwARdMpJ2WpWcJ6-w/exec";
 let teamsByLeague = {};
 const leagueNames = {
   "esp.1": "LaLiga España",
@@ -27,6 +27,27 @@ const leagueNames = {
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
   "ksa.1": "Saudi Pro League"
+};
+
+// Mapeo inverso para convertir nombres de hojas a códigos de liga
+const sheetToLeagueCode = {
+  "España_LaLiga": "esp.1",
+  "España_Segunda": "esp.2",
+  "Inglaterra_PremierLeague": "eng.1",
+  "Inglaterra_Championship": "eng.2",
+  "Italia_SerieA": "ita.1",
+  "Alemania_Bundesliga": "ger.1",
+  "Francia_Ligue1": "fra.1",
+  "PaísesBajos_Eredivisie": "ned.1",
+  "PaísesBajos_EersteDivisie": "ned.2",
+  "Portugal_LigaPortugal": "por.1",
+  "México_LigaMX": "mex.1",
+  "EstadosUnidos_MLS": "usa.1",
+  "Brasil_Brasileirao": "bra.1",
+  "Guatemala_LigaNacional": "gua.1",
+  "CostaRica_LigaPromerica": "crc.1",
+  "Honduras_LigaNacional": "hon.1",
+  "Arabia_Saudi_ProLeague": "ksa.1"
 };
 
 function normalizeTeam(raw) {
@@ -81,11 +102,22 @@ async function fetchTeams() {
     }
 
     const normalized = {};
-    for (const key in data) {
-      normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
-      console.log(`Equipos normalizados para ${key}:`, normalized[key]);
-      if (normalized[key].length === 0) {
-        console.warn(`No se encontraron equipos válidos para la liga ${key}`);
+    for (const sheetName in data) {
+      const leagueCode = sheetToLeagueCode[sheetName];
+      if (!leagueCode) {
+        console.warn(`Nombre de hoja desconocido: ${sheetName}`);
+        continue;
+      }
+      // Saltar la primera fila (encabezados) y convertir cada fila en un objeto
+      const teams = data[sheetName].slice(1).map(row => {
+        const team = {};
+        data[sheetName][0].forEach((header, i) => team[header] = row[i]);
+        return normalizeTeam(team);
+      }).filter(t => t && t.name);
+      normalized[leagueCode] = teams;
+      console.log(`Equipos normalizados para ${leagueCode}:`, teams);
+      if (teams.length === 0) {
+        console.warn(`No se encontraron equipos válidos para la liga ${leagueCode}`);
       }
     }
 

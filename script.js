@@ -44,23 +44,23 @@ function normalizeTeam(raw) {
   const r = {};
   r.name = raw.name || raw.Team || raw.team?.name || raw.teamName || raw.team_name || raw['Equipo'] || raw['team'] || '';
   if (!r.name) return null;
-  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || 0);
-  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.gfHome || 0);
-  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.gaHome || 0);
-  r.pj = parseNumberString(raw.pj || raw.played || 0);
-  r.g = parseNumberString(raw.g || raw.won || 0);
-  r.e = parseNumberString(raw.e || raw.draw || 0);
-  r.p = parseNumberString(raw.p || raw.lost || 0);
-  r.points = parseNumberString(raw.points || (r.g*3 + r.e) || 0);
-  r.gfHome = parseNumberString(raw.gfHome || 0);
-  r.gfAway = parseNumberString(raw.gfAway || 0);
-  r.gaHome = parseNumberString(raw.gaHome || 0);
-  r.gaAway = parseNumberString(raw.gaAway || 0);
-  r.pjHome = parseNumberString(raw.pjHome || 0);
-  r.pjAway = parseNumberString(raw.pjAway || 0);
+  r.pos = parseNumberString(raw.pos || raw.position || raw.rank || raw.Rank || 0);
+  r.gf = parseNumberString(raw.gf || raw.goalsFor || raw.GF || 0);
+  r.ga = parseNumberString(raw.ga || raw.goalsAgainst || raw.GC || 0);
+  r.dg = r.gf - r.ga; // Diferencia de goles
+  r.pj = parseNumberString(raw.pj || raw.played || raw.PJ || 0);
+  r.g = parseNumberString(raw.g || raw.won || raw.Victorias || 0);
+  r.e = parseNumberString(raw.e || raw.draw || raw.Empates || 0);
+  r.p = parseNumberString(raw.p || raw.lost || raw.Derrotas || 0);
+  r.points = parseNumberString(raw.points || raw.Puntos || (r.g*3 + r.e) || 0);
+  r.gfHome = parseNumberString(raw.gfHome || raw['GF Local'] || 0);
+  r.gfAway = parseNumberString(raw.gfAway || raw['GF Visitante'] || 0);
+  r.gaHome = parseNumberString(raw.gaHome || raw['GC Local'] || 0);
+  r.gaAway = parseNumberString(raw.gaAway || raw['GC Visitante'] || 0);
+  r.pjHome = parseNumberString(raw.pjHome || raw['PJ Local'] || 0);
+  r.pjAway = parseNumberString(raw.pjAway || raw['PJ Visitante'] || 0);
   r.recentGoals = parseNumberString(raw.recentGoals || 0);
   r.recentMatches = parseNumberString(raw.recentMatches || 0);
-  r.possession = parseNumberString(raw.possession || 50);
   return r;
 }
 
@@ -229,14 +229,14 @@ function clearTeamData(type) {
     $('posHome').value = '—';
     $('gfHome').value = '—';
     $('gaHome').value = '—';
-    $('possessionHome') && ($('possessionHome').value = '—');
+    $('dgHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
     $('formHomeBox').textContent = 'PJ: — | G: — | E: — | P: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
-    $('possessionAway') && ($('possessionAway').value = '—');
+    $('dgAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
     $('formAwayBox').textContent = 'PJ: — | G: — | E: — | P: —';
   }
@@ -273,14 +273,14 @@ function fillTeamData(teamName, leagueCode, type) {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('possessionHome') && ($('possessionHome').value = formatPct(t.possession / 100));
+    $('dgHome').value = t.dg;
     $('formHomeTeam').textContent = `Local: ${t.name}`;
     $('formHomeBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('possessionAway') && ($('possessionAway').value = formatPct(t.possession / 100));
+    $('dgAway').value = t.dg;
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
     $('formAwayBox').textContent = `PJ: ${t.pj} | G: ${t.g} | E: ${t.e} | P: ${t.p}`;
   }

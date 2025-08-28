@@ -33,9 +33,8 @@ const leagueNames = {
   "gua.1": "Liga Nacional Guatemala",
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
-  "ksa.1": "Pro League Arabia Saudita",
-  "uefa.champions": "UEFA Champions League",
-  "uefa.europa": "UEFA Europa League"
+  "ksa.1": "Pro League Arabia Saudita"
+ 
 };
 
 // ----------------------
@@ -312,3 +311,4 @@ function calculateAll() {
   $('pBTTS').textContent = formatPct(btts);
   $('pO25').textContent = formatPct(over25);
 }
+

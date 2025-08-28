@@ -60,7 +60,7 @@ function normalizeTeam(raw) {
   r.pjAway = parseNumberString(raw.awayGamesPlayed || raw.pjAway || raw['PJ Visitante'] || 0);
   r.winsHome = parseNumberString(raw.homeWins || raw.gHome || raw['Victorias Local'] || 0);
   r.winsAway = parseNumberString(raw.awayWins || raw.gAway || raw['Victorias Visitante'] || 0);
-  console.log('Equipo normalizado:', r); // Depuración
+  console.log('Equipo normalizado:', r);
   return r;
 }
 
@@ -211,20 +211,50 @@ function restrictSameTeam() {
 }
 
 function clearTeamData(type) {
+  const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
+  box.innerHTML = `
+    <div class="stat-section">
+      <span class="section-title">Rendimiento General</span>
+      <div class="stat-metrics">
+        <span>PJ: —</span>
+        <span>Victorias: —</span>
+        <span>Empates: —</span>
+        <span>Derrotas: —</span>
+        <span>GF: —</span>
+        <span>GC: —</span>
+      </div>
+    </div>
+    <div class="stat-section">
+      <span class="section-title">Rendimiento de Local</span>
+      <div class="stat-metrics">
+        <span>PJ: —</span>
+        <span>Victorias: —</span>
+        <span>GF: —</span>
+        <span>GC: —</span>
+      </div>
+    </div>
+    <div class="stat-section">
+      <span class="section-title">Rendimiento de Visitante</span>
+      <div class="stat-metrics">
+        <span>PJ: —</span>
+        <span>Victorias: —</span>
+        <span>GF: —</span>
+        <span>GC: —</span>
+      </div>
+    </div>
+  `;
   if (type === 'Home') {
     $('posHome').value = '—';
     $('gfHome').value = '—';
     $('gaHome').value = '—';
     $('winRateHome').value = '—';
     $('formHomeTeam').textContent = 'Local: —';
-    $('formHomeBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —';
   } else {
     $('posAway').value = '—';
     $('gfAway').value = '—';
     $('gaAway').value = '—';
     $('winRateAway').value = '—';
     $('formAwayTeam').textContent = 'Visitante: —';
-    $('formAwayBox').textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —';
   }
 }
 
@@ -236,7 +266,8 @@ function clearAll() {
     if (el) el.textContent = '—';
   });
   ['formHomeTeam','formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
-  ['formHomeBox','formAwayBox'].forEach(id => $(id).textContent = 'Rendimiento General: PJ: — | Victorias: — | Empates: — | Derrotas: — | GF: — | GC: —<br>Rendimiento de Local: PJ: — | Victorias: — | GF: — | GC: —<br>Rendimiento de Visitante: PJ: — | Victorias: — | GF: — | GC: —');
+  clearTeamData('Home');
+  clearTeamData('Away');
   updateCalcButton();
 }
 
@@ -255,20 +286,51 @@ function fillTeamData(teamName, leagueCode, type) {
   const lambda = type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1);
   const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
 
+  const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
+  box.innerHTML = `
+    <div class="stat-section">
+      <span class="section-title">Rendimiento General</span>
+      <div class="stat-metrics">
+        <span>PJ: ${t.pj}</span>
+        <span>Victorias: ${t.g}</span>
+        <span>Empates: ${t.e}</span>
+        <span>Derrotas: ${t.p}</span>
+        <span>GF: ${t.gf}</span>
+        <span>GC: ${t.ga}</span>
+      </div>
+    </div>
+    <div class="stat-section">
+      <span class="section-title">Rendimiento de Local</span>
+      <div class="stat-metrics">
+        <span>PJ: ${t.pjHome}</span>
+        <span>Victorias: ${t.winsHome}</span>
+        <span>GF: ${t.gfHome}</span>
+        <span>GC: ${t.gaHome}</span>
+      </div>
+    </div>
+    <div class="stat-section">
+      <span class="section-title">Rendimiento de Visitante</span>
+      <div class="stat-metrics">
+        <span>PJ: ${t.pjAway}</span>
+        <span>Victorias: ${t.winsAway}</span>
+        <span>GF: ${t.gfAway}</span>
+        <span>GC: ${t.gaAway}</span>
+      </div>
+    </div>
+  `;
+
   if (type === 'Home') {
     $('posHome').value = t.pos;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
     $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
     $('formHomeTeam').textContent = `Local: ${t.name}`;
-    $('formHomeBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}<br>Rendimiento de Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   } else {
     $('posAway').value = t.pos;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
     $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
-    $('formAwayBox').textContent = `Rendimiento General: PJ: ${t.pj} | Victorias: ${t.g} | Empates: ${t.e} | Derrotas: ${t.p} | GF: ${t.gf} | GC: ${t.ga}<br>Rendimiento de Local: PJ: ${t.pjHome} | Victorias: ${t.winsHome} | GF: ${t.gfHome} | GC: ${t.gaHome}<br>Rendimiento de Visitante: PJ: ${t.pjAway} | Victorias: ${t.winsAway} | GF: ${t.gfAway} | GC: ${t.gaAway}`;
   }
 }
 

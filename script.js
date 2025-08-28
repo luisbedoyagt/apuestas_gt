@@ -7,7 +7,7 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwd4dIOaYAU4a23YkqAAUtug-yjNlhq33cknHc5RiBkv_hi3AdvXzaDkGoFBtWYjKWpMQ/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwFQs3XVlp7KYxpKqGtrqvc-Qet57cJUzMeAoXKxEvd8Q2JUZQwaNKyBgNS8d7OpFUgRg/exec";
 let teamsByLeague = {};
 const leagueNames = {
   "esp.1": "LaLiga España",
@@ -32,7 +32,7 @@ const leagueNames = {
 function normalizeTeam(raw) {
   if (!raw) return null;
   const r = {};
-  r.name = raw.Equipo || raw.name || raw.team?.displayName || '';
+  r.name = raw.Equipo || raw.team?.displayName || '';
   if (!r.name) return null;
   r.pos = parseNumberString(raw.Rank || raw.rank || 0);
   r.pj = parseNumberString(raw.PJ || raw.gamesPlayed || 0);
@@ -50,7 +50,7 @@ function normalizeTeam(raw) {
   r.gAway = parseNumberString(raw['Victorias Visitante'] || raw.awayWins || 0);
   r.gfAway = parseNumberString(raw['GF Visitante'] || raw.awayPointsFor || 0);
   r.gcAway = parseNumberString(raw['GC Visitante'] || raw.awayPointsAgainst || 0);
-  r.possession = parseNumberString(raw.possession || 50); // Entrada manual o API futura
+  r.possession = parseNumberString(raw.possession || 50);
   return r;
 }
 
@@ -291,9 +291,7 @@ function fillTeamData(teamName, leagueCode, type) {
 }
 
 function clearAll() {
-  document.querySelectorAll('input').forEach(i => {
-    i.value = i.id.includes('possession') ? '50' : '—';
-  });
+  document.querySelectorAll('input').forEach(i => i.value = i.id.includes('possession') ? '50' : '—');
   document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
   ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25', 'details', 'homeAdvantageFactor', 'strengthFactor', 'dixonColesFactor'].forEach(id => {
     const el = $(id);

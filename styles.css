@@ -7,8 +7,9 @@ body {
 }
 
 .container {
-  max-width: 1000px;
-  margin: 0 auto;
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 10px;
 }
 
 .header {
@@ -30,7 +31,7 @@ h3 {
 
 h4 {
   font-size: 14px;
-  margin: 8px 0 12px; /* Aumentado de 4px a 12px para más espacio debajo de Local/Visitante */
+  margin: 8px 0 12px;
   color: #e0e0e0;
 }
 
@@ -41,10 +42,10 @@ p.small, div.small {
 
 .card {
   background: #2c2c2c;
-  border-radius: 6px;
+  border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
   border: 1px solid #3a3a3a;
 }
 
@@ -84,21 +85,30 @@ input:focus, select:focus {
   outline: none;
 }
 
+input[type="number"] {
+  width: 60px;
+}
+
 .sep {
   height: 1px;
   background: #4a4a4a;
-  margin: 6px 0;
+  margin: 10px 0;
 }
 
 .btn {
-  padding: 5px 10px;
+  padding: 8px 15px;
   border: none;
-  border-radius: 3px;
+  border-radius: 5px;
   background: #4dabf7;
   color: #fff;
   font-size: 12px;
   cursor: pointer;
-  margin-bottom: 12px; /* Aumentado de 0 a 12px para más espacio debajo de botones */
+  margin-bottom: 12px;
+}
+
+.btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
 }
 
 .btn:hover {
@@ -108,13 +118,13 @@ input:focus, select:focus {
 .kpis {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .kpis-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 10px;
   justify-content: center;
 }
 
@@ -127,8 +137,8 @@ input:focus, select:focus {
   width: 100%;
   max-width: 140px;
   text-align: center;
-  padding: 6px;
-  border-radius: 3px;
+  padding: 10px;
+  border-radius: 5px;
   background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
   border: 1px solid #4a4a4a;
   box-shadow: 0 1px 2px rgba(0,0,0,0.4);
@@ -261,8 +271,8 @@ input:focus, select:focus {
 }
 
 .recs .error {
-  color: #e0e0e0;
-  background: #3a3a3a;
+  color: #ff9999;
+  background: #2a2a2a;
   padding: 4px 8px;
   border-radius: 3px;
   border: 1px solid #ff6666;
@@ -282,7 +292,7 @@ input:focus, select:focus {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   padding: 12px;
-  margin-bottom: 12px; /* Aumentado de 8px a 12px para más espacio entre tarjetas */
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -293,6 +303,10 @@ input:focus, select:focus {
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+}
+
+.stat-card:nth-child(1) {
+  border-color: #4dabf7;
 }
 
 .stat-card:nth-child(2) {
@@ -310,6 +324,7 @@ input:focus, select:focus {
 }
 
 .stat-title::before {
+  content: '';
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -331,7 +346,7 @@ input:focus, select:focus {
   border-radius: 4px;
   border: 1px solid #4a4a4a;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
-  margin-bottom: 8px; /* Añadido espacio debajo de PJ: | G: | E: | P: */
+  margin-bottom: 8px;
 }
 
 .stat-values span {
@@ -358,6 +373,15 @@ input:focus, select:focus {
   margin-bottom: 4px;
   text-align: center;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.stat-legend div {
+  flex: 1;
+  min-width: 80px;
 }
 
 .bet-slip {
@@ -425,6 +449,7 @@ input:focus, select:focus {
 
   .container {
     max-width: 100%;
+    margin: 10px auto;
   }
 
   .header {
@@ -442,7 +467,7 @@ input:focus, select:focus {
 
   h4 {
     font-size: 12px;
-    margin: 8px 0 12px; /* Aumentado a 12px también en móvil */
+    margin: 8px 0 12px;
   }
 
   .card {
@@ -470,6 +495,10 @@ input:focus, select:focus {
     font-size: 11px;
   }
 
+  input[type="number"] {
+    width: 50px;
+  }
+
   .sep {
     margin: 4px 0;
   }
@@ -477,7 +506,7 @@ input:focus, select:focus {
   .btn {
     padding: 4px 8px;
     font-size: 11px;
-    margin-bottom: 12px; /* Aumentado a 12px también en móvil */
+    margin-bottom: 12px;
   }
 
   .kpis-row {
@@ -532,6 +561,7 @@ input:focus, select:focus {
 
   .stat-card {
     padding: 6px;
+    margin-bottom: 12px;
   }
 
   .stat-title {
@@ -548,7 +578,7 @@ input:focus, select:focus {
     font-size: 12px;
     padding: 3px 6px;
     gap: 4px;
-    margin-bottom: 8px; /* Añadido espacio también en móvil */
+    margin-bottom: 8px;
   }
 
   .stat-values span {
@@ -558,6 +588,11 @@ input:focus, select:focus {
   .stat-legend {
     font-size: 10px;
     padding: 3px 6px;
+    gap: 4px;
+  }
+
+  .stat-legend div {
+    min-width: 70px;
   }
 
   .bet-slip {

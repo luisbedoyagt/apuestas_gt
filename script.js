@@ -29,7 +29,7 @@ const leagueNames = {
   "ksa.1": "Saudi Pro League"
 };
 
-// Mapeo inverso para convertir nombres de hojas a códigos de liga
+// Mapeo de códigos de liga a nombres de hojas en la API
 const sheetToLeagueCode = {
   "España_LaLiga": "esp.1",
   "España_Segunda": "esp.2",
@@ -113,9 +113,9 @@ async function fetchTeams() {
         const team = {};
         data[sheetName][0].forEach((header, i) => team[header] = row[i]);
         return normalizeTeam(team);
-      }).filter(t => t && t.name);
+      }).filter(t => t && t.name && t.pj > 0); // Filtrar equipos con PJ=0
       normalized[leagueCode] = teams;
-      console.log(`Equipos normalizados para ${leagueCode}:`, teams);
+      console.log(`Equipos normalizados para ${leagueCode} (${leagueNames[leagueCode]}):`, teams);
       if (teams.length === 0) {
         console.warn(`No se encontraron equipos válidos para la liga ${leagueCode}`);
       }

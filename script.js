@@ -13,7 +13,7 @@ const parseNumberString = val => {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzjoN3CZSFWCvCKeuL8IcS_ZqlvopdWBt0pwz30DAGKt7PADAYlSztcaXUangnB-bW7ww/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyhYOCxt-TuuG3efEtYeXfv6awUcnLF43a8ATXeb65JIX0bSe5vPh0AfZeePjmDAqfzhA/exec";
 let teamsByLeague = {};
 
 const leagueNames = {
@@ -501,3 +501,4 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
+

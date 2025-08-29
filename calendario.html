@@ -7,8 +7,12 @@
 </head>
 <body>
   <h1>Calendario de Ligas</h1>
-  <div id="calendario-container"></div>
+  <div id="calendarios-container"></div>
 
+  <script>
+    // Inyectamos los datos de Apps Script directamente
+    const calendarios = <?= JSON.stringify(calendarios) ?>;
+  </script>
   <script src="calendario.js"></script>
 </body>
 </html>

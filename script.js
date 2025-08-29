@@ -42,25 +42,34 @@ const leagueNames = {
 function normalizeTeam(raw) {
   if (!raw) return null;
   const r = {};
-  r.name = raw.name || raw.Equipo || '';
+  r.name = raw.name || '';
   if (!r.name) return null;
-  r.pos = parseNumberString(raw.rank || raw.pos || 0);
-  r.gf = parseNumberString(raw.pointsFor || raw.gf || raw.GF || 0);
-  r.ga = parseNumberString(raw.pointsAgainst || raw.ga || raw.GC || 0);
-  r.pj = parseNumberString(raw.gamesPlayed || raw.pj || raw.PJ || 0);
-  r.g = parseNumberString(raw.wins || raw.g || raw.Victorias || 0);
-  r.e = parseNumberString(raw.ties || raw.e || raw.Empates || 0);
-  r.p = parseNumberString(raw.losses || raw.p || raw.Derrotas || 0);
-  r.points = parseNumberString(raw.points || raw.Puntos || (r.g*3 + r.e) || 0);
-  r.gfHome = parseNumberString(raw.homePointsFor || raw.gfHome || raw['GF Local'] || 0);
-  r.gfAway = parseNumberString(raw.awayPointsFor || raw.gfAway || raw['GF Visitante'] || 0);
-  r.gaHome = parseNumberString(raw.homePointsAgainst || raw.gaHome || raw['GC Local'] || 0);
-  r.gaAway = parseNumberString(raw.awayPointsAgainst || raw.gaAway || raw['GC Visitante'] || 0);
-  r.pjHome = parseNumberString(raw.homeGamesPlayed || raw.pjHome || raw['PJ Local'] || 0);
-  r.pjAway = parseNumberString(raw.awayGamesPlayed || raw.pjAway || raw['PJ Visitante'] || 0);
-  r.winsHome = parseNumberString(raw.homeWins || raw.gHome || raw['Victorias Local'] || 0);
-  r.winsAway = parseNumberString(raw.awayWins || raw.gAway || raw['Victorias Visitante'] || 0);
-  console.log('Equipo normalizado:', r);
+  r.pos = parseNumberString(raw.rank || 0);
+  r.gf = parseNumberString(raw.goalsFor || 0);
+  r.ga = parseNumberString(raw.goalsAgainst || 0);
+  r.pj = parseNumberString(raw.gamesPlayed || 0);
+  r.g = parseNumberString(raw.wins || 0);
+  r.e = parseNumberString(raw.ties || 0);
+  r.p = parseNumberString(raw.losses || 0);
+  r.points = parseNumberString(raw.points || (r.g * 3 + r.e) || 0);
+  r.gfHome = parseNumberString(raw.goalsForHome || 0);
+  r.gfAway = parseNumberString(raw.goalsForAway || 0);
+  r.gaHome = parseNumberString(raw.goalsAgainstHome || 0);
+  r.gaAway = parseNumberString(raw.goalsAgainstAway || 0);
+  r.pjHome = parseNumberString(raw.gamesPlayedHome || 0);
+  r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
+  r.winsHome = parseNumberString(raw.winsHome || 0);
+  r.winsAway = parseNumberString(raw.winsAway || 0);
+  console.log(`Equipo normalizado: ${r.name}`, {
+    pjAway: r.pjAway,
+    winsAway: r.winsAway,
+    gfAway: r.gfAway,
+    gaAway: r.gaAway,
+    rawGamesPlayedAway: raw.gamesPlayedAway,
+    rawWinsAway: raw.winsAway,
+    rawGoalsForAway: raw.goalsForAway,
+    rawGoalsAgainstAway: raw.goalsAgainstAway
+  }); // Log temporal para depuración
   return r;
 }
 
@@ -74,8 +83,12 @@ async function fetchTeams() {
 
   try {
     const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
+    }
     const data = await res.json();
+    console.log('JSON recibido:', data); // Log temporal para depuración
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
@@ -87,7 +100,7 @@ async function fetchTeams() {
     return normalized;
   } catch (err) {
     console.error('Error en fetchTeams:', err);
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API.</div>';
+    $('details').innerHTML = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Detalle: ${err.message}</div>`;
     return {};
   }
 }
@@ -213,49 +226,49 @@ function restrictSameTeam() {
 function clearTeamData(type) {
   const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
   box.innerHTML = `
-    <div class="stat-section">
+    <div class="stat-section" data-testid="general-${type.toLowerCase()}">
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
-        <span>PJ: —</span>
-        <span>Puntos: —</span>
-        <span>DG: —</span>
+        <span>PJ: 0</span>
+        <span>Puntos: 0</span>
+        <span>DG: 0</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="local-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Local</span>
       <div class="stat-metrics">
-        <span>PJ: —</span>
-        <span>PG: —</span>
-        <span>DG: —</span>
+        <span>PJ: 0</span>
+        <span>PG: 0</span>
+        <span>DG: 0</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="visitante-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Visitante</span>
       <div class="stat-metrics">
-        <span>PJ: —</span>
-        <span>PG: —</span>
-        <span>DG: —</span>
+        <span>PJ: 0</span>
+        <span>PG: 0</span>
+        <span>DG: 0</span>
       </div>
     </div>
     <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
   `;
   if (type === 'Home') {
-    $('posHome').value = '—';
-    $('gfHome').value = '—';
-    $('gaHome').value = '—';
-    $('winRateHome').value = '—';
+    $('posHome').value = '0';
+    $('gfHome').value = '0';
+    $('gaHome').value = '0';
+    $('winRateHome').value = '0%';
     $('formHomeTeam').textContent = 'Local: —';
   } else {
-    $('posAway').value = '—';
-    $('gfAway').value = '—';
-    $('gaAway').value = '—';
-    $('winRateAway').value = '—';
+    $('posAway').value = '0';
+    $('gfAway').value = '0';
+    $('gaAway').value = '0';
+    $('winRateAway').value = '0%';
     $('formAwayTeam').textContent = 'Visitante: —';
   }
 }
 
 function clearAll() {
-  document.querySelectorAll('input').forEach(i => i.value = '—');
+  document.querySelectorAll('input').forEach(i => i.value = '0');
   document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
   ['pHome','pDraw','pAway','pBTTS','pO25','details','homeAdvantageFactor','strengthFactor','dixonColesFactor','suggestion'].forEach(id => {
     const el = $(id);
@@ -277,54 +290,68 @@ function findTeam(leagueCode, teamName) {
 
 function fillTeamData(teamName, leagueCode, type) {
   const t = findTeam(leagueCode, teamName);
-  if (!t) return;
+  if (!t) {
+    console.error(`Equipo no encontrado: ${teamName} en liga ${leagueCode}`);
+    return;
+  }
 
-  const lambda = type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1);
-  const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
+  console.log(`Llenando datos para ${type}: ${teamName}`, {
+    pjAway: t.pjAway,
+    winsAway: t.winsAway,
+    gfAway: t.gfAway,
+    gaAway: t.gaAway,
+    pjHome: t.pjHome,
+    winsHome: t.winsHome,
+    gfHome: t.gfHome,
+    gaHome: t.gaHome
+  }); // Log temporal para depuración
+
+  const lambda = type === 'Home' ? (t.pjHome ? t.gfHome / t.pjHome : t.gf / (t.pj || 1)) : (t.pjAway ? t.gfAway / t.pjAway : t.gf / (t.pj || 1));
+  const gaAvg = type === 'Home' ? (t.pjHome ? t.gaHome / t.pjHome : t.ga / (t.pj || 1)) : (t.pjAway ? t.gaAway / t.pjAway : t.ga / (t.pj || 1));
   const dg = t.gf - t.ga;
   const dgHome = t.gfHome - t.gaHome;
   const dgAway = t.gfAway - t.gaAway;
 
   const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
   box.innerHTML = `
-    <div class="stat-section">
+    <div class="stat-section" data-testid="general-${type.toLowerCase()}">
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pj}</span>
-        <span>Puntos: ${t.points}</span>
-        <span>DG: ${dg >= 0 ? '+' + dg : dg}</span>
+        <span>PJ: ${t.pj || 0}</span>
+        <span>Puntos: ${t.points || 0}</span>
+        <span>DG: ${dg >= 0 ? '+' + dg : dg || 0}</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="local-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Local</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pjHome}</span>
-        <span>PG: ${t.winsHome}</span>
-        <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome}</span>
+        <span>PJ: ${t.pjHome || 0}</span>
+        <span>PG: ${t.winsHome || 0}</span>
+        <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome || 0}</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="visitante-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Visitante</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pjAway}</span>
-        <span>PG: ${t.winsAway}</span>
-        <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway}</span>
+        <span>PJ: ${t.pjAway || 0}</span>
+        <span>PG: ${t.winsAway || 0}</span>
+        <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway || 0}</span>
       </div>
     </div>
     <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
   `;
 
   if (type === 'Home') {
-    $('posHome').value = t.pos;
+    $('posHome').value = t.pos || 0;
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
+    $('winRateHome').value = formatPct(t.pjHome ? t.winsHome / t.pjHome : 0);
     $('formHomeTeam').textContent = `Local: ${t.name}`;
   } else {
-    $('posAway').value = t.pos;
+    $('posAway').value = t.pos || 0;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
+    $('winRateAway').value = formatPct(t.pjAway ? t.winsAway / t.pjAway : 0);
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
   }
 }
@@ -358,11 +385,19 @@ function calculateAll() {
   const teamHome = $('teamHome').value;
   const teamAway = $('teamAway').value;
   const league = $('leagueSelect').value;
-  if (!teamHome || !teamAway || !league) return;
+  if (!teamHome || !teamAway || !league) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y ambos equipos.</div>';
+    return;
+  }
 
   const tH = findTeam(league, teamHome);
   const tA = findTeam(league, teamAway);
-  if (!tH || !tA) return;
+  if (!tH || !tA) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipos no encontrados.</div>';
+    return;
+  }
+
+  console.log('Calculando para:', { tH, tA }); // Log temporal para depuración
 
   // Calcular promedios de la liga
   const teams = teamsByLeague[league];
@@ -440,14 +475,20 @@ function calculateAll() {
   }
 
   // Promediar probabilidades
-  const avgHome = (pHome + pHomeElo + pHomeDC) / 3;
-  const avgDraw = (pDraw + pDrawElo + pDrawDC) / 3;
-  const avgAway = (pAway + pAwayElo + pAwayDC) / 3;
+  const avgHome = (tH.pj && tA.pj) ? (pHome + pHomeElo + pHomeDC) / 3 : 0.33;
+  const avgDraw = (tH.pj && tA.pj) ? (pDraw + pDrawElo + pDrawDC) / 3 : 0.33;
+  const avgAway = (tH.pj && tA.pj) ? (pAway + pAwayElo + pAwayDC) / 3 : 0.33;
+
+  // Normalizar probabilidades
+  const totalAvg = avgHome + avgDraw + avgAway;
+  const finalHome = totalAvg > 0 ? avgHome / totalAvg : 0.33;
+  const finalDraw = totalAvg > 0 ? avgDraw / totalAvg : 0.33;
+  const finalAway = totalAvg > 0 ? avgAway / totalAvg : 0.33;
 
   // Mostrar probabilidades unificadas
-  $('pHome').textContent = formatPct(avgHome);
-  $('pDraw').textContent = formatPct(avgDraw);
-  $('pAway').textContent = formatPct(avgAway);
+  $('pHome').textContent = formatPct(finalHome);
+  $('pDraw').textContent = formatPct(finalDraw);
+  $('pAway').textContent = formatPct(finalAway);
   $('pBTTS').textContent = formatPct(pBTTS);
   $('pO25').textContent = formatPct(pO25);
 
@@ -462,11 +503,11 @@ function calculateAll() {
 
   // Recomendación
   const outcomes = [
-    { name: `${teamHome} gana`, prob: avgHome },
-    { name: 'Empate', prob: avgDraw },
-    { name: `${teamAway} gana`, prob: avgAway }
+    { name: `${teamHome} gana`, prob: finalHome },
+    { name: 'Empate', prob: finalDraw },
+    { name: `${teamAway} gana`, prob: finalAway }
   ];
-  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
+  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, outcomes[0] || { name: 'Empate', prob: 0.33 });
 
   let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
   const others = [

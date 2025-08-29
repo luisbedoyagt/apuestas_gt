@@ -26,39 +26,13 @@
         <select id="teamHome"></select>
         <div class="sep"></div>
         <div class="stat-card">
-          <div class="stat-title" id="formHomeTeam">Local: </div>
-          <div class="stat-values" id="formHomeBox">
-            <div class="stat-section" data-testid="general-home">
-              <span class="section-title">Rendimiento General</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>Puntos: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-section" data-testid="local-home">
-              <span class="section-title">Rendimiento de Local</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>PG: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-section" data-testid="visitante-home">
-              <span class="section-title">Rendimiento de Visitante</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>PG: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
-          </div>
+          <div class="stat-title" id="formHomeTeam">Local: —</div>
+          <div class="stat-values" id="formHomeBox">PJ: — | Victorias: — | GF: — | GC: —</div>
           <div class="stat-legend">
-            <div>Posición: <input readonly id="posHome" value="" class="small"></div>
-            <div>Goles a favor: <input readonly id="gfHome" value="" class="small"></div>
-            <div>Goles en contra: <input readonly id="gaHome" value="" class="small"></div>
-            <div>Win Rate Local (%): <input readonly id="winRateHome" value="" class="small"></div>
+            <div>Posición: <input readonly id="posHome" value="—" class="small"></div>
+            <div>Goles a favor: <input readonly id="gfHome" value="—" class="small"></div>
+            <div>Goles en contra: <input readonly id="gaHome" value="—" class="small"></div>
+            <div>Win Rate Local (%): <input readonly id="winRateHome" value="—" class="small"></div> <!-- Reemplazo de possession -->
           </div>
         </div>
       </div>
@@ -69,39 +43,13 @@
         <select id="teamAway"></select>
         <div class="sep"></div>
         <div class="stat-card">
-          <div class="stat-title" id="formAwayTeam">Visitante: </div>
-          <div class="stat-values" id="formAwayBox">
-            <div class="stat-section" data-testid="general-away">
-              <span class="section-title">Rendimiento General</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>Puntos: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-section" data-testid="local-away">
-              <span class="section-title">Rendimiento de Local</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>PG: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-section" data-testid="visitante-away">
-              <span class="section-title">Rendimiento de Visitante</span>
-              <div class="stat-metrics">
-                <span>PJ: </span>
-                <span>PG: </span>
-                <span>DG: </span>
-              </div>
-            </div>
-            <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
-          </div>
+          <div class="stat-title" id="formAwayTeam">Visitante: —</div>
+          <div class="stat-values" id="formAwayBox">PJ: — | Victorias: — | GF: — | GC: —</div>
           <div class="stat-legend">
-            <div>Posición: <input readonly id="posAway" value="" class="small"></div>
-            <div>Goles a favor: <input readonly id="gfAway" value="" class="small"></div>
-            <div>Goles en contra: <input readonly id="gaAway" value="" class="small"></div>
-            <div>Win Rate Visit. (%): <input readonly id="winRateAway" value="" class="small"></div>
+            <div>Posición: <input readonly id="posAway" value="—" class="small"></div>
+            <div>Goles a favor: <input readonly id="gfAway" value="—" class="small"></div>
+            <div>Goles en contra: <input readonly id="gaAway" value="—" class="small"></div>
+            <div>Win Rate Visit. (%): <input readonly id="winRateAway" value="—" class="small"></div> <!-- Reemplazo de possession -->
           </div>
         </div>
       </div>
@@ -119,7 +67,7 @@
           <span class="value" id="strengthFactor">—</span>
         </div>
         <div class="correction-factor">
-          <span class="label">Ajuste avanzado:</span>
+          <span class="label">Dixon-Coles:</span>
           <span class="value" id="dixonColesFactor">—</span>
         </div>
       </div>
@@ -164,6 +112,6 @@
       <div class="bet-slip" id="suggestion">Esperando datos para tu apuesta estelar...</div>
     </div>
   </div>
-  <script src="frontend.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

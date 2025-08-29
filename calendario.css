@@ -1,93 +1,87 @@
 /* Estilo general */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #1f1f1f; /* Gris oscuro */
-  color: #e0e0e0; /* Texto claro */
+  background-color: #1e1e1e;
+  color: #f0f0f0;
   margin: 0;
   padding: 20px;
 }
 
-/* Contenedor del menú */
-#menu-ligas {
-  margin-bottom: 20px;
+/* Título */
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #ffffff;
 }
 
-select {
-  padding: 8px 12px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: none;
+/* Contenedor de filtros */
+#filtro-fecha, #menu-ligas {
   background-color: #2c2c2c;
-  color: #e0e0e0;
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
-select:focus {
-  outline: 2px solid #4caf50;
+/* Etiquetas */
+label {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Inputs y select */
+input[type="date"], select, button {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: none;
+  font-size: 14px;
+}
+
+input[type="date"], select {
+  background-color: #3a3a3a;
+  color: #f0f0f0;
+}
+
+button {
+  background-color: #4caf50;
+  color: #ffffff;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #45a049;
 }
 
 /* Tabla */
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #2c2c2c;
+  margin-top: 20px;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 th, td {
   padding: 12px 15px;
   text-align: left;
+  border-bottom: 1px solid #444;
 }
 
 th {
   background-color: #3a3a3a;
-  font-weight: bold;
-  border-bottom: 2px solid #4caf50;
 }
 
-td {
-  border-bottom: 1px solid #444;
+tr:hover {
+  background-color: #2a2a2a;
 }
 
-/* Alternar colores de filas */
-tbody tr:nth-child(even) {
-  background-color: #292929;
-}
-
-tbody tr:hover {
-  background-color: #3a3a3a;
-}
-
-/* Responsivo para móviles */
+/* Responsive */
 @media (max-width: 768px) {
-  table, thead, tbody, th, td, tr {
-    display: block;
-  }
-
-  thead tr {
-    display: none;
-  }
-
-  tbody tr {
-    margin-bottom: 15px;
-    border-bottom: 2px solid #444;
-  }
-
-  td {
-    padding-left: 50%;
-    position: relative;
-    text-align: left;
-  }
-
-  td::before {
-    position: absolute;
-    left: 15px;
-    top: 12px;
-    width: 45%;
-    white-space: nowrap;
-    font-weight: bold;
-    content: attr(data-label);
-    color: #4caf50;
+  #filtro-fecha, #menu-ligas {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

@@ -6,7 +6,7 @@ async function cargarCalendario() {
     const data = await response.json();
 
     const container = document.getElementById("calendario-container");
-    container.innerHTML = ""; // Limpiar contenedor
+    container.innerHTML = "";
 
     for (const liga in data) {
       const partidos = data[liga];
@@ -35,8 +35,8 @@ async function cargarCalendario() {
       const tbody = document.createElement("tbody");
       partidos.forEach(partido => {
         const tr = document.createElement("tr");
-        const link = partido.link ? `<a href="${partido.link}" target="_blank">Ver</a>` : "";
-        [partido.fecha, partido.hora, partido.local, partido.visitante, partido.estadio, link].forEach(value => {
+        const linkHTML = partido.link ? `<a href="${partido.link}" target="_blank">Ver</a>` : "";
+        [partido.fecha, partido.hora, partido.local, partido.visitante, partido.estadio, linkHTML].forEach(value => {
           const td = document.createElement("td");
           td.innerHTML = value;
           tr.appendChild(td);
@@ -53,6 +53,4 @@ async function cargarCalendario() {
   }
 }
 
-// Ejecutar al cargar la página
 document.addEventListener("DOMContentLoaded", cargarCalendario);
-

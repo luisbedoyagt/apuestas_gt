@@ -47,7 +47,7 @@ function mostrarTabla(liga) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  const headers = ["Fecha", "Hora", "Local", "Visitante", "Estadio", "Link"];
+  const headers = ["Fecha", "Hora", "Local", "Visitante", "Estadio"];
   headers.forEach(text => {
     const th = document.createElement("th");
     th.textContent = text;
@@ -65,19 +65,6 @@ function mostrarTabla(liga) {
     tr.appendChild(crearCelda(partido.local, "Local"));
     tr.appendChild(crearCelda(partido.visitante, "Visitante"));
     tr.appendChild(crearCelda(partido.estadio, "Estadio"));
-
-    const linkTd = document.createElement("td");
-    linkTd.setAttribute("data-label", "Link");
-    if (partido.link && partido.link !== "#") {
-      const a = document.createElement("a");
-      a.href = partido.link;
-      a.textContent = "Ver partido";
-      a.target = "_blank";
-      linkTd.appendChild(a);
-    } else {
-      linkTd.textContent = "-";
-    }
-    tr.appendChild(linkTd);
 
     tbody.appendChild(tr);
   });

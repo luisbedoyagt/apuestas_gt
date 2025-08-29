@@ -13,7 +13,7 @@ const parseNumberString = val => {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwsRJiihEsyaTn8Av5tmDWWwJ2_Ol9sxIS1RrIzJlnF-ziSDSzwjTHfS2-uRwESW5QoLw/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwhxSccznUNIZFSfNKygHE--qPK4vn6KtxW5iyYrj0BmM_efw18_IWAUEcwNBzlFqBhcA/exec";
 let teamsByLeague = {};
 
 const leagueNames = {
@@ -60,15 +60,13 @@ function normalizeTeam(raw) {
   r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
   r.winsHome = parseNumberString(raw.winsHome || 0);
   r.winsAway = parseNumberString(raw.winsAway || 0);
+  r.logoUrl = raw.logoUrl || ''; // Nueva propiedad para la URL del logo
   console.log(`Equipo normalizado: ${r.name}`, {
     pjAway: r.pjAway,
     winsAway: r.winsAway,
     gfAway: r.gfAway,
     gaAway: r.gaAway,
-    rawGamesPlayedAway: raw.gamesPlayedAway,
-    rawWinsAway: raw.winsAway,
-    rawGoalsForAway: raw.goalsForAway,
-    rawGoalsAgainstAway: raw.goalsAgainstAway
+    logoUrl: r.logoUrl
   }); // Log temporal para depuración
   return r;
 }
@@ -260,13 +258,13 @@ function clearTeamData(type) {
     $('gfHome').value = '0';
     $('gaHome').value = '0';
     $('winRateHome').value = '0%';
-    $('formHomeTeam').textContent = 'Local: —';
+    $('formHomeTeam').innerHTML = 'Local: —';
   } else {
     $('posAway').value = '0';
     $('gfAway').value = '0';
     $('gaAway').value = '0';
     $('winRateAway').value = '0%';
-    $('formAwayTeam').textContent = 'Visitante: —';
+    $('formAwayTeam').innerHTML = 'Visitante: —';
   }
 }
 
@@ -277,7 +275,7 @@ function clearAll() {
     const el = $(id);
     if (el) el.textContent = '—';
   });
-  ['formHomeTeam','formAwayTeam'].forEach(id => $(id).textContent = id.includes('Home') ? 'Local: —' : 'Visitante: —');
+  ['formHomeTeam','formAwayTeam'].forEach(id => $(id).innerHTML = id.includes('Home') ? 'Local: —' : 'Visitante: —');
   clearTeamData('Home');
   clearTeamData('Away');
   updateCalcButton();
@@ -306,7 +304,8 @@ function fillTeamData(teamName, leagueCode, type) {
     pjHome: t.pjHome,
     winsHome: t.winsHome,
     gfHome: t.gfHome,
-    gaHome: t.gaHome
+    gaHome: t.gaHome,
+    logoUrl: t.logoUrl
   }); // Log temporal para depuración
 
   const lambda = type === 'Home' ? (t.pjHome ? t.gfHome / t.pjHome : t.gf / (t.pj || 1)) : (t.pjAway ? t.gfAway / t.pjAway : t.gf / (t.pj || 1));
@@ -349,13 +348,17 @@ function fillTeamData(teamName, leagueCode, type) {
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
     $('winRateHome').value = formatPct(t.pjHome ? t.winsHome / t.pjHome : 0);
-    $('formHomeTeam').textContent = `Local: ${t.name}`;
+    $('formHomeTeam').innerHTML = t.logoUrl
+      ? `<img src="${t.logoUrl}" alt="${t.name} logo" class="team-logo"> Local: ${t.name}`
+      : `Local: ${t.name}`;
   } else {
     $('posAway').value = t.pos || 0;
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
     $('winRateAway').value = formatPct(t.pjAway ? t.winsAway / t.pjAway : 0);
-    $('formAwayTeam').textContent = `Visitante: ${t.name}`;
+    $('formAwayTeam').innerHTML = t.logoUrl
+      ? `<img src="${t.logoUrl}" alt="${t.name} logo" class="team-logo"> Visitante: ${t.name}`
+      : `Visitante: ${t.name}`;
   }
 }
 

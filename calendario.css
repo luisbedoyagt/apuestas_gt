@@ -1,30 +1,66 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-  margin: 20px;
+  margin: 0;
+  background: #f4f4f4;
 }
 
-h1 {
+header {
+  background: #222;
+  color: #fff;
+  padding: 15px;
   text-align: center;
 }
 
-.liga {
-  margin-bottom: 30px;
+.container {
+  display: flex;
+  min-height: 100vh;
 }
 
-.liga h2 {
-  background-color: #4CAF50;
-  color: white;
+nav#menu-ligas {
+  width: 220px;
+  background: #333;
+  color: #fff;
   padding: 10px;
 }
 
-.partido {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 10px;
-  border-bottom: 1px solid #ccc;
+nav#menu-ligas button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+  background: #444;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
 }
 
-.partido:nth-child(even) {
-  background-color: #e8f5e9;
+nav#menu-ligas button:hover {
+  background: #555;
+}
+
+main#calendarios {
+  flex: 1;
+  padding: 20px;
+}
+
+.liga {
+  margin-bottom: 20px;
+}
+
+.partido {
+  background: #fff;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.partido span {
+  display: block;
+}
+
+.partido a {
+  color: #0066cc;
+  text-decoration: none;
 }

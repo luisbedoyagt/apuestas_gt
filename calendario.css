@@ -1,8 +1,7 @@
 body {
   font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
   margin: 20px;
-  background-color: #f9f9f9;
-  color: #333;
 }
 
 h1 {
@@ -10,37 +9,22 @@ h1 {
 }
 
 .liga {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .liga h2 {
-  background-color: #00529b;
-  color: #fff;
+  background-color: #4CAF50;
+  color: white;
   padding: 10px;
-  margin: 0;
 }
 
-.tabla-calendario {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+.partido {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-bottom: 1px solid #ccc;
 }
 
-.tabla-calendario th, .tabla-calendario td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-}
-
-.tabla-calendario th {
-  background-color: #e0e0e0;
-}
-
-.tabla-calendario tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-.tabla-calendario a {
-  color: #00529b;
-  text-decoration: none;
+.partido:nth-child(even) {
+  background-color: #e8f5e9;
 }

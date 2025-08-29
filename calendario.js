@@ -14,15 +14,20 @@ async function cargarDatos() {
   }
 }
 
-// Llenar selector de ligas
+// Llenar selector de ligas con tus nombres
 function llenarSelectorLigas() {
   const ligaSelect = document.getElementById("liga");
-  ligaSelect.innerHTML = `<option value="todas">Todas las ligas</option>`;
+  ligaSelect.innerHTML = ""; // limpiar antes
 
-  Object.keys(datosCalendario).forEach(liga => {
+  const optionTodas = document.createElement("option");
+  optionTodas.value = "todas";
+  optionTodas.textContent = "Todas las ligas";
+  ligaSelect.appendChild(optionTodas);
+
+  Object.keys(datosCalendario).forEach(ligaNombre => {
     const option = document.createElement("option");
-    option.value = liga;
-    option.textContent = liga.replace(/_/g, " ");
+    option.value = ligaNombre;
+    option.textContent = ligaNombre.replace(/_/g, " "); // más legible
     ligaSelect.appendChild(option);
   });
 }
@@ -58,6 +63,7 @@ function filtrarPorFecha() {
     card.innerHTML = `
       <h3>${p.local} vs ${p.visitante}</h3>
       <p><strong>Hora:</strong> ${p.hora} | <strong>Estadio:</strong> ${p.estadio}</p>
+      <p><strong>Fecha:</strong> ${p.fecha}</p>
     `;
     container.appendChild(card);
   });

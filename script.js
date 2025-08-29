@@ -109,6 +109,11 @@ async function fetchTeams() {
 // INICIALIZACIÓN
 // ----------------------
 async function init() {
+  // Inicializar el DOM con valores por defecto inmediatamente
+  clearTeamData('Home');
+  clearTeamData('Away');
+  updateCalcButton();
+
   teamsByLeague = await fetchTeams();
   const leagueSelect = $('leagueSelect');
   const teamHomeSelect = $('teamHome');
@@ -143,8 +148,6 @@ async function init() {
 
   $('recalc').addEventListener('click', calculateAll);
   $('reset').addEventListener('click', clearAll);
-
-  clearAll();
 }
 document.addEventListener('DOMContentLoaded', init);
 

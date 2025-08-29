@@ -86,7 +86,7 @@ function normalizeTeam(raw) {
 }
 
 // ----------------------
-// FETCH EQUIPOS (sin cambios, añadido manejo de errores más claro)
+// FETCH EQUIPOS
 // ----------------------
 async function fetchTeams() {
   const leagueSelect = $('leagueSelect');
@@ -112,6 +112,28 @@ async function fetchTeams() {
     $('details').innerHTML = errorMsg;
     if (leagueSelect) leagueSelect.innerHTML = '<option value="">Error al cargar ligas</option>';
     return {};
+  }
+}
+
+// ----------------------
+// GUARDAR APUESTA
+// ----------------------
+async function saveBet(betData) {
+  try {
+    const response = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(betData)
+    });
+    const result = await response.json();
+    if (result.status === 'success') {
+      $('details').innerHTML = `<div class="success"><strong>Éxito:</strong> Apuesta guardada correctamente.</div>`;
+    } else {
+      throw new Error(result.message || 'Error al guardar la apuesta');
+    }
+  } catch (err) {
+    console.error('Error en saveBet:', err);
+    $('details').innerHTML = `<div class="error"><strong>Error:</strong> No se pudo guardar la apuesta. Detalle: ${err.message}</div>`;
   }
 }
 
@@ -216,6 +238,8 @@ function updateCalcButton() {
   const teamAway = $('teamAway').value;
   const leagueCode = $('leagueSelect').value;
   $('recalc').disabled = !(leagueCode && teamHome && teamAway && teamHome !== teamAway);
+  const saveBetBtn = $('saveBet');
+  if (saveBetBtn) saveBetBtn.disabled = true; // Deshabilitar hasta que se calcule
 }
 
 function restrictSameTeam() {
@@ -388,7 +412,7 @@ function calculateAll() {
     warning = '<div class="warning"><strong>Advertencia:</strong> Al menos un equipo tiene menos de 5 partidos jugados. Las predicciones pueden ser menos precisas en etapas tempranas de la liga (ideal: 10+ jornadas).</div>';
   }
 
-  // Calcular promedios de la liga (fallback si totalGames=0)
+  // Calcular promedios de la liga
   const teams = teamsByLeague[league];
   let totalGames = 0;
   let totalGfHome = 0;
@@ -458,7 +482,7 @@ function calculateAll() {
     pO25DC /= totalDC;
   }
 
-  // Promediar probabilidades (solo Poisson + Dixon-Coles)
+  // Promediar probabilidades
   const avgHome = (tH.pj && tA.pj) ? (pHomeP + pHomeDC) / 2 : 0.33;
   const avgDraw = (tH.pj && tA.pj) ? (pDrawP + pDrawDC) / 2 : 0.33;
   const avgAway = (tH.pj && tA.pj) ? (pAwayP + pAwayDC) / 2 : 0.33;
@@ -499,7 +523,6 @@ function calculateAll() {
 
   let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
 
-  // Lógica de umbrales para BTTS y O25
   const bttsText = avgBTTS > 0.55 ? `✔ Ambos anotan (${formatPct(avgBTTS)})` :
                    avgBTTS < 0.45 ? `❌ No ambos anotan (${formatPct(1 - avgBTTS)})` :
                    `— Ambos anotan equilibrado (${formatPct(avgBTTS)})`;
@@ -510,13 +533,34 @@ function calculateAll() {
   const others = [bttsText, o25Text];
   suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
 
-  // Si no hay claro favorito
   if (maxOutcome.prob < 0.40) {
     suggestionText += `<div class="warning">No hay un claro favorito; considera evitar esta apuesta principal.</div>`;
   }
 
   $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson + Dixon-Coles.`;
   $('suggestion').innerHTML = suggestionText;
+
+  // Habilitar botón de guardar apuesta
+  const saveBetBtn = $('saveBet');
+  if (saveBetBtn) {
+    saveBetBtn.disabled = false;
+    saveBetBtn.onclick = () => {
+      const betData = {
+        league: leagueNames[league] || league,
+        homeTeam: teamHome,
+        awayTeam: teamAway,
+        homeProb: (finalHome * 100).toFixed(1),
+        drawProb: (finalDraw * 100).toFixed(1),
+        awayProb: (finalAway * 100).toFixed(1),
+        bttsProb: (avgBTTS * 100).toFixed(1),
+        o25Prob: (avgO25 * 100).toFixed(1),
+        mainBet: maxOutcome.name,
+        bttsRecommendation: bttsText.replace(/✔|❌|—/, '').trim(),
+        o25Recommendation: o25Text.replace(/✔|❌|—/, '').trim()
+      };
+      saveBet(betData);
+    };
+  }
 
   // Animación
   const suggestionEl = $('suggestion');

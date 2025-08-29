@@ -64,7 +64,11 @@ function normalizeTeam(raw) {
     pjAway: r.pjAway,
     winsAway: r.winsAway,
     gfAway: r.gfAway,
-    gaAway: r.gaAway
+    gaAway: r.gaAway,
+    rawGamesPlayedAway: raw.gamesPlayedAway,
+    rawWinsAway: raw.winsAway,
+    rawGoalsForAway: raw.goalsForAway,
+    rawGoalsAgainstAway: raw.goalsAgainstAway
   }); // Log temporal para depuración
   return r;
 }
@@ -79,8 +83,12 @@ async function fetchTeams() {
 
   try {
     const res = await fetch(WEBAPP_URL);
-    if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
+    }
     const data = await res.json();
+    console.log('JSON recibido:', data); // Log temporal para depuración
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
@@ -92,7 +100,7 @@ async function fetchTeams() {
     return normalized;
   } catch (err) {
     console.error('Error en fetchTeams:', err);
-    $('details').innerHTML = '<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API.</div>';
+    $('details').innerHTML = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Detalle: ${err.message}</div>`;
     return {};
   }
 }
@@ -516,4 +524,3 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

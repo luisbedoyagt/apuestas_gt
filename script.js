@@ -42,24 +42,25 @@ const leagueNames = {
 function normalizeTeam(raw) {
   if (!raw) return null;
   const r = {};
-  r.name = raw.name || raw.Equipo || '';
+  r.name = raw.name || '';
   if (!r.name) return null;
-  r.pos = parseNumberString(raw.rank || raw.pos || 0);
-  r.gf = parseNumberString(raw.pointsFor || raw.gf || raw.GF || 0);
-  r.ga = parseNumberString(raw.pointsAgainst || raw.ga || raw.GC || 0);
-  r.pj = parseNumberString(raw.gamesPlayed || raw.pj || raw.PJ || 0);
-  r.g = parseNumberString(raw.wins || raw.g || raw.Victorias || 0);
-  r.e = parseNumberString(raw.ties || raw.e || raw.Empates || 0);
-  r.p = parseNumberString(raw.losses || raw.p || raw.Derrotas || 0);
-  r.points = parseNumberString(raw.points || raw.Puntos || (r.g*3 + r.e) || 0);
-  r.gfHome = parseNumberString(raw.homePointsFor || raw.gfHome || raw['GF Local'] || 0);
-  r.gfAway = parseNumberString(raw.awayPointsFor || raw.gfAway || raw['GF Visitante'] || 0);
-  r.gaHome = parseNumberString(raw.homePointsAgainst || raw.gaHome || raw['GC Local'] || 0);
-  r.gaAway = parseNumberString(raw.awayPointsAgainst || raw.gaAway || raw['GC Visitante'] || 0);
-  r.pjHome = parseNumberString(raw.homeGamesPlayed || raw.pjHome || raw['PJ Local'] || 0);
-  r.pjAway = parseNumberString(raw.awayGamesPlayed || raw.pjAway || raw['PJ Visitante'] || 0);
-  r.winsHome = parseNumberString(raw.homeWins || raw.gHome || raw['Victorias Local'] || 0);
-  r.winsAway = parseNumberString(raw.awayWins || raw.gAway || raw['Victorias Visitante'] || 0);
+  r.pos = parseNumberString(raw.rank || 0);
+  r.gf = parseNumberString(raw.goalsFor || 0);
+  r.ga = parseNumberString(raw.goalsAgainst || 0);
+  r.pj = parseNumberString(raw.gamesPlayed || 0);
+  r.g = parseNumberString(raw.wins || 0);
+  r.e = parseNumberString(raw.ties || 0);
+  r.p = parseNumberString(raw.losses || 0);
+  r.points = parseNumberString(raw.points || (r.g * 3 + r.e) || 0);
+  r.gfHome = parseNumberString(raw.goalsForHome || 0);
+  r.gfAway = parseNumberString(raw.goalsForAway || 0);
+  r.gaHome = parseNumberString(raw.goalsAgainstHome || 0);
+  r.gaAway = parseNumberString(raw.goalsAgainstAway || 0);
+  r.pjHome = parseNumberString(raw.gamesPlayedHome || 0);
+  r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
+  r.winsHome = parseNumberString(raw.winsHome || 0);
+  r.winsAway = parseNumberString(raw.winsAway || 0);
+  r.recentGoals = parseNumberString(raw.recentGoals || 0);
   console.log('Equipo normalizado:', r);
   return r;
 }
@@ -277,10 +278,15 @@ function findTeam(leagueCode, teamName) {
 
 function fillTeamData(teamName, leagueCode, type) {
   const t = findTeam(leagueCode, teamName);
-  if (!t) return;
+  if (!t) {
+    console.error(`Equipo no encontrado: ${teamName} en liga ${leagueCode}`);
+    return;
+  }
 
-  const lambda = type === 'Home' ? t.gfHome / (t.pjHome || t.pj || 1) : t.gfAway / (t.pjAway || t.pj || 1);
-  const gaAvg = type === 'Home' ? t.gaHome / (t.pjHome || t.pj || 1) : t.gaAway / (t.pjAway || t.pj || 1);
+  console.log(`Llenando datos para ${type}:`, t); // Log para depuración
+
+  const lambda = type === 'Home' ? (t.pjHome ? t.gfHome / t.pjHome : t.gf / (t.pj || 1)) : (t.pjAway ? t.gfAway / t.pjAway : t.gf / (t.pj || 1));
+  const gaAvg = type === 'Home' ? (t.pjHome ? t.gaHome / t.pjHome : t.ga / (t.pj || 1)) : (t.pjAway ? t.gaAway / t.pjAway : t.ga / (t.pj || 1));
   const dg = t.gf - t.ga;
   const dgHome = t.gfHome - t.gaHome;
   const dgAway = t.gfAway - t.gaAway;
@@ -290,41 +296,41 @@ function fillTeamData(teamName, leagueCode, type) {
     <div class="stat-section">
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pj}</span>
-        <span>Puntos: ${t.points}</span>
-        <span>DG: ${dg >= 0 ? '+' + dg : dg}</span>
+        <span>PJ: ${t.pj || '—'}</span>
+        <span>Puntos: ${t.points || '—'}</span>
+        <span>DG: ${dg >= 0 ? '+' + dg : dg || '—'}</span>
       </div>
     </div>
     <div class="stat-section">
       <span class="section-title">Rendimiento de Local</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pjHome}</span>
-        <span>PG: ${t.winsHome}</span>
-        <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome}</span>
+        <span>PJ: ${t.pjHome || '—'}</span>
+        <span>PG: ${t.winsHome || '—'}</span>
+        <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome || '—'}</span>
       </div>
     </div>
     <div class="stat-section">
       <span class="section-title">Rendimiento de Visitante</span>
       <div class="stat-metrics">
-        <span>PJ: ${t.pjAway}</span>
-        <span>PG: ${t.winsAway}</span>
-        <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway}</span>
+        <span>PJ: ${t.pjAway || '—'}</span>
+        <span>PG: ${t.winsAway || '—'}</span>
+        <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway || '—'}</span>
       </div>
     </div>
     <div class="stat-legend-text">PJ: Partidos Jugados, Puntos: Puntos Totales, PG: Partidos Ganados, DG: Diferencia de Goles</div>
   `;
 
   if (type === 'Home') {
-    $('posHome').value = t.pos;
+    $('posHome').value = t.pos || '—';
     $('gfHome').value = formatDec(lambda);
     $('gaHome').value = formatDec(gaAvg);
-    $('winRateHome').value = formatPct(t.winsHome / (t.pjHome || 1));
+    $('winRateHome').value = formatPct(t.pjHome ? t.winsHome / t.pjHome : 0);
     $('formHomeTeam').textContent = `Local: ${t.name}`;
   } else {
-    $('posAway').value = t.pos;
+    $('posAway').value = t.pos || '—';
     $('gfAway').value = formatDec(lambda);
     $('gaAway').value = formatDec(gaAvg);
-    $('winRateAway').value = formatPct(t.winsAway / (t.pjAway || 1));
+    $('winRateAway').value = formatPct(t.pjAway ? t.winsAway / t.pjAway : 0);
     $('formAwayTeam').textContent = `Visitante: ${t.name}`;
   }
 }
@@ -358,11 +364,17 @@ function calculateAll() {
   const teamHome = $('teamHome').value;
   const teamAway = $('teamAway').value;
   const league = $('leagueSelect').value;
-  if (!teamHome || !teamAway || !league) return;
+  if (!teamHome || !teamAway || !league) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y ambos equipos.</div>';
+    return;
+  }
 
   const tH = findTeam(league, teamHome);
   const tA = findTeam(league, teamAway);
-  if (!tH || !tA) return;
+  if (!tH || !tA) {
+    $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipos no encontrados.</div>';
+    return;
+  }
 
   // Calcular promedios de la liga
   const teams = teamsByLeague[league];
@@ -440,14 +452,20 @@ function calculateAll() {
   }
 
   // Promediar probabilidades
-  const avgHome = (pHome + pHomeElo + pHomeDC) / 3;
-  const avgDraw = (pDraw + pDrawElo + pDrawDC) / 3;
-  const avgAway = (pAway + pAwayElo + pAwayDC) / 3;
+  const avgHome = (tH.pj && tA.pj) ? (pHome + pHomeElo + pHomeDC) / 3 : 0.33;
+  const avgDraw = (tH.pj && tA.pj) ? (pDraw + pDrawElo + pDrawDC) / 3 : 0.33;
+  const avgAway = (tH.pj && tA.pj) ? (pAway + pAwayElo + pAwayDC) / 3 : 0.33;
+
+  // Normalizar probabilidades
+  const totalAvg = avgHome + avgDraw + avgAway;
+  const finalHome = totalAvg > 0 ? avgHome / totalAvg : 0.33;
+  const finalDraw = totalAvg > 0 ? avgDraw / totalAvg : 0.33;
+  const finalAway = totalAvg > 0 ? avgAway / totalAvg : 0.33;
 
   // Mostrar probabilidades unificadas
-  $('pHome').textContent = formatPct(avgHome);
-  $('pDraw').textContent = formatPct(avgDraw);
-  $('pAway').textContent = formatPct(avgAway);
+  $('pHome').textContent = formatPct(finalHome);
+  $('pDraw').textContent = formatPct(finalDraw);
+  $('pAway').textContent = formatPct(finalAway);
   $('pBTTS').textContent = formatPct(pBTTS);
   $('pO25').textContent = formatPct(pO25);
 
@@ -462,11 +480,11 @@ function calculateAll() {
 
   // Recomendación
   const outcomes = [
-    { name: `${teamHome} gana`, prob: avgHome },
-    { name: 'Empate', prob: avgDraw },
-    { name: `${teamAway} gana`, prob: avgAway }
+    { name: `${teamHome} gana`, prob: finalHome },
+    { name: 'Empate', prob: finalDraw },
+    { name: `${teamAway} gana`, prob: finalAway }
   ];
-  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, { prob: 0 });
+  const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, outcomes[0] || { name: 'Empate', prob: 0.33 });
 
   let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
   const others = [
@@ -483,4 +501,3 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

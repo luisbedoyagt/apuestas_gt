@@ -1,3 +1,4 @@
+
 // ----------------------
 // UTILIDADES
 // ----------------------
@@ -34,7 +35,7 @@ function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby3S2boy77yxXu4kRLvqtpEg0ZHcNynB4G2Pzl8MRFrv6_uGD8D5X30dKcpEdagXbrlgQ/exec";
+const WEBAPP_URL = "NUEVO_URL_AQUÍ"; // Reemplaza con el URL de tu despliegue
 let teamsByLeague = {};
 
 const leagueNames = {
@@ -119,12 +120,19 @@ async function fetchTeams() {
 // GUARDAR APUESTA
 // ----------------------
 async function saveBet(betData) {
+  console.log('Enviando datos:', JSON.stringify(betData));
   try {
     const response = await fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(betData)
+      body: JSON.stringify(betData),
+      redirect: 'follow',
+      mode: 'cors'
     });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+    }
     const result = await response.json();
     if (result.status === 'success') {
       $('details').innerHTML = `<div class="success"><strong>Éxito:</strong> Apuesta guardada correctamente.</div>`;
@@ -239,7 +247,7 @@ function updateCalcButton() {
   const leagueCode = $('leagueSelect').value;
   $('recalc').disabled = !(leagueCode && teamHome && teamAway && teamHome !== teamAway);
   const saveBetBtn = $('saveBet');
-  if (saveBetBtn) saveBetBtn.disabled = true; // Deshabilitar hasta que se calcule
+  if (saveBetBtn) saveBetBtn.disabled = true;
 }
 
 function restrictSameTeam() {
@@ -406,13 +414,11 @@ function calculateAll() {
     return;
   }
 
-  // Check de jornadas mínimas
   let warning = '';
   if (tH.pj < 5 || tA.pj < 5) {
     warning = '<div class="warning"><strong>Advertencia:</strong> Al menos un equipo tiene menos de 5 partidos jugados. Las predicciones pueden ser menos precisas en etapas tempranas de la liga (ideal: 10+ jornadas).</div>';
   }
 
-  // Calcular promedios de la liga
   const teams = teamsByLeague[league];
   let totalGames = 0;
   let totalGfHome = 0;
@@ -425,7 +431,6 @@ function calculateAll() {
   const avgGh = totalGames > 0 ? totalGfHome / totalGames : 1.2;
   const avgGa = totalGames > 0 ? totalGaHome / totalGames : 1.0;
 
-  // Ataque y defensa ajustados
   const attackH = (tH.pjHome || tH.pj) > 0 ? (tH.gfHome || tH.gf) / (tH.pjHome || tH.pj) / avgGh : 1;
   const defenseA = (tA.pjAway || tA.pj) > 0 ? (tA.gaAway || tA.ga) / (tA.pjAway || tA.pj) / avgGh : 1;
   const lambdaH = attackH * defenseA * avgGh;
@@ -434,7 +439,6 @@ function calculateAll() {
   const defenseH = (tH.pjHome || tH.pj) > 0 ? (tH.gaHome || tH.ga) / (tH.pjHome || tH.pj) / avgGa : 1;
   const lambdaA = attackA * defenseH * avgGa;
 
-  // Método 1: Poisson
   let pHomeP = 0;
   let pDrawP = 0;
   let pAwayP = 0;
@@ -454,7 +458,6 @@ function calculateAll() {
     }
   }
 
-  // Método 2: Dixon-Coles
   let pHomeDC = 0;
   let pDrawDC = 0;
   let pAwayDC = 0;
@@ -472,7 +475,6 @@ function calculateAll() {
     }
   }
 
-  // Normalizar Dixon-Coles
   const totalDC = pHomeDC + pDrawDC + pAwayDC;
   if (totalDC > 0) {
     pHomeDC /= totalDC;
@@ -482,27 +484,23 @@ function calculateAll() {
     pO25DC /= totalDC;
   }
 
-  // Promediar probabilidades
   const avgHome = (tH.pj && tA.pj) ? (pHomeP + pHomeDC) / 2 : 0.33;
   const avgDraw = (tH.pj && tA.pj) ? (pDrawP + pDrawDC) / 2 : 0.33;
   const avgAway = (tH.pj && tA.pj) ? (pAwayP + pAwayDC) / 2 : 0.33;
   const avgBTTS = (tH.pj && tA.pj) ? (pBTTSP + pBTTSDC) / 2 : 0.5;
   const avgO25 = (tH.pj && tA.pj) ? (pO25P + pO25DC) / 2 : 0.5;
 
-  // Normalizar resultados principales
   const totalAvg = avgHome + avgDraw + avgAway;
   const finalHome = totalAvg > 0 ? avgHome / totalAvg : 0.33;
   const finalDraw = totalAvg > 0 ? avgDraw / totalAvg : 0.33;
   const finalAway = totalAvg > 0 ? avgAway / totalAvg : 0.33;
 
-  // Mostrar probabilidades
   $('pHome').textContent = formatPct(finalHome);
   $('pDraw').textContent = formatPct(finalDraw);
   $('pAway').textContent = formatPct(finalAway);
   $('pBTTS').textContent = formatPct(avgBTTS);
   $('pO25').textContent = formatPct(avgO25);
 
-  // Factores de corrección
   const homeAdvantage = formatDec(avgGh / (avgGa || 1));
   const ppgH = tH.points / (tH.pj || 1);
   const ppgA = tA.points / (tA.pj || 1);
@@ -513,7 +511,6 @@ function calculateAll() {
   $('strengthFactor').textContent = strengthDiff;
   $('dixonColesFactor').textContent = dixonColes;
 
-  // Recomendación con umbrales
   const outcomes = [
     { name: `${teamHome} gana`, prob: finalHome },
     { name: 'Empate', prob: finalDraw },
@@ -540,7 +537,6 @@ function calculateAll() {
   $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson + Dixon-Coles.`;
   $('suggestion').innerHTML = suggestionText;
 
-  // Habilitar botón de guardar apuesta
   const saveBetBtn = $('saveBet');
   if (saveBetBtn) {
     saveBetBtn.disabled = false;
@@ -562,9 +558,7 @@ function calculateAll() {
     };
   }
 
-  // Animación
   const suggestionEl = $('suggestion');
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

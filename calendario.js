@@ -9,7 +9,7 @@ async function cargarDatos() {
     calendarios = await resp.json();
     crearMenuLigas();
   } catch (e) {
-    document.getElementById("tabla-calendario").innerHTML = "<p>Error cargando datos.</p>";
+    document.getElementById("tabla-calendario").innerHTML = "<p style='text-align:center; color:red;'>Error cargando datos.</p>";
     console.error(e);
   }
 }
@@ -47,7 +47,8 @@ function mostrarTabla(liga) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  ["Fecha", "Hora", "Local", "Visitante", "Estadio", "Link"].forEach(text => {
+  const headers = ["Fecha", "Hora", "Local", "Visitante", "Estadio", "Link"];
+  headers.forEach(text => {
     const th = document.createElement("th");
     th.textContent = text;
     headerRow.appendChild(th);
@@ -59,13 +60,14 @@ function mostrarTabla(liga) {
   calendarios[liga].forEach(partido => {
     const tr = document.createElement("tr");
 
-    tr.appendChild(crearCelda(partido.fecha));
-    tr.appendChild(crearCelda(partido.hora));
-    tr.appendChild(crearCelda(partido.local));
-    tr.appendChild(crearCelda(partido.visitante));
-    tr.appendChild(crearCelda(partido.estadio));
+    tr.appendChild(crearCelda(partido.fecha, "Fecha"));
+    tr.appendChild(crearCelda(partido.hora, "Hora"));
+    tr.appendChild(crearCelda(partido.local, "Local"));
+    tr.appendChild(crearCelda(partido.visitante, "Visitante"));
+    tr.appendChild(crearCelda(partido.estadio, "Estadio"));
 
     const linkTd = document.createElement("td");
+    linkTd.setAttribute("data-label", "Link");
     if (partido.link && partido.link !== "#") {
       const a = document.createElement("a");
       a.href = partido.link;
@@ -84,11 +86,12 @@ function mostrarTabla(liga) {
   container.appendChild(tabla);
 }
 
-function crearCelda(texto) {
+function crearCelda(texto, label) {
   const td = document.createElement("td");
   td.textContent = texto || "-";
+  td.setAttribute("data-label", label);
   return td;
 }
 
-// Inicia la carga
+// Carga inicial
 cargarDatos();

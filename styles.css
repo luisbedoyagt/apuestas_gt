@@ -58,7 +58,7 @@ p.small, div.small {
 
 .table-like {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Ajustado para 3 botones */
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
@@ -286,23 +286,6 @@ input[type="number"] {
 .recs .error strong {
   font-size: 12px;
   color: #ff6666;
-}
-
-.recs .success {
-  color: #99ff99;
-  background: #2a2a2a;
-  padding: 4px 8px;
-  border-radius: 3px;
-  border: 1px solid #66ff66;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  font-size: 11px;
-  text-align: center;
-  order: -1;
-}
-
-.recs .success strong {
-  font-size: 12px;
-  color: #66ff66;
 }
 
 .stat-card {

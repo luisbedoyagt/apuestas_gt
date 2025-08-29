@@ -1,5 +1,5 @@
 // URL de tu Web App (debe devolver JSON con todos los partidos)
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxSQts94sS2KilDwdqsWT7FVrj9PKUHCWqbdnQkyx8RAbgJ3SwkfKqHVAH7RJHn0OjXWg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5_wcj6K30HuBiIFaTgnwWdv14uivd-A75qssuYOz2F8l0LEI45-_yCF19vHYwQ-4wgw/exec";
 
 let datosCalendario = {}; // Guardamos todo aquí
 

@@ -2,10 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario de Ligas</title>
   <link rel="stylesheet" href="calendario.css">
 </head>
 <body>
+
   <h1>Calendario de Ligas</h1>
 
   <!-- Selector de fecha -->
@@ -15,29 +17,16 @@
     <button onclick="filtrarPorFecha()">Filtrar</button>
   </div>
 
-  <!-- Selector de liga (opcional) -->
+  <!-- Selector de liga -->
   <div id="menu-ligas">
     <label for="liga">Selecciona liga:</label>
-    <select id="liga" onchange="mostrarPartidos()">
+    <select id="liga" onchange="filtrarPorFecha()">
       <option value="todas">Todas las ligas</option>
     </select>
   </div>
 
-  <!-- Tabla de partidos -->
-  <table id="tabla-partidos">
-    <thead>
-      <tr>
-        <th>Liga</th>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>Local</th>
-        <th>Visitante</th>
-        <th>Estadio</th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
+  <!-- Contenedor de partidos -->
+  <div id="partidos-container"></div>
 
   <script src="calendario.js"></script>
 </body>

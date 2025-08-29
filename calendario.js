@@ -22,7 +22,7 @@ function llenarSelectorLigas() {
   Object.keys(datosCalendario).forEach(liga => {
     const option = document.createElement("option");
     option.value = liga;
-    option.textContent = liga.replace(/_/g, " "); // mejor presentación
+    option.textContent = liga.replace(/_/g, " ");
     ligaSelect.appendChild(option);
   });
 }
@@ -50,7 +50,7 @@ function filtrarPorFecha() {
     return;
   }
 
-  partidos.sort((a,b) => a.hora.localeCompare(b.hora));
+  partidos.sort((a, b) => a.hora.localeCompare(b.hora));
 
   partidos.forEach(p => {
     const card = document.createElement("div");

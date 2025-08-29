@@ -60,7 +60,12 @@ function normalizeTeam(raw) {
   r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
   r.winsHome = parseNumberString(raw.winsHome || 0);
   r.winsAway = parseNumberString(raw.winsAway || 0);
-  console.log('Equipo normalizado:', r); // Log temporal para depuración
+  console.log(`Equipo normalizado: ${r.name}`, {
+    pjAway: r.pjAway,
+    winsAway: r.winsAway,
+    gfAway: r.gfAway,
+    gaAway: r.gaAway
+  }); // Log temporal para depuración
   return r;
 }
 
@@ -213,7 +218,7 @@ function restrictSameTeam() {
 function clearTeamData(type) {
   const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
   box.innerHTML = `
-    <div class="stat-section">
+    <div class="stat-section" data-testid="general-${type.toLowerCase()}">
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
         <span>PJ: 0</span>
@@ -221,7 +226,7 @@ function clearTeamData(type) {
         <span>DG: 0</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="local-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Local</span>
       <div class="stat-metrics">
         <span>PJ: 0</span>
@@ -229,7 +234,7 @@ function clearTeamData(type) {
         <span>DG: 0</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="visitante-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Visitante</span>
       <div class="stat-metrics">
         <span>PJ: 0</span>
@@ -282,7 +287,16 @@ function fillTeamData(teamName, leagueCode, type) {
     return;
   }
 
-  console.log(`Llenando datos para ${type}:`, t); // Log temporal para depuración
+  console.log(`Llenando datos para ${type}: ${teamName}`, {
+    pjAway: t.pjAway,
+    winsAway: t.winsAway,
+    gfAway: t.gfAway,
+    gaAway: t.gaAway,
+    pjHome: t.pjHome,
+    winsHome: t.winsHome,
+    gfHome: t.gfHome,
+    gaHome: t.gaHome
+  }); // Log temporal para depuración
 
   const lambda = type === 'Home' ? (t.pjHome ? t.gfHome / t.pjHome : t.gf / (t.pj || 1)) : (t.pjAway ? t.gfAway / t.pjAway : t.gf / (t.pj || 1));
   const gaAvg = type === 'Home' ? (t.pjHome ? t.gaHome / t.pjHome : t.ga / (t.pj || 1)) : (t.pjAway ? t.gaAway / t.pjAway : t.ga / (t.pj || 1));
@@ -292,7 +306,7 @@ function fillTeamData(teamName, leagueCode, type) {
 
   const box = $(type === 'Home' ? 'formHomeBox' : 'formAwayBox');
   box.innerHTML = `
-    <div class="stat-section">
+    <div class="stat-section" data-testid="general-${type.toLowerCase()}">
       <span class="section-title">Rendimiento General</span>
       <div class="stat-metrics">
         <span>PJ: ${t.pj || 0}</span>
@@ -300,7 +314,7 @@ function fillTeamData(teamName, leagueCode, type) {
         <span>DG: ${dg >= 0 ? '+' + dg : dg || 0}</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="local-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Local</span>
       <div class="stat-metrics">
         <span>PJ: ${t.pjHome || 0}</span>
@@ -308,7 +322,7 @@ function fillTeamData(teamName, leagueCode, type) {
         <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome || 0}</span>
       </div>
     </div>
-    <div class="stat-section">
+    <div class="stat-section" data-testid="visitante-${type.toLowerCase()}">
       <span class="section-title">Rendimiento de Visitante</span>
       <div class="stat-metrics">
         <span>PJ: ${t.pjAway || 0}</span>
@@ -374,6 +388,8 @@ function calculateAll() {
     $('details').innerHTML = '<div class="error"><strong>Error:</strong> Equipos no encontrados.</div>';
     return;
   }
+
+  console.log('Calculando para:', { tH, tA }); // Log temporal para depuración
 
   // Calcular promedios de la liga
   const teams = teamsByLeague[league];
@@ -500,4 +516,3 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

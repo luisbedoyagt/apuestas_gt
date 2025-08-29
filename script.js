@@ -123,10 +123,13 @@ async function saveBet(betData) {
   try {
     const response = await fetch(WEBAPP_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify(betData),
-      redirect: 'follow',
-      mode: 'cors'
+      mode: 'cors',
+      credentials: 'omit'
     });
     if (!response.ok) {
       const errorText = await response.text();
@@ -561,4 +564,3 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

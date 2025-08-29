@@ -17,10 +17,12 @@ async function cargarDatos() {
 // Llenar selector de ligas
 function llenarSelectorLigas() {
   const ligaSelect = document.getElementById("liga");
+  ligaSelect.innerHTML = `<option value="todas">Todas las ligas</option>`;
+
   Object.keys(datosCalendario).forEach(liga => {
     const option = document.createElement("option");
     option.value = liga;
-    option.textContent = liga;
+    option.textContent = liga.replace(/_/g, " "); // mejor presentación
     ligaSelect.appendChild(option);
   });
 }
@@ -44,7 +46,7 @@ function filtrarPorFecha() {
   }
 
   if (partidos.length === 0) {
-    container.innerHTML = "<p>No hay partidos para esta fecha.</p>";
+    container.innerHTML = "<p>No hay partidos programados en esta fecha.</p>";
     return;
   }
 

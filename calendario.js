@@ -1,56 +1,38 @@
-const endpoint = "https://script.google.com/macros/s/AKfycbxSQts94sS2KilDwdqsWT7FVrj9PKUHCWqbdnQkyx8RAbgJ3SwkfKqHVAH7RJHn0OjXWg/exec";
+// Aquí va tu link de Web App
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxSQts94sS2KilDwdqsWT7FVrj9PKUHCWqbdnQkyx8RAbgJ3SwkfKqHVAH7RJHn0OjXWg/exec";
 
 async function cargarCalendario() {
   try {
-    const response = await fetch(endpoint);
+    const response = await fetch(WEB_APP_URL);
+    if (!response.ok) throw new Error("No se pudo obtener la información");
+    
     const data = await response.json();
-
-    const container = document.getElementById("calendario-container");
-    container.innerHTML = "";
-
+    const contenedor = document.getElementById("calendarios");
+    
     for (const liga in data) {
-      const partidos = data[liga];
-      if (!partidos || !partidos.length) continue;
-
-      const ligaDiv = document.createElement("div");
-      ligaDiv.classList.add("liga");
-
-      const h2 = document.createElement("h2");
-      h2.textContent = liga;
-      ligaDiv.appendChild(h2);
-
-      const table = document.createElement("table");
-      table.classList.add("tabla-calendario");
-
-      const thead = document.createElement("thead");
-      const headerRow = document.createElement("tr");
-      ["Fecha", "Hora", "Local", "Visitante", "Estadio", "Link"].forEach(text => {
-        const th = document.createElement("th");
-        th.textContent = text;
-        headerRow.appendChild(th);
+      const divLiga = document.createElement("div");
+      divLiga.classList.add("liga");
+      divLiga.innerHTML = `<h2>${liga}</h2>`;
+      
+      data[liga].forEach(partido => {
+        const divPartido = document.createElement("div");
+        divPartido.classList.add("partido");
+        divPartido.innerHTML = `
+          <span>${partido.fecha} ${partido.hora}</span>
+          <span>${partido.local} vs ${partido.visitante}</span>
+          <span>${partido.estadio}</span>
+          <a href="${partido.link}" target="_blank">Link</a>
+        `;
+        divLiga.appendChild(divPartido);
       });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement("tbody");
-      partidos.forEach(partido => {
-        const tr = document.createElement("tr");
-        const linkHTML = partido.link ? `<a href="${partido.link}" target="_blank">Ver</a>` : "";
-        [partido.fecha, partido.hora, partido.local, partido.visitante, partido.estadio, linkHTML].forEach(value => {
-          const td = document.createElement("td");
-          td.innerHTML = value;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      ligaDiv.appendChild(table);
-      container.appendChild(ligaDiv);
+      
+      contenedor.appendChild(divLiga);
     }
   } catch (error) {
-    console.error("Error cargando calendario:", error);
+    console.error(error);
+    document.getElementById("calendarios").innerText = "Error cargando los datos.";
   }
 }
 
-document.addEventListener("DOMContentLoaded", cargarCalendario);
+// Ejecutar al cargar
+cargarCalendario();

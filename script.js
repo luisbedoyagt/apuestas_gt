@@ -10,6 +10,27 @@ const parseNumberString = val => {
   return isFinite(n) ? n : 0;
 };
 
+// Caché para factorial (mejora eficiencia)
+const factorialCache = [1, 1];
+function factorial(n) {
+  if (n < 0) return 0;
+  if (factorialCache[n] !== undefined) return factorialCache[n];
+  factorialCache[n] = n * factorial(n - 1);
+  return factorialCache[n];
+}
+
+function poissonProb(lambda, k) {
+  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
+}
+
+function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
+  if (h === 0 && a === 0) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 0);
+  if (h === 0 && a === 1) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 1);
+  if (h === 1 && a === 0) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 0);
+  if (h === 1 && a === 1) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 1);
+  return poissonProb(lambdaH, h) * poissonProb(lambdaA, a);
+}
+
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
@@ -60,22 +81,14 @@ function normalizeTeam(raw) {
   r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
   r.winsHome = parseNumberString(raw.winsHome || 0);
   r.winsAway = parseNumberString(raw.winsAway || 0);
-  r.logoUrl = raw.logoUrl || ''; // Nueva propiedad para la URL del logo
-  console.log(`Equipo normalizado: ${r.name}`, {
-    pjAway: r.pjAway,
-    winsAway: r.winsAway,
-    gfAway: r.gfAway,
-    gaAway: r.gaAway,
-    logoUrl: r.logoUrl
-  }); // Log temporal para depuración
+  r.logoUrl = raw.logoUrl || '';
   return r;
 }
 
 // ----------------------
-// FETCH EQUIPOS
+// FETCH EQUIPOS (sin cambios, añadido manejo de errores más claro)
 // ----------------------
 async function fetchTeams() {
-  console.time('fetchTeams');
   const leagueSelect = $('leagueSelect');
   if (leagueSelect) leagueSelect.innerHTML = '<option value="">Cargando ligas...</option>';
 
@@ -86,19 +99,18 @@ async function fetchTeams() {
       throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
     }
     const data = await res.json();
-    console.log('JSON recibido:', data); // Log temporal para depuración
     const normalized = {};
     for (const key in data) {
       normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
     }
     teamsByLeague = normalized;
     localStorage.setItem('teamsByLeague', JSON.stringify(normalized));
-    console.log('Datos normalizados:', Object.keys(teamsByLeague));
-    console.timeEnd('fetchTeams');
     return normalized;
   } catch (err) {
     console.error('Error en fetchTeams:', err);
-    $('details').innerHTML = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Detalle: ${err.message}</div>`;
+    const errorMsg = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Verifica la conexión a la hoja de Google Sheets o el endpoint de la API. Detalle: ${err.message}</div>`;
+    $('details').innerHTML = errorMsg;
+    if (leagueSelect) leagueSelect.innerHTML = '<option value="">Error al cargar ligas</option>';
     return {};
   }
 }
@@ -107,7 +119,6 @@ async function fetchTeams() {
 // INICIALIZACIÓN
 // ----------------------
 async function init() {
-  // Inicializar el DOM con valores por defecto inmediatamente
   clearTeamData('Home');
   clearTeamData('Away');
   updateCalcButton();
@@ -163,6 +174,7 @@ function onLeagueChange() {
     clearTeamData('Home');
     clearTeamData('Away');
     updateCalcButton();
+    $('details').innerHTML = '<div class="warning"><strong>Advertencia:</strong> No hay datos disponibles para esta liga.</div>';
     return;
   }
 
@@ -293,20 +305,9 @@ function fillTeamData(teamName, leagueCode, type) {
   const t = findTeam(leagueCode, teamName);
   if (!t) {
     console.error(`Equipo no encontrado: ${teamName} en liga ${leagueCode}`);
+    $('details').innerHTML = `<div class="error"><strong>Error:</strong> Equipo ${teamName} no encontrado en la liga seleccionada.</div>`;
     return;
   }
-
-  console.log(`Llenando datos para ${type}: ${teamName}`, {
-    pjAway: t.pjAway,
-    winsAway: t.winsAway,
-    gfAway: t.gfAway,
-    gaAway: t.gaAway,
-    pjHome: t.pjHome,
-    winsHome: t.winsHome,
-    gfHome: t.gfHome,
-    gaHome: t.gaHome,
-    logoUrl: t.logoUrl
-  }); // Log temporal para depuración
 
   const lambda = type === 'Home' ? (t.pjHome ? t.gfHome / t.pjHome : t.gf / (t.pj || 1)) : (t.pjAway ? t.gfAway / t.pjAway : t.gf / (t.pj || 1));
   const gaAvg = type === 'Home' ? (t.pjHome ? t.gaHome / t.pjHome : t.ga / (t.pj || 1)) : (t.pjAway ? t.gaAway / t.pjAway : t.ga / (t.pj || 1));
@@ -363,28 +364,6 @@ function fillTeamData(teamName, leagueCode, type) {
 }
 
 // ----------------------
-// FUNCIONES PARA CÁLCULOS
-// ----------------------
-function factorial(n) {
-  if (n === 0 || n === 1) return 1;
-  let f = 1;
-  for (let i = 2; i <= n; i++) f *= i;
-  return f;
-}
-
-function poissonProb(lambda, k) {
-  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
-}
-
-function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
-  if (h === 0 && a === 0) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 0);
-  if (h === 0 && a === 1) return tau * poissonProb(lambdaH, 0) * poissonProb(lambdaA, 1);
-  if (h === 1 && a === 0) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 0);
-  if (h === 1 && a === 1) return tau * poissonProb(lambdaH, 1) * poissonProb(lambdaA, 1);
-  return poissonProb(lambdaH, h) * poissonProb(lambdaA, a);
-}
-
-// ----------------------
 // CÁLCULO PRINCIPAL
 // ----------------------
 function calculateAll() {
@@ -403,9 +382,13 @@ function calculateAll() {
     return;
   }
 
-  console.log('Calculando para:', { tH, tA }); // Log temporal para depuración
+  // Check de jornadas mínimas
+  let warning = '';
+  if (tH.pj < 5 || tA.pj < 5) {
+    warning = '<div class="warning"><strong>Advertencia:</strong> Al menos un equipo tiene menos de 5 partidos jugados. Las predicciones pueden ser menos precisas en etapas tempranas de la liga (ideal: 10+ jornadas).</div>';
+  }
 
-  // Calcular promedios de la liga
+  // Calcular promedios de la liga (fallback si totalGames=0)
   const teams = teamsByLeague[league];
   let totalGames = 0;
   let totalGfHome = 0;
@@ -428,47 +411,40 @@ function calculateAll() {
   const lambdaA = attackA * defenseH * avgGa;
 
   // Método 1: Poisson
-  let pHome = 0;
-  let pDraw = 0;
-  let pAway = 0;
-  let pBTTS = 0;
-  let pO25 = 0;
-  const maxGoals = 10;
+  let pHomeP = 0;
+  let pDrawP = 0;
+  let pAwayP = 0;
+  let pBTTSP = 0;
+  let pO25P = 0;
+  const maxGoals = 15;
 
   for (let h = 0; h <= maxGoals; h++) {
     for (let a = 0; a <= maxGoals; a++) {
       const prob = poissonProb(lambdaH, h) * poissonProb(lambdaA, a);
-      if (h > a) pHome += prob;
-      else if (h === a) pDraw += prob;
-      else pAway += prob;
+      if (h > a) pHomeP += prob;
+      else if (h === a) pDrawP += prob;
+      else pAwayP += prob;
 
-      if (h >= 1 && a >= 1) pBTTS += prob;
-      if (h + a > 2) pO25 += prob;
+      if (h >= 1 && a >= 1) pBTTSP += prob;
+      if (h + a > 2) pO25P += prob;
     }
   }
 
-  // Método 2: Elo
-  const ppgH = tH.points / (tH.pj || 1);
-  const ppgA = tA.points / (tA.pj || 1);
-  const eloH = 1500 + 100 * (ppgH - 1.5);
-  const eloA = 1500 + 100 * (ppgA - 1.5);
-  const homeAdv = 100;
-  const expectedH = 1 / (1 + Math.pow(10, (eloA - (eloH + homeAdv)) / 400));
-  const expectedA = 1 - expectedH;
-  const pHomeElo = expectedH * 0.7;
-  const pAwayElo = expectedA * 0.7;
-  const pDrawElo = 0.3;
-
-  // Método 3: Dixon-Coles
+  // Método 2: Dixon-Coles
   let pHomeDC = 0;
   let pDrawDC = 0;
   let pAwayDC = 0;
+  let pBTTSDC = 0;
+  let pO25DC = 0;
   for (let h = 0; h <= maxGoals; h++) {
     for (let a = 0; a <= maxGoals; a++) {
       const prob = dixonColesAdjustment(lambdaH, lambdaA, h, a, 0.9);
       if (h > a) pHomeDC += prob;
       else if (h === a) pDrawDC += prob;
       else pAwayDC += prob;
+
+      if (h >= 1 && a >= 1) pBTTSDC += prob;
+      if (h + a > 2) pO25DC += prob;
     }
   }
 
@@ -478,28 +454,34 @@ function calculateAll() {
     pHomeDC /= totalDC;
     pDrawDC /= totalDC;
     pAwayDC /= totalDC;
+    pBTTSDC /= totalDC;
+    pO25DC /= totalDC;
   }
 
-  // Promediar probabilidades
-  const avgHome = (tH.pj && tA.pj) ? (pHome + pHomeElo + pHomeDC) / 3 : 0.33;
-  const avgDraw = (tH.pj && tA.pj) ? (pDraw + pDrawElo + pDrawDC) / 3 : 0.33;
-  const avgAway = (tH.pj && tA.pj) ? (pAway + pAwayElo + pAwayDC) / 3 : 0.33;
+  // Promediar probabilidades (solo Poisson + Dixon-Coles)
+  const avgHome = (tH.pj && tA.pj) ? (pHomeP + pHomeDC) / 2 : 0.33;
+  const avgDraw = (tH.pj && tA.pj) ? (pDrawP + pDrawDC) / 2 : 0.33;
+  const avgAway = (tH.pj && tA.pj) ? (pAwayP + pAwayDC) / 2 : 0.33;
+  const avgBTTS = (tH.pj && tA.pj) ? (pBTTSP + pBTTSDC) / 2 : 0.5;
+  const avgO25 = (tH.pj && tA.pj) ? (pO25P + pO25DC) / 2 : 0.5;
 
-  // Normalizar probabilidades
+  // Normalizar resultados principales
   const totalAvg = avgHome + avgDraw + avgAway;
   const finalHome = totalAvg > 0 ? avgHome / totalAvg : 0.33;
   const finalDraw = totalAvg > 0 ? avgDraw / totalAvg : 0.33;
   const finalAway = totalAvg > 0 ? avgAway / totalAvg : 0.33;
 
-  // Mostrar probabilidades unificadas
+  // Mostrar probabilidades
   $('pHome').textContent = formatPct(finalHome);
   $('pDraw').textContent = formatPct(finalDraw);
   $('pAway').textContent = formatPct(finalAway);
-  $('pBTTS').textContent = formatPct(pBTTS);
-  $('pO25').textContent = formatPct(pO25);
+  $('pBTTS').textContent = formatPct(avgBTTS);
+  $('pO25').textContent = formatPct(avgO25);
 
   // Factores de corrección
   const homeAdvantage = formatDec(avgGh / (avgGa || 1));
+  const ppgH = tH.points / (tH.pj || 1);
+  const ppgA = tA.points / (tA.pj || 1);
   const strengthDiff = formatDec(ppgH - ppgA);
   const dixonColes = '0.90';
 
@@ -517,12 +499,12 @@ function calculateAll() {
 
   let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
   const others = [
-    `✔ Ambos anotan (${formatPct(pBTTS)})`,
-    `✔ +2.5 goles (${formatPct(pO25)})`
+    `✔ Ambos anotan (${formatPct(avgBTTS)})`,
+    `✔ +2.5 goles (${formatPct(avgO25)})`
   ];
   suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
 
-  $('details').textContent = `Basado en datos ajustados por rendimiento local/visitante y múltiples métodos predictivos.`;
+  $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson + Dixon-Coles.`;
   $('suggestion').innerHTML = suggestionText;
 
   // Animación

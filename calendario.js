@@ -1,84 +1,61 @@
-const appUrl = "https://script.google.com/macros/s/AKfycby5_wcj6K30HuBiIFaTgnwWdv14uivd-A75qssuYOz2F8l0LEI45-_yCF19vHYwQ-4wgw/exec";
+const urlAppWeb = "https://script.google.com/macros/s/AKfycby5_wcj6K30HuBiIFaTgnwWdv14uivd-A75qssuYOz2F8l0LEI45-_yCF19vHYwQ-4wgw/exec";
+let datosCalendario = {};
 
-let calendarios = {};
-let ligaActual = "";
+// Cargar los datos al iniciar
+window.onload = function() {
+  fetch(urlAppWeb)
+    .then(res => res.json())
+    .then(data => {
+      datosCalendario = data;
+      llenarSelectLigas();
+      mostrarPartidos(); // Mostrar todos al inicio
+    })
+    .catch(err => {
+      console.error("Error cargando datos:", err);
+      alert("Error cargando datos.");
+    });
+};
 
-async function cargarDatos() {
-  try {
-    const resp = await fetch(appUrl);
-    calendarios = await resp.json();
-    crearMenuLigas();
-  } catch (e) {
-    document.getElementById("tabla-calendario").innerHTML = "<p style='text-align:center; color:red;'>Error cargando datos.</p>";
-    console.error(e);
+// Llenar select de ligas
+function llenarSelectLigas() {
+  const select = document.getElementById("liga");
+  for (let liga in datosCalendario) {
+    const option = document.createElement("option");
+    option.value = liga;
+    option.text = liga;
+    select.appendChild(option);
   }
 }
 
-function crearMenuLigas() {
-  const menu = document.getElementById("menu-ligas");
-  const select = document.createElement("select");
-  select.addEventListener("change", () => {
-    ligaActual = select.value;
-    mostrarTabla(ligaActual);
-  });
+// Mostrar los partidos según liga seleccionada y fecha
+function mostrarPartidos() {
+  const tbody = document.getElementById("tabla-partidos").querySelector("tbody");
+  tbody.innerHTML = "";
 
-  const defaultOption = document.createElement("option");
-  defaultOption.textContent = "Seleccione una liga";
-  defaultOption.value = "";
-  select.appendChild(defaultOption);
+  const ligaSel = document.getElementById("liga").value;
+  const fechaSel = document.getElementById("fecha").value;
 
-  Object.keys(calendarios).forEach(liga => {
-    const option = document.createElement("option");
-    option.value = liga;
-    option.textContent = liga;
-    select.appendChild(option);
-  });
+  for (let liga in datosCalendario) {
+    if (ligaSel !== "todas" && liga !== ligaSel) continue;
 
-  menu.appendChild(select);
+    datosCalendario[liga].forEach(p => {
+      if (fechaSel && p.fecha !== fechaSel) return; // Filtrar por fecha
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${liga}</td>
+        <td>${p.fecha}</td>
+        <td>${p.hora}</td>
+        <td>${p.local}</td>
+        <td>${p.visitante}</td>
+        <td>${p.estadio}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 }
 
-function mostrarTabla(liga) {
-  const container = document.getElementById("tabla-calendario");
-  container.innerHTML = "";
-
-  if (!liga || !calendarios[liga]) return;
-
-  const tabla = document.createElement("table");
-  const thead = document.createElement("thead");
-  const headerRow = document.createElement("tr");
-
-  const headers = ["Fecha", "Hora", "Local", "Visitante", "Estadio"];
-  headers.forEach(text => {
-    const th = document.createElement("th");
-    th.textContent = text;
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-  tabla.appendChild(thead);
-
-  const tbody = document.createElement("tbody");
-  calendarios[liga].forEach(partido => {
-    const tr = document.createElement("tr");
-
-    tr.appendChild(crearCelda(partido.fecha, "Fecha"));
-    tr.appendChild(crearCelda(partido.hora, "Hora"));
-    tr.appendChild(crearCelda(partido.local, "Local"));
-    tr.appendChild(crearCelda(partido.visitante, "Visitante"));
-    tr.appendChild(crearCelda(partido.estadio, "Estadio"));
-
-    tbody.appendChild(tr);
-  });
-
-  tabla.appendChild(tbody);
-  container.appendChild(tabla);
+// Filtrar por fecha (botón)
+function filtrarPorFecha() {
+  mostrarPartidos();
 }
-
-function crearCelda(texto, label) {
-  const td = document.createElement("td");
-  td.textContent = texto || "-";
-  td.setAttribute("data-label", label);
-  return td;
-}
-
-// Carga inicial
-cargarDatos();

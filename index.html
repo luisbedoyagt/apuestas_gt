@@ -28,7 +28,7 @@
         <div class="stat-card">
           <div class="stat-title" id="formHomeTeam">Local: </div>
           <div class="stat-values" id="formHomeBox">
-            <div class="stat-section">
+            <div class="stat-section" data-testid="general-home">
               <span class="section-title">Rendimiento General</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -36,7 +36,7 @@
                 <span>DG: </span>
               </div>
             </div>
-            <div class="stat-section">
+            <div class="stat-section" data-testid="local-home">
               <span class="section-title">Rendimiento de Local</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -44,7 +44,7 @@
                 <span>DG: </span>
               </div>
             </div>
-            <div class="stat-section">
+            <div class="stat-section" data-testid="visitante-home">
               <span class="section-title">Rendimiento de Visitante</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -71,7 +71,7 @@
         <div class="stat-card">
           <div class="stat-title" id="formAwayTeam">Visitante: </div>
           <div class="stat-values" id="formAwayBox">
-            <div class="stat-section">
+            <div class="stat-section" data-testid="general-away">
               <span class="section-title">Rendimiento General</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -79,7 +79,7 @@
                 <span>DG: </span>
               </div>
             </div>
-            <div class="stat-section">
+            <div class="stat-section" data-testid="local-away">
               <span class="section-title">Rendimiento de Local</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -87,7 +87,7 @@
                 <span>DG: </span>
               </div>
             </div>
-            <div class="stat-section">
+            <div class="stat-section" data-testid="visitante-away">
               <span class="section-title">Rendimiento de Visitante</span>
               <div class="stat-metrics">
                 <span>PJ: </span>
@@ -164,8 +164,6 @@
       <div class="bet-slip" id="suggestion">Esperando datos para tu apuesta estelar...</div>
     </div>
   </div>
-  <script src="script.js"></script>
+  <script src="frontend.js"></script>
 </body>
 </html>
-
-

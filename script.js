@@ -489,7 +489,7 @@ function calculateAll() {
   $('strengthFactor').textContent = strengthDiff;
   $('dixonColesFactor').textContent = dixonColes;
 
-  // Recomendación
+  // Recomendación con umbrales
   const outcomes = [
     { name: `${teamHome} gana`, prob: finalHome },
     { name: 'Empate', prob: finalDraw },
@@ -498,11 +498,22 @@ function calculateAll() {
   const maxOutcome = outcomes.reduce((max, curr) => curr.prob > max.prob ? curr : max, outcomes[0] || { name: 'Empate', prob: 0.33 });
 
   let suggestionText = `<span class="star">★</span><span class="main-bet">🏆 Apuesta principal: <strong>${maxOutcome.name} (${formatPct(maxOutcome.prob)})</strong></span>`;
-  const others = [
-    `✔ Ambos anotan (${formatPct(avgBTTS)})`,
-    `✔ +2.5 goles (${formatPct(avgO25)})`
-  ];
+
+  // Lógica de umbrales para BTTS y O25
+  const bttsText = avgBTTS > 0.55 ? `✔ Ambos anotan (${formatPct(avgBTTS)})` :
+                   avgBTTS < 0.45 ? `❌ No ambos anotan (${formatPct(1 - avgBTTS)})` :
+                   `— Ambos anotan equilibrado (${formatPct(avgBTTS)})`;
+  const o25Text = avgO25 > 0.55 ? `✔ +2.5 goles (${formatPct(avgO25)})` :
+                  avgO25 < 0.45 ? `❌ -2.5 goles (${formatPct(1 - avgO25)})` :
+                  `— +2.5 goles equilibrado (${formatPct(avgO25)})`;
+
+  const others = [bttsText, o25Text];
   suggestionText += `<ul class="other-bets">${others.map(bet => `<li>${bet}</li>`).join('')}</ul>`;
+
+  // Si no hay claro favorito
+  if (maxOutcome.prob < 0.40) {
+    suggestionText += `<div class="warning">No hay un claro favorito; considera evitar esta apuesta principal.</div>`;
+  }
 
   $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson + Dixon-Coles.`;
   $('suggestion').innerHTML = suggestionText;

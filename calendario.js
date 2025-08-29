@@ -1,61 +1,65 @@
-const urlAppWeb = "https://script.google.com/macros/s/AKfycby5_wcj6K30HuBiIFaTgnwWdv14uivd-A75qssuYOz2F8l0LEI45-_yCF19vHYwQ-4wgw/exec";
+const appWeb = "https://script.google.com/macros/s/AKfycby5_wcj6K30HuBiIFaIFaEXAMPLE/exec";
 let datosCalendario = {};
 
-// Cargar los datos al iniciar
-window.onload = function() {
-  fetch(urlAppWeb)
-    .then(res => res.json())
-    .then(data => {
-      datosCalendario = data;
-      llenarSelectLigas();
-      mostrarPartidos(); // Mostrar todos al inicio
-    })
-    .catch(err => {
-      console.error("Error cargando datos:", err);
-      alert("Error cargando datos.");
-    });
-};
+// Cargar datos desde la app web
+async function cargarDatos() {
+  try {
+    const response = await fetch(appWeb);
+    datosCalendario = await response.json();
+    llenarSelectorLigas();
+    filtrarPorFecha();
+  } catch (err) {
+    document.getElementById("partidos-container").innerHTML = "<p>Error cargando datos.</p>";
+    console.error(err);
+  }
+}
 
-// Llenar select de ligas
-function llenarSelectLigas() {
-  const select = document.getElementById("liga");
-  for (let liga in datosCalendario) {
+// Llenar selector de ligas
+function llenarSelectorLigas() {
+  const ligaSelect = document.getElementById("liga");
+  Object.keys(datosCalendario).forEach(liga => {
     const option = document.createElement("option");
     option.value = liga;
-    option.text = liga;
-    select.appendChild(option);
-  }
+    option.textContent = liga;
+    ligaSelect.appendChild(option);
+  });
 }
 
-// Mostrar los partidos según liga seleccionada y fecha
-function mostrarPartidos() {
-  const tbody = document.getElementById("tabla-partidos").querySelector("tbody");
-  tbody.innerHTML = "";
-
-  const ligaSel = document.getElementById("liga").value;
-  const fechaSel = document.getElementById("fecha").value;
-
-  for (let liga in datosCalendario) {
-    if (ligaSel !== "todas" && liga !== ligaSel) continue;
-
-    datosCalendario[liga].forEach(p => {
-      if (fechaSel && p.fecha !== fechaSel) return; // Filtrar por fecha
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${liga}</td>
-        <td>${p.fecha}</td>
-        <td>${p.hora}</td>
-        <td>${p.local}</td>
-        <td>${p.visitante}</td>
-        <td>${p.estadio}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-}
-
-// Filtrar por fecha (botón)
+// Filtrar partidos por fecha y liga
 function filtrarPorFecha() {
-  mostrarPartidos();
+  const fecha = document.getElementById("fecha").value;
+  const liga = document.getElementById("liga").value;
+  const container = document.getElementById("partidos-container");
+  container.innerHTML = "";
+
+  if (!fecha) {
+    container.innerHTML = "<p>Selecciona una fecha para ver los partidos.</p>";
+    return;
+  }
+
+  let partidos = [];
+  for (let key in datosCalendario) {
+    if (liga !== "todas" && key !== liga) continue;
+    partidos = partidos.concat(datosCalendario[key].filter(p => p.fecha === fecha));
+  }
+
+  if (partidos.length === 0) {
+    container.innerHTML = "<p>No hay partidos para esta fecha.</p>";
+    return;
+  }
+
+  partidos.sort((a,b) => a.hora.localeCompare(b.hora));
+
+  partidos.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "partido-card";
+    card.innerHTML = `
+      <h3>${p.local} vs ${p.visitante}</h3>
+      <p><strong>Hora:</strong> ${p.hora} | <strong>Estadio:</strong> ${p.estadio}</p>
+    `;
+    container.appendChild(card);
+  });
 }
+
+// Inicializar
+document.addEventListener("DOMContentLoaded", cargarDatos);

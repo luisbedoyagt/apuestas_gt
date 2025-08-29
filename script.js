@@ -34,7 +34,7 @@ function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz8QAZII7FHjPEbsc1LsFZ5nfQlS3P8Fqt5VE3_OAano63Vzle2WeXNBULJoFkaPyrY0w/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxc1RvHBPC6q9KDWCawzfZ65w7rzBxJl2aGSKFwyinJsgFM0FTmX6NKCoTMFIZKsxY-Fg/exec";
 let teamsByLeague = {};
 
 const leagueNames = {
@@ -223,11 +223,131 @@ async function init(){
   teamAway.addEventListener('change',()=>{ if(restrictSameTeam()){ fillTeamData(teamAway.value, leagueSelect.value,'Away'); updateCalcButton(); } });
   $('recalc').addEventListener('click', calculateAll);
   $('reset').addEventListener('click', clearAll);
+  
+  // Event listener para el botón de guardar
+  const saveButton = $('saveBet');
+  if (saveButton) {
+    saveButton.addEventListener('click', async () => {
+      const betData = buildBetData();  // Función para armar los datos
+      if (betData) {
+        await saveBet(betData);
+      } else {
+        $('details').innerHTML = '<div class="error">No hay datos para guardar.</div>';
+      }
+    });
+  }
 }
 document.addEventListener('DOMContentLoaded', init);
 
+// Función para armar betData basada en tus cálculos (ajusta si tus IDs/divs son diferentes)
+function buildBetData() {
+  const league = $('leagueSelect').value;
+  const homeTeam = $('teamHome').value;
+  const awayTeam = $('teamAway').value;
+  if (!league || !homeTeam || !awayTeam) return null;
+
+  return {
+    league: leagueNames[league] || league,
+    homeTeam,
+    awayTeam,
+    homeProb: parseFloat($('pHome').textContent.replace('%', '')) || 0,
+    drawProb: parseFloat($('pDraw').textContent.replace('%', '')) || 0,
+    awayProb: parseFloat($('pAway').textContent.replace('%', '')) || 0,
+    bttsProb: parseFloat($('pBTTS').textContent.replace('%', '')) || 0,
+    o25Prob: parseFloat($('pO25').textContent.replace('%', '')) || 0,
+    mainBet: $('suggestion').textContent || '',  // Asume que la sugerencia principal está aquí
+    bttsRecommendation: 'Sí/No basado en calc',  // Ajusta con tu lógica real
+    o25Recommendation: 'Over/Under basado en calc'  // Ajusta con tu lógica real
+  };
+}
+
 // ----------------------
-// FILL TEAM DATA & CALCULATE ALL
+// FILL TEAM DATA
 // ----------------------
-function fillTeamData(teamName, leagueCode, type){ /* ...todo tu código original de fillTeamData... */ }
-function calculateAll(){ /* ...todo tu código original de calculateAll... */ }
+function fillTeamData(teamName, leagueCode, type) {
+  const team = findTeam(leagueCode, teamName);
+  if (!team) {
+    clearTeamData(type);
+    return;
+  }
+
+  const isHome = type === 'Home';
+  const boxId = isHome ? 'formHomeBox' : 'formAwayBox';
+  const box = $(boxId);
+  box.innerHTML = `
+    <div class="stat-section">
+      <span class="section-title">Rendimiento General</span>
+      <div class="stat-metrics">
+        <span>PJ: ${team.pj}</span>
+        <span>Puntos: ${team.points}</span>
+        <span>DG: ${team.gf - team.ga}</span>
+      </div>
+    </div>
+    <div class="stat-section">
+      <span class="section-title">${isHome ? 'Local' : 'Visitante'}</span>
+      <div class="stat-metrics">
+        <span>PJ: ${isHome ? team.pjHome : team.pjAway}</span>
+        <span>Victorias: ${isHome ? team.winsHome : team.winsAway}</span>
+        <span>GF: ${isHome ? team.gfHome : team.gfAway}</span>
+        <span>GC: ${isHome ? team.gaHome : team.gaAway}</span>
+      </div>
+    </div>`;
+
+  if (isHome) {
+    $('posHome').value = team.pos;
+    $('gfHome').value = (team.gfHome / team.pjHome) || 0;
+    $('gaHome').value = (team.gaHome / team.pjHome) || 0;
+    $('winRateHome').value = formatPct(team.winsHome / team.pjHome);
+    $('formHomeTeam').innerHTML = `Local: ${teamName}`;
+  } else {
+    $('posAway').value = team.pos;
+    $('gfAway').value = (team.gfAway / team.pjAway) || 0;
+    $('gaAway').value = (team.gaAway / team.pjAway) || 0;
+    $('winRateAway').value = formatPct(team.winsAway / team.pjAway);
+    $('formAwayTeam').innerHTML = `Visitante: ${teamName}`;
+  }
+}
+
+// ----------------------
+// CALCULATE ALL
+// ----------------------
+function calculateAll() {
+  // Asume que aquí haces tus cálculos de Poisson/Dixon-Coles basados en inputs
+  // Ejemplo placeholder: calcula probs simples (reemplaza con tu lógica real)
+  const homeGF = parseNumberString($('gfHome').value);
+  const awayGA = parseNumberString($('gaAway').value);
+  const awayGF = parseNumberString($('gfAway').value);
+  const homeGA = parseNumberString($('gaHome').value);
+
+  const lambdaHome = homeGF * awayGA;  // Ataque local * defensa visitante
+  const lambdaAway = awayGF * homeGA;  // Ataque visitante * defensa local
+
+  // Calcula probs de victoria/empate (simplificado, agrega tu Poisson full)
+  let pHomeWin = 0, pDraw = 0, pAwayWin = 0, pBTTS = 0, pO25 = 0;
+  for (let h = 0; h < 10; h++) {
+    for (let a = 0; a < 10; a++) {
+      const prob = dixonColesAdjustment(lambdaHome, lambdaAway, h, a);
+      if (h > a) pHomeWin += prob;
+      else if (h === a) pDraw += prob;
+      else pAwayWin += prob;
+      if (h >= 1 && a >= 1) pBTTS += prob;
+      if (h + a > 2.5) pO25 += prob;
+    }
+  }
+
+  // Actualiza interfaz
+  $('pHome').textContent = formatPct(pHomeWin);
+  $('pDraw').textContent = formatPct(pDraw);
+  $('pAway').textContent = formatPct(pAwayWin);
+  $('pBTTS').textContent = formatPct(pBTTS);
+  $('pO25').textContent = formatPct(pO25);
+
+  // Sugerencia ejemplo (ajusta)
+  let mainBet = pHomeWin > 0.5 ? 'Victoria Local' : pAwayWin > 0.5 ? 'Victoria Visitante' : 'Empate';
+  $('suggestion').textContent = mainBet;
+  $('details').innerHTML = '<div class="success">Cálculos actualizados.</div>';
+
+  // Habilita el botón de guardar después de calcular
+  const saveBtn = $('saveBet');
+  if (saveBtn) saveBtn.disabled = false;
+}

@@ -34,7 +34,7 @@ function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyKeze4Q381JYVCx4RabKZ61oV9b4rUjt74GHmLbiXvI99yq6FKhQ4mLpoeH-0HPc8oHA/exec"; // Reemplaza con el URL de tu despliegue
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz8QAZII7FHjPEbsc1LsFZ5nfQlS3P8Fqt5VE3_OAano63Vzle2WeXNBULJoFkaPyrY0w/exec"; // Reemplaza con el URL de tu despliegue
 let teamsByLeague = {};
 
 const leagueNames = {
@@ -564,4 +564,5 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
+
 

@@ -34,8 +34,9 @@ function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwhxSccznUNIZFSfNKygHE--qPK4vn6KtxW5iyYrj0BmM_efw18_IWAUEcwNBzlFqBhcA/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwVdThe929PXqow3PQefuG_2nKpJqEe19ZCidMzy8g8qtTYwcfKQr-dUfz9NMAkq7po/exec";
 let teamsByLeague = {};
+let allData = {};
 
 const leagueNames = {
   "esp.1": "LaLiga España",
@@ -55,6 +56,26 @@ const leagueNames = {
   "crc.1": "Liga Promerica Costa Rica",
   "hon.1": "Liga Nacional Honduras",
   "ksa.1": "Pro League Arabia Saudita"
+};
+
+const leagueCodeToName = {
+  "esp.1": "España_LaLiga",
+  "esp.2": "España_Segunda",
+  "eng.1": "Inglaterra_PremierLeague",
+  "eng.2": "Inglaterra_Championship",
+  "ita.1": "Italia_SerieA",
+  "ger.1": "Alemania_Bundesliga",
+  "fra.1": "Francia_Ligue1",
+  "ned.1": "PaísesBajos_Eredivisie",
+  "ned.2": "PaísesBajos_EersteDivisie",
+  "por.1": "Portugal_LigaPortugal",
+  "mex.1": "México_LigaMX",
+  "usa.1": "EstadosUnidos_MLS",
+  "bra.1": "Brasil_Brasileirao",
+  "gua.1": "Guatemala_LigaNacional",
+  "crc.1": "CostaRica_LigaPromerica",
+  "hon.1": "Honduras_LigaNacional",
+  "ksa.1": "Arabia_Saudi_ProLeague"
 };
 
 // ----------------------
@@ -86,11 +107,11 @@ function normalizeTeam(raw) {
 }
 
 // ----------------------
-// FETCH EQUIPOS (sin cambios, añadido manejo de errores más claro)
+// FETCH DATOS COMPLETOS
 // ----------------------
-async function fetchTeams() {
+async function fetchAllData() {
   const leagueSelect = $('leagueSelect');
-  if (leagueSelect) leagueSelect.innerHTML = '<option value="">Cargando ligas...</option>';
+  if (leagueSelect) leagueSelect.innerHTML = '<option value="">Cargando datos...</option>';
 
   try {
     const res = await fetch(WEBAPP_URL);
@@ -98,21 +119,155 @@ async function fetchTeams() {
       const errorText = await res.text();
       throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
     }
-    const data = await res.json();
+    allData = await res.json();
+    
+    // Depuración: Mostrar datos crudos de allData.calendario
+    console.log('Datos crudos de allData.calendario:', JSON.stringify(allData.calendario, null, 2));
+    console.log('Datos de México_LigaMX:', JSON.stringify(allData.calendario['México_LigaMX'], null, 2));
+
     const normalized = {};
-    for (const key in data) {
-      normalized[key] = (data[key] || []).map(normalizeTeam).filter(t => t && t.name);
+    for (const key in allData.ligas) {
+      normalized[key] = (allData.ligas[key] || []).map(normalizeTeam).filter(t => t && t.name);
     }
     teamsByLeague = normalized;
-    localStorage.setItem('teamsByLeague', JSON.stringify(normalized));
-    return normalized;
+    
+    localStorage.setItem('allData', JSON.stringify(allData));
+    return allData;
   } catch (err) {
-    console.error('Error en fetchTeams:', err);
+    console.error('Error en fetchAllData:', err);
     const errorMsg = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Verifica la conexión a la hoja de Google Sheets o el endpoint de la API. Detalle: ${err.message}</div>`;
     $('details').innerHTML = errorMsg;
     if (leagueSelect) leagueSelect.innerHTML = '<option value="">Error al cargar ligas</option>';
     return {};
   }
+}
+
+// ----------------------
+// MUESTRA DE EVENTOS FUTUROS
+// ----------------------
+function displayUpcomingEvents() {
+  const upcomingEventsList = $('upcoming-events-list');
+  if (!upcomingEventsList) return;
+
+  const allEvents = [];
+  if (allData.calendario) {
+    for (const liga in allData.calendario) {
+      allData.calendario[liga].forEach(event => {
+        let eventDateTime;
+        try {
+          console.log(`Evento: ${event.local} vs. ${event.visitante}, Estadio: ${event.estadio}, Fecha: ${event.fecha}, Liga: ${event.liga}`);
+          const parsedDate = new Date(event.fecha);
+          if (isNaN(parsedDate.getTime())) {
+            throw new Error("Fecha inválida");
+          }
+          const dateOptions = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            timeZone: 'America/Guatemala'
+          };
+          const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'America/Guatemala'
+          };
+          const formattedDate = parsedDate.toLocaleDateString('es-ES', dateOptions);
+          const formattedTime = parsedDate.toLocaleTimeString('es-ES', timeOptions);
+          eventDateTime = `${formattedDate} ${formattedTime} (GT)`;
+        } catch (err) {
+          console.warn(`Error parseando fecha para el evento: ${event.local} vs. ${event.visitante}`, err);
+          eventDateTime = `${event.fecha} (Hora no disponible)`;
+        }
+
+        allEvents.push({
+          liga: event.liga,
+          teams: `${event.local} vs. ${event.visitante}`,
+          estadio: event.estadio || 'Por confirmar',
+          date: eventDateTime,
+        });
+      });
+    }
+  }
+
+  if (allEvents.length > 0) {
+    upcomingEventsList.innerHTML = '';
+    allEvents.forEach(event => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <strong>${event.liga}</strong>: ${event.teams}
+        <span>Estadio: ${event.estadio}</span>
+        <small>${event.date}</small>
+      `;
+      upcomingEventsList.appendChild(li);
+    });
+  } else {
+    upcomingEventsList.innerHTML = '<li>No hay eventos próximos disponibles.</li>';
+  }
+
+  // Mostrar eventos de la liga seleccionada (inicialmente vacía)
+  displaySelectedLeagueEvents('');
+}
+
+// ----------------------
+// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
+// ----------------------
+function displaySelectedLeagueEvents(leagueCode) {
+  const selectedEventsList = $('selected-league-events');
+  if (!selectedEventsList) return;
+
+  selectedEventsList.innerHTML = '';
+
+  if (!leagueCode || !allData.calendario) {
+    selectedEventsList.innerHTML = '<li class="event-box">Selecciona una liga para ver sus próximos eventos.</li>';
+    return;
+  }
+
+  const ligaName = leagueCodeToName[leagueCode];
+  const events = (allData.calendario[ligaName] || []).slice(0, 3); // Limitar a 3 eventos
+
+  if (events.length === 0) {
+    selectedEventsList.innerHTML = '<li class="event-box">No hay eventos próximos para esta liga.</li>';
+    return;
+  }
+
+  events.forEach(event => {
+    let eventDateTime;
+    try {
+      console.log(`Evento seleccionado: ${event.local} vs. ${event.visitante}, Estadio: ${event.estadio}, Fecha: ${event.fecha}, Liga: ${ligaName}`);
+      const parsedDate = new Date(event.fecha);
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error("Fecha inválida");
+      }
+      const dateOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: 'America/Guatemala'
+      };
+      const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'America/Guatemala'
+      };
+      const formattedDate = parsedDate.toLocaleDateString('es-ES', dateOptions);
+      const formattedTime = parsedDate.toLocaleTimeString('es-ES', timeOptions);
+      eventDateTime = `${formattedDate} ${formattedTime} (GT)`;
+    } catch (err) {
+      console.warn(`Error parseando fecha para el evento: ${event.local} vs. ${event.visitante}`, err);
+      eventDateTime = `${event.fecha} (Hora no disponible)`;
+    }
+
+    const li = document.createElement('li');
+    li.className = 'event-box';
+    li.innerHTML = `
+      <strong>${event.local} vs. ${event.visitante}</strong>
+      <span>Estadio: ${event.estadio || 'Por confirmar'}</span>
+      <small>${eventDateTime}</small>
+    `;
+    selectedEventsList.appendChild(li);
+  });
 }
 
 // ----------------------
@@ -123,7 +278,9 @@ async function init() {
   clearTeamData('Away');
   updateCalcButton();
 
-  teamsByLeague = await fetchTeams();
+  await fetchAllData();
+  displayUpcomingEvents();
+
   const leagueSelect = $('leagueSelect');
   const teamHomeSelect = $('teamHome');
   const teamAwaySelect = $('teamAway');
@@ -141,7 +298,10 @@ async function init() {
     leagueSelect.appendChild(opt);
   });
 
-  leagueSelect.addEventListener('change', onLeagueChange);
+  leagueSelect.addEventListener('change', () => {
+    onLeagueChange();
+    displaySelectedLeagueEvents(leagueSelect.value);
+  });
   teamHomeSelect.addEventListener('change', () => {
     if (restrictSameTeam()) {
       fillTeamData($('teamHome').value, $('leagueSelect').value, 'Home');
@@ -291,6 +451,7 @@ function clearAll() {
   clearTeamData('Home');
   clearTeamData('Away');
   updateCalcButton();
+  displaySelectedLeagueEvents('');
 }
 
 // ----------------------

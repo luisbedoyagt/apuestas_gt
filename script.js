@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Script para interfaz web que muestra estadísticas de fútbol y calcula probabilidades de partidos
+ *               usando datos de una API de Google Apps Script. Incluye métodos Poisson, Dixon-Coles y Heurístico.
+ */
+
 // ----------------------
 // UTILIDADES
 // ----------------------
@@ -102,6 +107,10 @@ function normalizeTeam(raw) {
   r.pjAway = parseNumberString(raw.gamesPlayedAway || 0);
   r.winsHome = parseNumberString(raw.winsHome || 0);
   r.winsAway = parseNumberString(raw.winsAway || 0);
+  r.tiesHome = parseNumberString(raw.tiesHome || 0);
+  r.tiesAway = parseNumberString(raw.tiesAway || 0);
+  r.lossesHome = parseNumberString(raw.lossesHome || 0);
+  r.lossesAway = parseNumberString(raw.lossesAway || 0);
   r.logoUrl = raw.logoUrl || '';
   return r;
 }
@@ -528,6 +537,70 @@ function fillTeamData(teamName, leagueCode, type) {
 }
 
 // ----------------------
+// CÁLCULO HEURÍSTICO
+// ----------------------
+function heuristicProbabilities(tH, tA) {
+  // Tasas de resultados como local (tH) y visitante (tA)
+  const homeWinRate = tH.pjHome ? tH.winsHome / tH.pjHome : 0;
+  const homeDrawRate = tH.pjHome ? tH.tiesHome / tH.pjHome : 0;
+  const homeLossRate = tH.pjHome ? tH.lossesHome / tH.pjHome : 0;
+  const awayWinRate = tA.pjAway ? tA.winsAway / tA.pjAway : 0;
+  const awayDrawRate = tA.pjAway ? tA.tiesAway / tA.pjAway : 0;
+  const awayLossRate = tA.pjAway ? tA.lossesAway / tA.pjAway : 0;
+
+  // Promedio inicial de tasas
+  let pHomeH = (homeWinRate + awayLossRate) / 2;
+  let pDrawH = (homeDrawRate + awayDrawRate) / 2;
+  let pAwayH = (homeLossRate + awayWinRate) / 2;
+
+  // Ajustes por fuerza ofensiva y defensiva
+  const gfHomeAvg = tH.pjHome ? tH.gfHome / tH.pjHome : tH.gf / (tH.pj || 1);
+  const gaAwayAvg = tA.pjAway ? tA.gaAway / tA.pjAway : tA.ga / (tA.pj || 1);
+  const gfAwayAvg = tA.pjAway ? tA.gfAway / tA.pjAway : tA.gf / (tA.pj || 1);
+  const gaHomeAvg = tH.pjHome ? tH.gaHome / tH.pjHome : tH.ga / (tH.pj || 1);
+
+  // Probabilidad de que cada equipo anote
+  const probHomeScores = Math.min(0.9, gfHomeAvg / (gaAwayAvg || 1)) * 0.8 + 0.1;
+  const probAwayScores = Math.min(0.9, gfAwayAvg / (gaHomeAvg || 1)) * 0.8 + 0.1;
+
+  // Ajustar probabilidades según fuerza general (puntos por partido y diferencia de goles)
+  const ppgH = tH.points / (tH.pj || 1);
+  const ppgA = tA.points / (tA.pj || 1);
+  const dgH = tH.gf - tH.ga;
+  const dgA = tA.ga - tA.ga;
+  const strengthDiff = ppgH - ppgA;
+  if (strengthDiff > 0) {
+    pHomeH += 0.1;
+    pAwayH -= 0.1;
+  } else if (strengthDiff < 0) {
+    pHomeH -= 0.1;
+    pAwayH += 0.1;
+  }
+
+  // Normalizar probabilidades de resultado
+  const totalH = pHomeH + pDrawH + pAwayH;
+  pHomeH = totalH > 0 ? pHomeH / totalH : 0.33;
+  pDrawH = totalH > 0 ? pDrawH / totalH : 0.33;
+  pAwayH = totalH > 0 ? pAwayH / totalH : 0.33;
+
+  // Probabilidad de BTTS
+  let pBTTSH = probHomeScores * probAwayScores;
+  const scoredHome = tH.pjHome ? (tH.gfHome > 0 ? 1 : 0) : (tH.gf > 0 ? 1 : 0);
+  const scoredAway = tA.pjAway ? (tA.gfAway > 0 ? 1 : 0) : (tA.gf > 0 ? 1 : 0);
+  const concededHome = tH.pjHome ? (tH.gaHome > 0 ? 1 : 0) : (tH.ga > 0 ? 1 : 0);
+  const concededAway = tA.pjAway ? (tA.gaAway > 0 ? 1 : 0) : (tA.ga > 0 ? 1 : 0);
+  pBTTSH = pBTTSH * 0.5 + (scoredHome && concededAway && scoredAway && concededHome ? 0.5 : 0.25);
+
+  // Probabilidad de más de 2.5 goles
+  const totalGoalsHome = (tH.pjHome ? (tH.gfHome + tH.gaHome) / tH.pjHome : (tH.gf + tH.ga) / (tH.pj || 1));
+  const totalGoalsAway = (tA.pjAway ? (tA.gfAway + tA.gaAway) / tA.pjAway : (tA.gf + tA.ga) / (tA.pj || 1));
+  const avgTotalGoals = (totalGoalsHome + totalGoalsAway) / 2;
+  let pO25H = avgTotalGoals > 2.5 ? Math.min(0.8, (avgTotalGoals - 2.5) / 2 + 0.5) : Math.max(0.2, avgTotalGoals / 5);
+
+  return { pHomeH, pDrawH, pAwayH, pBTTSH, pO25H };
+}
+
+// ----------------------
 // CÁLCULO PRINCIPAL
 // ----------------------
 function calculateAll() {
@@ -565,7 +638,7 @@ function calculateAll() {
   const avgGh = totalGames > 0 ? totalGfHome / totalGames : 1.2;
   const avgGa = totalGames > 0 ? totalGaHome / totalGames : 1.0;
 
-  // Ataque y defensa ajustados
+  // Ataque y defensa ajustados para Poisson y Dixon-Coles
   const attackH = (tH.pjHome || tH.pj) > 0 ? (tH.gfHome || tH.gf) / (tH.pjHome || tH.pj) / avgGh : 1;
   const defenseA = (tA.pjAway || tA.pj) > 0 ? (tA.gaAway || tA.ga) / (tA.pjAway || tA.pj) / avgGh : 1;
   const lambdaH = attackH * defenseA * avgGh;
@@ -622,12 +695,15 @@ function calculateAll() {
     pO25DC /= totalDC;
   }
 
-  // Promediar probabilidades (solo Poisson + Dixon-Coles)
-  const avgHome = (tH.pj && tA.pj) ? (pHomeP + pHomeDC) / 2 : 0.33;
-  const avgDraw = (tH.pj && tA.pj) ? (pDrawP + pDrawDC) / 2 : 0.33;
-  const avgAway = (tH.pj && tA.pj) ? (pAwayP + pAwayDC) / 2 : 0.33;
-  const avgBTTS = (tH.pj && tA.pj) ? (pBTTSP + pBTTSDC) / 2 : 0.5;
-  const avgO25 = (tH.pj && tA.pj) ? (pO25P + pO25DC) / 2 : 0.5;
+  // Método 3: Heurístico
+  const { pHomeH, pDrawH, pAwayH, pBTTSH, pO25H } = heuristicProbabilities(tH, tA);
+
+  // Promediar probabilidades (Poisson + Dixon-Coles + Heurístico)
+  const avgHome = (tH.pj && tA.pj) ? (pHomeP + pHomeDC + pHomeH) / 3 : 0.33;
+  const avgDraw = (tH.pj && tA.pj) ? (pDrawP + pDrawDC + pDrawH) / 3 : 0.33;
+  const avgAway = (tH.pj && tA.pj) ? (pAwayP + pAwayDC + pAwayH) / 3 : 0.33;
+  const avgBTTS = (tH.pj && tA.pj) ? (pBTTSP + pBTTSDC + pBTTSH) / 3 : 0.5;
+  const avgO25 = (tH.pj && tA.pj) ? (pO25P + pO25DC + pO25H) / 3 : 0.5;
 
   // Normalizar resultados principales
   const totalAvg = avgHome + avgDraw + avgAway;
@@ -679,7 +755,7 @@ function calculateAll() {
     suggestionText += `<div class="warning">No hay un claro favorito; considera evitar esta apuesta principal.</div>`;
   }
 
-  $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson + Dixon-Coles.`;
+  $('details').innerHTML = `${warning}Basado en datos ajustados por rendimiento local/visitante y métodos Poisson, Dixon-Coles y Heurístico.`;
   $('suggestion').innerHTML = suggestionText;
 
   // Animación
@@ -687,4 +763,3 @@ function calculateAll() {
   suggestionEl.classList.add('pulse');
   setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-

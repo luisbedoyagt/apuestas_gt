@@ -32,7 +32,7 @@ function factorial(n) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS (sin cambios)
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby7kW5RnlHOdJ81GwE3PHBI1H5Tqd7XxadXgkr6tnGLjQHONS2czRo435u2aa7YdZxLQw/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyf0tL-YP3Adayod45UBKDiZmffsWD7oMdftjWIDc76SItGsNPyU9zk3RfouL2784nufg/exec";
 let teamsByLeague = {};
 let allData = {};
 
@@ -681,4 +681,5 @@ function calculateAll() {
     suggestionEl.classList.add('pulse');
     setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
+
 

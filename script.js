@@ -1,7 +1,7 @@
 /**
  * @fileoverview Script mejorado para interfaz web que muestra estadísticas de fútbol y calcula probabilidades de partidos
  * usando datos de una API de Google Apps Script. Ahora usa un modelo basado en la distribución de Poisson
- * con el ajuste de Dixon y Coles para una mejor predicción de empates.
+ * con el ajuste de Dixon y Coles y "shrinkage" para una mejor predicción de empates y resultados realistas.
  */
 
 // ----------------------
@@ -524,36 +524,55 @@ function fillTeamData(teamName, leagueCode, type) {
 }
 
 // ----------------------
-// CÁLCULO DE PROBABILIDADES CON DIXON-COLES
+// CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE
 // ----------------------
 function dixonColesProbabilities(tH, tA, league) {
-    // Definimos el factor de correlación del empate. Este valor debe ser calibrado con datos históricos.
-    // Un valor de -0.1 a -0.15 es un buen punto de partida para muchas ligas.
-    const rho = -0.11; // Factor de correlación de Dixon y Coles
+    // Definimos el factor de correlación del empate.
+    // Un valor entre -0.1 y -0.15 es un buen punto de partida para muchas ligas.
+    const rho = -0.11; 
+    
+    // Factor de "encogimiento" (shrinkage) para hacer el modelo más conservador
+    // y evitar predicciones extremas en las primeras jornadas.
+    const shrinkageFactor = 1.0; 
 
     const teams = teamsByLeague[league];
-    let totalGamesHome = 0, totalGfHome = 0, totalGaHome = 0;
+    let totalGames = 0, totalGf = 0, totalGa = 0, totalGfHome = 0, totalGaHome = 0, totalGfAway = 0, totalGaAway = 0;
     teams.forEach(t => {
-        totalGamesHome += t.pjHome || 0;
+        totalGames += t.pj || 0;
+        totalGf += t.gf || 0;
+        totalGa += t.ga || 0;
         totalGfHome += t.gfHome || 0;
         totalGaHome += t.gaHome || 0;
+        totalGfAway += t.gfAway || 0;
+        totalGaAway += t.gaAway || 0;
     });
-    const leagueAvgGfHome = totalGamesHome > 0 ? totalGfHome / totalGamesHome : 1.2;
-    const leagueAvgGaHome = totalGamesHome > 0 ? totalGaHome / totalGamesHome : 1.0;
-    const homeAdvantageFactor = leagueAvgGfHome / (leagueAvgGaHome || 1);
 
-    const gfHomeAvg = tH.pjHome ? tH.gfHome / tH.pjHome : tH.gf / (tH.pj || 1);
-    const gaHomeAvg = tH.pjHome ? tH.gaHome / tH.pjHome : tH.ga / (tH.pj || 1);
-    const gfAwayAvg = tA.pjAway ? tA.gfAway / tA.pjAway : tA.gf / (tA.pj || 1);
-    const gaAwayAvg = tA.pjAway ? tA.gaAway / tA.pjAway : tA.ga / (tA.pj || 1);
+    const leagueAvgGoals = totalGf / (totalGames || 1);
+    const leagueAvgGfHome = totalGfHome / (totalGames || 1);
+    const leagueAvgGaAway = totalGaAway / (totalGames || 1);
+    const leagueAvgGfAway = totalGfAway / (totalGames || 1);
+    const leagueAvgGaHome = totalGaHome / (totalGames || 1);
 
-    const homeAttackStrength = gfHomeAvg / (leagueAvgGaHome || 1);
-    const awayDefenseStrength = gaAwayAvg / (leagueAvgGaHome || 1);
-    const awayAttackStrength = gfAwayAvg / (leagueAvgGfHome || 1);
-    const homeDefenseStrength = gaHomeAvg / (leagueAvgGfHome || 1);
+    const homeAttackRaw = (tH.gfHome || 0) / (tH.pjHome || 1);
+    const homeDefenseRaw = (tH.gaHome || 0) / (tH.pjHome || 1);
+    const awayAttackRaw = (tA.gfAway || 0) / (tA.pjAway || 1);
+    const awayDefenseRaw = (tA.gaAway || 0) / (tA.pjAway || 1);
 
-    const lambdaHome = homeAttackStrength * awayDefenseStrength * leagueAvgGfHome * homeAdvantageFactor;
-    const lambdaAway = awayAttackStrength * homeDefenseStrength * leagueAvgGaHome;
+    // Aplicar "shrinkage" para suavizar los promedios hacia la media de la liga
+    const homeAttackAdj = (homeAttackRaw + (leagueAvgGfHome * shrinkageFactor)) / (1 + shrinkageFactor);
+    const homeDefenseAdj = (homeDefenseRaw + (leagueAvgGaHome * shrinkageFactor)) / (1 + shrinkageFactor);
+    const awayAttackAdj = (awayAttackRaw + (leagueAvgGfAway * shrinkageFactor)) / (1 + shrinkageFactor);
+    const awayDefenseAdj = (awayDefenseRaw + (leagueAvgGaAway * shrinkageFactor)) / (1 + shrinkageFactor);
+
+    // Calcular las fuerzas relativas de ataque y defensa
+    const homeAttackStrength = homeAttackAdj / (leagueAvgGfHome || 1);
+    const homeDefenseStrength = homeDefenseAdj / (leagueAvgGaHome || 1);
+    const awayAttackStrength = awayAttackAdj / (leagueAvgGfAway || 1);
+    const awayDefenseStrength = awayDefenseAdj / (leagueAvgGaAway || 1);
+
+    // Fórmulas corregidas para los goles esperados (lambda)
+    const lambdaHome = homeAttackStrength * awayDefenseStrength * (leagueAvgGfHome || 1);
+    const lambdaAway = awayAttackStrength * homeDefenseStrength * (leagueAvgGfAway || 1);
 
     const maxGoals = 6;
     let pHome = 0, pDraw = 0, pAway = 0, pBTTS = 0, pO25 = 0;
@@ -561,11 +580,8 @@ function dixonColesProbabilities(tH, tA, league) {
     for (let h = 0; h <= maxGoals; h++) {
         for (let a = 0; a <= maxGoals; a++) {
             let prob;
-            if (h === 0 && a === 0) {
-                // Ajuste para el 0-0
-                prob = poissonProbability(lambdaHome, h) * poissonProbability(lambdaAway, a) * (1 - rho * lambdaHome * lambdaAway);
-            } else if (h === 1 && a === 1) {
-                // Ajuste para el 1-1
+            if (h === a) {
+                // Ajuste para el empate usando Dixon y Coles
                 prob = poissonProbability(lambdaHome, h) * poissonProbability(lambdaAway, a) * (1 + rho);
             } else {
                 // Sin ajuste para otros marcadores
@@ -582,14 +598,18 @@ function dixonColesProbabilities(tH, tA, league) {
     }
 
     const total = pHome + pDraw + pAway;
-    pHome = total > 0 ? pHome / total : 0.33;
-    pDraw = total > 0 ? pDraw / total : 0.33;
-    pAway = total > 0 ? pAway / total : 0.33;
+    const finalHome = total > 0 ? pHome / total : 0.33;
+    const finalDraw = total > 0 ? pDraw / total : 0.33;
+    const finalAway = total > 0 ? pAway / total : 0.33;
 
-    pBTTS = Math.min(0.9, Math.max(0.1, pBTTS));
-    pO25 = Math.min(0.9, Math.max(0.1, pO25));
+    // Normalizar probabilidades de BTTS y O/U para que sean más realistas
+    const totalPossibleBTTS = pBTTS + (1 - (pBTTS + (poissonProbability(lambdaHome, 0) + poissonProbability(lambdaAway, 0))));
+    pBTTS = totalPossibleBTTS > 0 ? pBTTS / totalPossibleBTTS : 0.5;
 
-    return { finalHome: pHome, finalDraw: pDraw, finalAway: pAway, pBTTSH: pBTTS, pO25H: pO25, rho: rho };
+    const totalPossibleO25 = pO25 + (1-pO25); // Suma de todas las probabilidades
+    pO25 = totalPossibleO25 > 0 ? pO25 / totalPossibleO25 : 0.5;
+
+    return { finalHome, finalDraw, finalAway, pBTTSH: pBTTS, pO25H: pO25, rho };
 }
 
 // ----------------------
@@ -616,7 +636,6 @@ function calculateAll() {
         warning = '<div class="warning"><strong>Advertencia:</strong> Al menos un equipo tiene menos de 5 partidos jugados. Las predicciones pueden ser menos precisas.</div>';
     }
 
-    // Usamos la nueva función dixonColesProbabilities
     const { finalHome, finalDraw, finalAway, pBTTSH, pO25H, rho } = dixonColesProbabilities(tH, tA, league);
 
     $('pHome').textContent = formatPct(finalHome);

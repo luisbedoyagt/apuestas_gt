@@ -34,7 +34,7 @@ function dixonColesAdjustment(lambdaH, lambdaA, h, a, tau = 0.9) {
 // ----------------------
 // CONFIGURACIÓN DE LIGAS
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxUEGodt1hghICyqamd1JmiHQ_DIDEd6jxX9WmmClWEjjH6cUxmzlK4HvBbacfwcJk2zw/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxUEGodt1hghICyqamd1JmiHQ_DIDEd6jxX9WmmClWEjjH6cUxmzlK4HvBbacfwcJk2zw/exec"; // Reemplaza con la URL de tu Web App
 let teamsByLeague = {};
 let allData = {};
 
@@ -114,23 +114,27 @@ async function fetchAllData() {
   if (leagueSelect) leagueSelect.innerHTML = '<option value="">Cargando datos...</option>';
 
   try {
-    const res = await fetch(WEBAPP_URL);
+    const res = await fetch(`${WEBAPP_URL}?tipo=todo&update=false`);
     if (!res.ok) {
       const errorText = await res.text();
       throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
     }
     allData = await res.json();
-    
-    // Depuración: Mostrar datos crudos de allData.calendario
-    console.log('Datos crudos de allData.calendario:', JSON.stringify(allData.calendario, null, 2));
-    console.log('Datos de México_LigaMX:', JSON.stringify(allData.calendario['México_LigaMX'], null, 2));
+
+    // Depuración: Mostrar datos crudos
+    console.log('Datos recibidos de la API:', JSON.stringify(allData, null, 2));
+
+    // Verificar estructura de datos
+    if (!allData.calendario || !allData.ligas) {
+      throw new Error('Estructura de datos inválida: faltan "calendario" o "ligas"');
+    }
 
     const normalized = {};
     for (const key in allData.ligas) {
       normalized[key] = (allData.ligas[key] || []).map(normalizeTeam).filter(t => t && t.name);
     }
     teamsByLeague = normalized;
-    
+
     localStorage.setItem('allData', JSON.stringify(allData));
     return allData;
   } catch (err) {
@@ -205,7 +209,6 @@ function displayUpcomingEvents() {
     upcomingEventsList.innerHTML = '<li>No hay eventos próximos disponibles.</li>';
   }
 
-  // Mostrar eventos de la liga seleccionada (inicialmente vacía)
   displaySelectedLeagueEvents('');
 }
 
@@ -443,11 +446,11 @@ function clearTeamData(type) {
 function clearAll() {
   document.querySelectorAll('input').forEach(i => i.value = '0');
   document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-  ['pHome','pDraw','pAway','pBTTS','pO25','details','homeAdvantageFactor','strengthFactor','dixonColesFactor','suggestion'].forEach(id => {
+  ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25', 'details', 'homeAdvantageFactor', 'strengthFactor', 'dixonColesFactor', 'suggestion'].forEach(id => {
     const el = $(id);
     if (el) el.textContent = '—';
   });
-  ['formHomeTeam','formAwayTeam'].forEach(id => $(id).innerHTML = id.includes('Home') ? 'Local: —' : 'Visitante: —');
+  ['formHomeTeam', 'formAwayTeam'].forEach(id => $(id).innerHTML = id.includes('Home') ? 'Local: —' : 'Visitante: —');
   clearTeamData('Home');
   clearTeamData('Away');
   updateCalcButton();

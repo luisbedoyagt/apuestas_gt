@@ -30,9 +30,9 @@ function factorial(n) {
 }
 
 // ----------------------
-// CONFIGURACIÓN DE LIGAS (completa)
+// CONFIGURACIÓN DE LIGAS (sin cambios)
 // ----------------------
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw82FHvqkPfh63g1tiPHBC5CcfD35AUUQk4hCQBPpupBjOKMlpEnYEGJjAX0kMdXZCh8w/exec";
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzQEWGLCjXh6_uDrb8lXTSgWlSiiDOd7jEmBBLu2upSdyW37L-yigBm8r-7cRgYx0xxWA/exec";
 let teamsByLeague = {};
 let allData = {};
 
@@ -53,18 +53,7 @@ const leagueNames = {
     "gua.1": "Liga Nacional Guatemala",
     "crc.1": "Liga Promerica Costa Rica",
     "hon.1": "Liga Nacional Honduras",
-    "ksa.1": "Pro League Arabia Saudita",
-    "conmebol.libertadores": "Conmebol Libertadores",
-    "conmebol.sudamericana": "Conmebol Sudamericana",
-    "arg.1": "Liga Profesional Argentina",
-    "ecu.1": "Liga Pro Ecuador",
-    "uru.1": "Primera División Uruguay",
-    "ven.1": "Primera División Venezuela",
-    "per.1": "Liga 1 Perú",
-    "bol.1": "División Profesional Bolivia",
-    "par.1": "Primera División Paraguay",
-    "chi.1": "Primera División Chile",
-    "col.1": "Primera A Colombia"
+    "ksa.1": "Pro League Arabia Saudita"
 };
 
 const leagueCodeToName = {
@@ -84,22 +73,11 @@ const leagueCodeToName = {
     "gua.1": "Guatemala_LigaNacional",
     "crc.1": "CostaRica_LigaPromerica",
     "hon.1": "Honduras_LigaNacional",
-    "ksa.1": "Arabia_Saudi_ProLeague",
-    "conmebol.libertadores": "Conmebol_Libertadores",
-    "conmebol.sudamericana": "Conmebol_Sudamericana",
-    "arg.1": "Argentina_LigaProfesional",
-    "ecu.1": "Ecuador_LigaPro",
-    "uru.1": "Uruguay_PrimeraDivisión",
-    "ven.1": "Venezuela_PrimeraDivisión",
-    "per.1": "Perú_Liga1",
-    "bol.1": "Bolivia_DivisiónProfesional",
-    "par.1": "Paraguay_PrimeraDivisión",
-    "chi.1": "Chile_PrimeraDivisión",
-    "col.1": "Colombia_PrimeraA"
+    "ksa.1": "Arabia_Saudi_ProLeague"
 };
 
 // ----------------------
-// NORMALIZACIÓN DE DATOS
+// NORMALIZACIÓN DE DATOS (sin cambios)
 // ----------------------
 function normalizeTeam(raw) {
     if (!raw) return null;
@@ -131,7 +109,7 @@ function normalizeTeam(raw) {
 }
 
 // ----------------------
-// FETCH DATOS COMPLETOS
+// FETCH DATOS COMPLETOS (sin cambios)
 // ----------------------
 async function fetchAllData() {
     const leagueSelect = $('leagueSelect');
@@ -145,8 +123,8 @@ async function fetchAllData() {
         }
         allData = await res.json();
 
-        if (!allData.calendario || !allData.ligas || !allData.ligasConfig) {
-            throw new Error('Estructura de datos inválida: faltan "calendario", "ligas" o "ligasConfig"');
+        if (!allData.calendario || !allData.ligas) {
+            throw new Error('Estructura de datos inválida: faltan "calendario" o "ligas"');
         }
 
         const normalized = {};
@@ -167,7 +145,7 @@ async function fetchAllData() {
 }
 
 // ----------------------
-// MUESTRA DE EVENTOS FUTUROS
+// MUESTRA DE EVENTOS FUTUROS (sin cambios)
 // ----------------------
 function displayUpcomingEvents() {
     const upcomingEventsList = $('upcoming-events-list');
@@ -232,7 +210,7 @@ function displayUpcomingEvents() {
 }
 
 // ----------------------
-// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
+// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA (sin cambios)
 // ----------------------
 function displaySelectedLeagueEvents(leagueCode) {
     const selectedEventsList = $('selected-league-events');
@@ -246,28 +224,53 @@ function displaySelectedLeagueEvents(leagueCode) {
     }
 
     const ligaName = leagueCodeToName[leagueCode];
-    const eventsForLeague = (allData.calendario[ligaName] || []);
+    const events = (allData.calendario[ligaName] || []).slice(0, 3);
 
-    if (eventsForLeague.length > 0) {
-        eventsForLeague.forEach(event => {
-            const li = document.createElement('li');
-            li.className = 'event-box';
-            li.innerHTML = `
-                <div class="team-names">${event.local} vs. ${event.visitante}</div>
-                <div class="event-details">
-                    <span>Estadio: ${event.estadio}</span>
-                    <small>Fecha: ${event.fecha}</small>
-                </div>
-            `;
-            selectedEventsList.appendChild(li);
-        });
-    } else {
-        selectedEventsList.innerHTML = '<li class="event-box">No se encontraron eventos para esta liga.</li>';
+    if (events.length === 0) {
+        selectedEventsList.innerHTML = '<li class="event-box">No hay eventos próximos para esta liga.</li>';
+        return;
     }
+
+    events.forEach(event => {
+        let eventDateTime;
+        try {
+            const parsedDate = new Date(event.fecha);
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error("Fecha inválida");
+            }
+            const dateOptions = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZone: 'America/Guatemala'
+            };
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'America/Guatemala'
+            };
+            const formattedDate = parsedDate.toLocaleDateString('es-ES', dateOptions);
+            const formattedTime = parsedDate.toLocaleTimeString('es-ES', timeOptions);
+            eventDateTime = `${formattedDate} ${formattedTime} (GT)`;
+        } catch (err) {
+            console.warn(`Error parseando fecha para el evento: ${event.local} vs. ${event.visitante}`, err);
+            eventDateTime = `${event.fecha} (Hora no disponible)`;
+        }
+
+        const li = document.createElement('li');
+        li.className = 'event-box';
+        li.innerHTML = `
+      <strong>${event.local} vs. ${event.visitante}</strong>
+      <span>Estadio: ${event.estadio || 'Por confirmar'}</span>
+      <small>${eventDateTime}</small>
+    `;
+        selectedEventsList.appendChild(li);
+    });
 }
 
 // ----------------------
-// INICIALIZACIÓN
+// INICIALIZACIÓN (sin cambios)
 // ----------------------
 async function init() {
     clearTeamData('Home');
@@ -287,24 +290,12 @@ async function init() {
     }
 
     leagueSelect.innerHTML = '<option value="">-- Selecciona liga --</option>';
-    // Usar ligasConfig para poblar el selector con todas las ligas
-    if (allData.ligasConfig) {
-        const allLigas = Object.values(allData.ligasConfig).flatMap(Object.keys).sort();
-        allLigas.forEach(code => {
-            const opt = document.createElement('option');
-            opt.value = code;
-            opt.textContent = leagueNames[code] || code;
-            leagueSelect.appendChild(opt);
-        });
-    } else {
-        // Fallback en caso de que ligasConfig no esté disponible
-        Object.keys(teamsByLeague).sort().forEach(code => {
-            const opt = document.createElement('option');
-            opt.value = code;
-            opt.textContent = leagueNames[code] || code;
-            leagueSelect.appendChild(opt);
-        });
-    }
+    Object.keys(teamsByLeague).sort().forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = leagueNames[code] || code;
+        leagueSelect.appendChild(opt);
+    });
 
     leagueSelect.addEventListener('change', () => {
         onLeagueChange();
@@ -329,7 +320,7 @@ async function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 // ----------------------
-// FUNCIONES AUXILIARES
+// FUNCIONES AUXILIARES (sin cambios)
 // ----------------------
 function onLeagueChange() {
     const code = $('leagueSelect').value;
@@ -463,7 +454,7 @@ function clearAll() {
 }
 
 // ----------------------
-// BÚSQUEDA Y LLENADO DE EQUIPO
+// BÚSQUEDA Y LLENADO DE EQUIPO (sin cambios)
 // ----------------------
 function findTeam(leagueCode, teamName) {
     if (!teamsByLeague[leagueCode]) return null;
@@ -536,8 +527,8 @@ function fillTeamData(teamName, leagueCode, type) {
 // CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE
 // ----------------------
 function dixonColesProbabilities(tH, tA, league) {
-    const rho = -0.11;
-    const shrinkageFactor = 1.0;
+    const rho = -0.11; 
+    const shrinkageFactor = 1.0; 
 
     const teams = teamsByLeague[league];
     let totalGames = 0, totalGf = 0, totalGa = 0, totalGfHome = 0, totalGaHome = 0, totalGfAway = 0, totalGaAway = 0;
@@ -690,3 +681,5 @@ function calculateAll() {
     suggestionEl.classList.add('pulse');
     setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
+
+

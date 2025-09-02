@@ -99,7 +99,7 @@ const leagueCodeToName = {
 };
 
 // ----------------------
-// NORMALIZACIÓN DE DATOS (sin cambios)
+// NORMALIZACIÓN DE DATOS
 // ----------------------
 function normalizeTeam(raw) {
     if (!raw) return null;
@@ -131,7 +131,7 @@ function normalizeTeam(raw) {
 }
 
 // ----------------------
-// FETCH DATOS COMPLETOS (sin cambios)
+// FETCH DATOS COMPLETOS
 // ----------------------
 async function fetchAllData() {
     const leagueSelect = $('leagueSelect');
@@ -145,8 +145,8 @@ async function fetchAllData() {
         }
         allData = await res.json();
 
-        if (!allData.calendario || !allData.ligas) {
-            throw new Error('Estructura de datos inválida: faltan "calendario" o "ligas"');
+        if (!allData.calendario || !allData.ligas || !allData.ligasConfig) {
+            throw new Error('Estructura de datos inválida: faltan "calendario", "ligas" o "ligasConfig"');
         }
 
         const normalized = {};
@@ -167,7 +167,7 @@ async function fetchAllData() {
 }
 
 // ----------------------
-// MUESTRA DE EVENTOS FUTUROS (sin cambios)
+// MUESTRA DE EVENTOS FUTUROS
 // ----------------------
 function displayUpcomingEvents() {
     const upcomingEventsList = $('upcoming-events-list');
@@ -232,7 +232,7 @@ function displayUpcomingEvents() {
 }
 
 // ----------------------
-// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA (sin cambios)
+// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
 // ----------------------
 function displaySelectedLeagueEvents(leagueCode) {
     const selectedEventsList = $('selected-league-events');
@@ -267,7 +267,7 @@ function displaySelectedLeagueEvents(leagueCode) {
 }
 
 // ----------------------
-// INICIALIZACIÓN (sin cambios)
+// INICIALIZACIÓN
 // ----------------------
 async function init() {
     clearTeamData('Home');
@@ -287,12 +287,24 @@ async function init() {
     }
 
     leagueSelect.innerHTML = '<option value="">-- Selecciona liga --</option>';
-    Object.keys(teamsByLeague).sort().forEach(code => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = leagueNames[code] || code;
-        leagueSelect.appendChild(opt);
-    });
+    // Usar ligasConfig para poblar el selector con todas las ligas
+    if (allData.ligasConfig) {
+        const allLigas = Object.values(allData.ligasConfig).flatMap(Object.keys).sort();
+        allLigas.forEach(code => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = leagueNames[code] || code;
+            leagueSelect.appendChild(opt);
+        });
+    } else {
+        // Fallback en caso de que ligasConfig no esté disponible
+        Object.keys(teamsByLeague).sort().forEach(code => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = leagueNames[code] || code;
+            leagueSelect.appendChild(opt);
+        });
+    }
 
     leagueSelect.addEventListener('change', () => {
         onLeagueChange();
@@ -317,7 +329,7 @@ async function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 // ----------------------
-// FUNCIONES AUXILIARES (sin cambios)
+// FUNCIONES AUXILIARES
 // ----------------------
 function onLeagueChange() {
     const code = $('leagueSelect').value;
@@ -451,7 +463,7 @@ function clearAll() {
 }
 
 // ----------------------
-// BÚSQUEDA Y LLENADO DE EQUIPO (sin cambios)
+// BÚSQUEDA Y LLENADO DE EQUIPO
 // ----------------------
 function findTeam(leagueCode, teamName) {
     if (!teamsByLeague[leagueCode]) return null;
@@ -678,5 +690,3 @@ function calculateAll() {
     suggestionEl.classList.add('pulse');
     setTimeout(() => suggestionEl.classList.remove('pulse'), 1000);
 }
-
-

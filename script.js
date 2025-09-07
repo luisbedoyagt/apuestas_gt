@@ -12,16 +12,16 @@ const parseNumberString = val => {
     return isFinite(n) ? n : 0;
 };
 
-// Nueva función para normalizar nombres de equipos
+// Normalización de nombres
 function normalizeName(name) {
     if (!name) return '';
     return name
         .trim()
         .toLowerCase()
-        .normalize('NFD') // Descompone caracteres con acentos
-        .replace(/[\u0300-\u036f]/g, '') // Elimina diacríticos
-        .replace(/[^a-z0-9\s]/g, '') // Elimina caracteres especiales
-        .replace(/\s+/g, ' '); // Normaliza espacios
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ');
 }
 
 // Funciones auxiliares para Poisson y Dixon-Coles
@@ -179,7 +179,6 @@ function parsePlainText(text, matchData) {
             aiProbs.home = parseFloat(percentages[0]) / 100;
             aiProbs.draw = parseFloat(percentages[1]) / 100;
             aiProbs.away = parseFloat(percentages[2]) / 100;
-            // Validar que las probabilidades sumen aproximadamente 100% y no sean todas 0
             const total = aiProbs.home + aiProbs.draw + aiProbs.away;
             if (total < 0.9 || total > 1.1 || (aiProbs.home === 0 && aiProbs.draw === 0 && aiProbs.away === 0)) {
                 console.warn(`[parsePlainText] Probabilidades de IA inválidas (suma=${total.toFixed(2)}): Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
@@ -595,7 +594,6 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
-    // Buscar la liga correspondiente al evento
     let eventLeagueCode = '';
     const ligaName = Object.keys(allData.calendario).find(liga =>
         (allData.calendario[liga] || []).some(e =>
@@ -615,7 +613,6 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
-    // Actualizar el selector de liga
     if (eventLeagueCode) {
         leagueSelect.value = eventLeagueCode;
         const changeEvent = new Event('change');
@@ -629,7 +626,6 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
-    // Esperar a que los selectores de equipos se llenen
     const waitForTeams = async () => {
         let attempts = 0;
         const maxAttempts = 10;
@@ -655,7 +651,6 @@ function selectEvent(homeTeamName, awayTeamName) {
         const homeTeamNameNormalized = normalizeName(homeTeamName);
         const awayTeamNameNormalized = normalizeName(awayTeamName);
 
-        // Buscar opciones en los selectores
         const homeOption = Array.from(teamHomeSelect.options).find(opt => normalizeName(opt.text) === homeTeamNameNormalized);
         const awayOption = Array.from(teamAwaySelect.options).find(opt => normalizeName(opt.text) === awayTeamNameNormalized);
 
@@ -864,56 +859,110 @@ function fillTeamData(teamName, leagueCode, type) {
     }
 }
 
-// CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE
+// CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
 function dixonColesProbabilities(tH, tA, league) {
-    const rho = -0.11;
-    const shrinkageFactor = 1.0;
+    console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
+    
+    // Validar datos de entrada
+    if (!tH || !tA || !teamsByLeague[league]) {
+        console.error('[dixonColesProbabilities] Datos inválidos:', { tH, tA, league });
+        return { finalHome: 0.333, finalDraw: 0.333, finalAway: 0.333, pBTTSH: 0.5, pO25H: 0.5 };
+    }
+
+    // Calcular rho dinámicamente basado en la proporción de empates en la liga
+    let rho = -0.1;
+    const ligaName = leagueCodeToName[league];
+    if (allData.calendario && allData.calendario[ligaName]) {
+        const matches = allData.calendario[ligaName];
+        let totalMatches = 0;
+        let totalDraws = 0;
+        matches.forEach(match => {
+            if (match.resultado && match.resultado.includes('-')) {
+                const [homeGoals, awayGoals] = match.resultado.split('-').map(Number);
+                if (!isNaN(homeGoals) && !isNaN(awayGoals)) {
+                    totalMatches++;
+                    if (homeGoals === awayGoals) totalDraws++;
+                }
+            }
+        });
+        const drawRate = totalMatches > 0 ? totalDraws / totalMatches : 0.25;
+        const expectedDrawRate = 0.25; // Promedio típico de empates en fútbol
+        rho = -0.1 * (drawRate / expectedDrawRate);
+        rho = Math.max(-0.2, Math.min(-0.05, rho)); // Limitar rho entre -0.2 y -0.05
+        console.log(`[dixonColesProbabilities] Rho calculado: ${rho.toFixed(3)} (drawRate=${drawRate.toFixed(3)}, totalMatches=${totalMatches})`);
+    }
+
+    // Calcular promedios de la liga
     const teams = teamsByLeague[league];
-    let totalGames = 0, totalGf = 0, totalGa = 0, totalGfHome = 0, totalGaHome = 0, totalGfAway = 0, totalGaAway = 0;
+    let totalGames = 0, totalGfHome = 0, totalGaHome = 0, totalGfAway = 0, totalGaAway = 0;
     teams.forEach(t => {
-        totalGames += t.pj || 0;
-        totalGf += t.gf || 0;
-        totalGa += t.ga || 0;
-        totalGfHome += t.gfHome || 0;
-        totalGaHome += t.gaHome || 0;
-        totalGfAway += t.gfAway || 0;
-        totalGaAway += t.gaAway || 0;
+        if (t.pjHome >= 3 && t.pjAway >= 3) { // Solo contar equipos con suficientes partidos
+            totalGames += (t.pjHome || 0) + (t.pjAway || 0);
+            totalGfHome += t.gfHome || 0;
+            totalGaHome += t.gaHome || 0;
+            totalGfAway += t.gfAway || 0;
+            totalGaAway += t.gaAway || 0;
+        }
     });
-    const leagueAvgGfHome = totalGfHome / (totalGames || 1);
-    const leagueAvgGaAway = totalGaAway / (totalGames || 1);
-    const leagueAvgGfAway = totalGfAway / (totalGames || 1);
-    const leagueAvgGaHome = totalGaHome / (totalGames || 1);
-    const homeAttackRaw = (tH.gfHome || 0) / (tH.pjHome || 1);
-    const homeDefenseRaw = (tH.gaHome || 0) / (tH.pjHome || 1);
-    const awayAttackRaw = (tA.gfAway || 0) / (tA.pjAway || 1);
-    const awayDefenseRaw = (tA.gaAway || 0) / (tA.pjAway || 1);
-    const homeAttack = (homeAttackRaw / leagueAvgGfHome) * shrinkageFactor;
-    const homeDefense = (homeDefenseRaw / leagueAvgGaHome) * shrinkageFactor;
-    const awayAttack = (awayAttackRaw / leagueAvgGfAway) * shrinkageFactor;
-    const awayDefense = (awayDefenseRaw / leagueAvgGaHome) * shrinkageFactor;
-    const expectedHomeGoals = homeAttack * awayDefense * leagueAvgGfHome;
-    const expectedAwayGoals = awayAttack * homeDefense * leagueAvgGaHome;
+    totalGames = Math.max(totalGames, 1); // Evitar división por cero
+    const leagueAvgGfHome = totalGfHome / (totalGames / 2);
+    const leagueAvgGaHome = totalGaHome / (totalGames / 2);
+    const leagueAvgGfAway = totalGfAway / (totalGames / 2);
+    const leagueAvgGaAway = totalGaAway / (totalGames / 2);
+    console.log(`[dixonColesProbabilities] Promedios de liga: GfHome=${leagueAvgGfHome.toFixed(2)}, GaHome=${leagueAvgGaHome.toFixed(2)}, GfAway=${leagueAvgGfAway.toFixed(2)}, GaAway=${leagueAvgGaAway.toFixed(2)}`);
+
+    // Calcular factor de shrinkage dinámico
+    const minGames = 3;
+    const shrinkageBase = 0.8;
+    const shrinkageHome = tH.pjHome < minGames ? 0.5 : shrinkageBase * (1 - Math.exp(-tH.pjHome / 10));
+    const shrinkageAway = tA.pjAway < minGames ? 0.5 : shrinkageBase * (1 - Math.exp(-tA.pjAway / 10));
+    console.log(`[dixonColesProbabilities] Shrinkage: Home=${shrinkageHome.toFixed(2)}, Away=${shrinkageAway.toFixed(2)}`);
+
+    // Calcular métricas de ataque y defensa
+    const homeAttackRaw = tH.pjHome >= minGames ? (tH.gfHome / tH.pjHome) : leagueAvgGfHome;
+    const homeDefenseRaw = tH.pjHome >= minGames ? (tH.gaHome / tH.pjHome) : leagueAvgGaHome;
+    const awayAttackRaw = tA.pjAway >= minGames ? (tA.gfAway / tA.pjAway) : leagueAvgGfAway;
+    const awayDefenseRaw = tA.pjAway >= minGames ? (tA.gaAway / tA.pjAway) : leagueAvgGaAway;
+    console.log(`[dixonColesProbabilities] Métricas crudas: homeAttack=${homeAttackRaw.toFixed(2)}, homeDefense=${homeDefenseRaw.toFixed(2)}, awayAttack=${awayAttackRaw.toFixed(2)}, awayDefense=${awayDefenseRaw.toFixed(2)}`);
+
+    const homeAttack = leagueAvgGfHome > 0 ? (homeAttackRaw / leagueAvgGfHome) * shrinkageHome + (1 - shrinkageHome) : 1;
+    const homeDefense = leagueAvgGaHome > 0 ? (homeDefenseRaw / leagueAvgGaHome) * shrinkageHome + (1 - shrinkageHome) : 1;
+    const awayAttack = leagueAvgGfAway > 0 ? (awayAttackRaw / leagueAvgGfAway) * shrinkageAway + (1 - shrinkageAway) : 1;
+    const awayDefense = leagueAvgGaAway > 0 ? (awayDefenseRaw / leagueAvgGaAway) * shrinkageAway + (1 - shrinkageAway) : 1;
+    console.log(`[dixonColesProbabilities] Métricas ajustadas: homeAttack=${homeAttack.toFixed(2)}, homeDefense=${homeDefense.toFixed(2)}, awayAttack=${awayAttack.toFixed(2)}, awayDefense=${awayDefenseRaw.toFixed(2)}`);
+
+    // Calcular goles esperados
+    const expectedHomeGoals = Math.max(0, homeAttack * awayDefense * leagueAvgGfHome);
+    const expectedAwayGoals = Math.max(0, awayAttack * homeDefense * leagueAvgGaHome);
+    console.log(`[dixonColesProbabilities] Goles esperados: Home=${expectedHomeGoals.toFixed(2)}, Away=${expectedAwayGoals.toFixed(2)}`);
+
+    // Calcular probabilidades iniciales con Poisson
     let homeWin = 0, draw = 0, awayWin = 0;
-    for (let i = 0; i <= 10; i++) {
-        for (let j = 0; j <= 10; j++) {
+    const maxGoals = 10;
+    for (let i = 0; i <= maxGoals; i++) {
+        for (let j = 0; j <= maxGoals; j++) {
             const prob = poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, j);
             if (i > j) homeWin += prob;
             else if (i === j) draw += prob;
             else awayWin += prob;
         }
     }
+
+    // Ajustar empate con tau
     const tau = (scoreH, scoreA) => {
-        if (scoreH === 0 && scoreA === 0) return 1 - (homeAttack * awayDefense * rho);
-        if (scoreH === 0 && scoreA === 1) return 1 + (homeAttack * rho);
-        if (scoreH === 1 && scoreA === 0) return 1 + (awayDefense * rho);
+        if (scoreH === 0 && scoreA === 0) return 1 - (expectedHomeGoals * expectedAwayGoals * rho);
+        if (scoreH === 0 && scoreA === 1) return 1 + (expectedHomeGoals * rho);
+        if (scoreH === 1 && scoreA === 0) return 1 + (expectedAwayGoals * rho);
         if (scoreH === 1 && scoreA === 1) return 1 - rho;
         return 1;
     };
     let adjustedDraw = 0;
-    for (let i = 0; i <= 10; i++) {
+    for (let i = 0; i <= maxGoals; i++) {
         const prob = poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, i) * tau(i, i);
         adjustedDraw += prob;
     }
+
+    // Normalizar probabilidades
     const total = homeWin + draw + awayWin;
     if (total > 0) {
         const scale = 1 / total;
@@ -922,18 +971,45 @@ function dixonColesProbabilities(tH, tA, league) {
         awayWin *= scale;
     }
     const adjustedTotal = homeWin + adjustedDraw + awayWin;
+    let finalHome = homeWin;
+    let finalDraw = adjustedDraw;
+    let finalAway = awayWin;
     if (adjustedTotal > 0) {
         const scale = 1 / adjustedTotal;
-        homeWin *= scale;
-        adjustedDraw *= scale;
-        awayWin *= scale;
+        finalHome *= scale;
+        finalDraw *= scale;
+        finalAway *= scale;
     }
-    const pBTTSH = 1 - poissonProbability(expectedHomeGoals, 0) - poissonProbability(expectedAwayGoals, 0) + poissonProbability(expectedHomeGoals, 0) * poissonProbability(expectedAwayGoals, 0);
-    const pO25H = 1 - (poissonProbability(expectedHomeGoals, 0) + poissonProbability(expectedHomeGoals, 1) + poissonProbability(expectedHomeGoals, 2)) * (poissonProbability(expectedAwayGoals, 0) + poissonProbability(expectedAwayGoals, 1) + poissonProbability(expectedAwayGoals, 2));
+    console.log(`[dixonColesProbabilities] Probabilidades iniciales: Home=${homeWin.toFixed(3)}, Draw=${draw.toFixed(3)}, Away=${awayWin.toFixed(3)}`);
+    console.log(`[dixonColesProbabilities] Probabilidades ajustadas: Home=${finalHome.toFixed(3)}, Draw=${finalDraw.toFixed(3)}, Away=${finalAway.toFixed(3)}`);
+
+    // Calcular BTTS con ajuste de rho
+    let pBTTSH = 0;
+    for (let i = 1; i <= maxGoals; i++) {
+        for (let j = 1; j <= maxGoals; j++) {
+            pBTTSH += poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, j) * tau(i, j);
+        }
+    }
+
+    // Calcular Over 2.5 con ajuste de rho
+    let pO25H = 0;
+    for (let i = 0; i <= maxGoals; i++) {
+        for (let j = 0; j <= maxGoals; j++) {
+            if (i + j > 2) {
+                pO25H += poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, j) * tau(i, j);
+            }
+        }
+    }
+
+    // Normalizar BTTS y Over 2.5
+    pBTTSH = Math.min(1, Math.max(0, pBTTSH));
+    pO25H = Math.min(1, Math.max(0, pO25H));
+    console.log(`[dixonColesProbabilities] Probabilidades adicionales: BTTS=${pBTTSH.toFixed(3)}, Over2.5=${pO25H.toFixed(3)}`);
+
     return {
-        finalHome: homeWin,
-        finalDraw: adjustedDraw,
-        finalAway: awayWin,
+        finalHome,
+        finalDraw,
+        finalAway,
         pBTTSH,
         pO25H
     };
@@ -999,7 +1075,6 @@ function getIntegratedPrediction(stats, event, matchData) {
     const hasValidIA = ai && ai["1X2"] && !Object.values(ai["1X2"]).every(p => !p?.probabilidad || parseFloat(p.probabilidad) === 0);
     
     if (!hasValidIA) {
-        // Fallback: Solo Stats si no IA
         return {
             header: "Análisis Estadístico (Sin IA)",
             probabilities: [
@@ -1041,13 +1116,11 @@ function getIntegratedPrediction(stats, event, matchData) {
         };
     }
 
-    // Probs IA
     const aiProbs = {
         home: parseFloat(ai["1X2"].victoria_local.probabilidad) / 100 || stats.finalHome,
         draw: parseFloat(ai["1X2"].empate.probabilidad) / 100 || stats.finalDraw,
         away: parseFloat(ai["1X2"].victoria_visitante.probabilidad) / 100 || stats.finalAway,
     };
-    // Normalizar si la suma no está cerca de 100%
     const totalAiProbs = aiProbs.home + aiProbs.draw + aiProbs.away;
     if (totalAiProbs < 0.9 || totalAiProbs > 1.1) {
         console.warn(`[getIntegratedPrediction] Suma de probabilidades IA inválida (${totalAiProbs.toFixed(2)}), usando estadísticas como respaldo`);
@@ -1057,7 +1130,6 @@ function getIntegratedPrediction(stats, event, matchData) {
     }
     const statProbs = { home: stats.finalHome, draw: stats.finalDraw, away: stats.finalAway };
 
-    // Lógica de fusión: Promedio ponderado (60% Stats, 40% IA - Stats más "duros")
     const weightStats = 0.6;
     const weightIA = 0.4;
     const integratedProbs = {
@@ -1066,14 +1138,13 @@ function getIntegratedPrediction(stats, event, matchData) {
         away: (statProbs.away * weightStats + aiProbs.away * weightIA)
     };
 
-    // Detectar consenso/discrepancia
     const statMaxKey = Object.keys(statProbs).reduce((a, b) => statProbs[a] > statProbs[b] ? a : b);
     const aiMaxKey = Object.keys(aiProbs).reduce((a, b) => aiProbs[a] > aiProbs[b] ? a : b);
     const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
     const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
     let header = '';
     let verdictText = '';
-    if (statMaxKey === aiMaxKey && diff < 0.1) {  // Consenso fuerte (<10% diff)
+    if (statMaxKey === aiMaxKey && diff < 0.1) {
         header = `Recomendación Segura: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
         verdictText = `Ambos análisis coinciden: la mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Apuesta si la cuota es menor a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
@@ -1081,7 +1152,6 @@ function getIntegratedPrediction(stats, event, matchData) {
         verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
     }
 
-    // Probabilidades para tiles
     const bttsValue = ai.BTTS?.si?.probabilidad && parseFloat(ai.BTTS.si.probabilidad) > 0 ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH;
     const o25Value = ai.Goles?.mas_2_5?.probabilidad && parseFloat(ai.Goles.mas_2_5.probabilidad) > 0 ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : stats.pO25H;
     const probabilities = [
@@ -1092,7 +1162,6 @@ function getIntegratedPrediction(stats, event, matchData) {
         { id: 'pO25', value: o25Value, label: 'Más de 2.5 Goles', stats: stats.pO25H, ia: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : null }
     ];
 
-    // Top Recomendaciones: Basadas en integratedProbs, filtrando >30%
     const recs = Object.entries(integratedProbs)
         .filter(([key, val]) => val >= 0.3)
         .sort((a, b) => b[1] - a[1])
@@ -1106,7 +1175,6 @@ function getIntegratedPrediction(stats, event, matchData) {
 
     const recsHtml = `<div class="rec-suggestion"><h4>Top Recomendaciones</h4><ul>${recs || '<li><span>No hay recomendaciones con probabilidad mayor al 30%</span></li>'}</ul></div>`;
 
-    // Análisis detallado (1X2 con dual probs + justificaciones truncadas)
     const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin datos de IA.", 15);
     const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin datos de IA.", 15);
     const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin datos de IA.", 15);
@@ -1114,9 +1182,9 @@ function getIntegratedPrediction(stats, event, matchData) {
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>
             <ul>
-                <li class="rec-item"><span class="rec-bet ${homeJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.home)} | IA: ${formatPct(aiProbs.home)} | Combinado: ${formatPct(integratedProbs.home)}</span></li>
-                <li class="rec-item"><span class="rec-bet ${drawJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>Empate:</strong> ${drawJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.draw)} | IA: ${formatPct(aiProbs.draw)} | Combinado: ${formatPct(integratedProbs.draw)}</span></li>
-                <li class="rec-item"><span class="rec-bet ${awayJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.away)} | IA: ${formatPct(aiProbs.away)} | Combinado: ${formatPct(integratedProbs.away)}</span></li>
+                <li class="rec-item"><span class="rec-bet ${homeJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
+                <li class="rec-item"><span class="rec-bet ${drawJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>Empate:</strong> ${drawJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
+                <li class="rec-item"><span class="rec-bet ${awayJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
             </ul>
             <h4>Otras Apuestas</h4>
             <ul>
@@ -1124,84 +1192,95 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(o25Value)}</span></li>
             </ul>
             <h4>Apuesta Recomendada</h4>
-            <div class="rec-item verdict-item"><span class="rec-bet">${truncateText(verdictText, 25).text}</span></div>
+            <div class="rec-item verdict-item"><span class="rec-bet">${verdictText}</span></div>
         </div>
     `;
 
-    return { header, probabilities, recsHtml, analysisHtml };
+    return {
+        header,
+        probabilities,
+        recsHtml,
+        analysisHtml,
+        verdict: verdictText
+    };
 }
 
-// CÁLCULO COMPLETO
-function calculateAll() {
-    const leagueSelect = $('leagueSelect');
-    const teamHomeSelect = $('teamHome');
-    const teamAwaySelect = $('teamAway');
-    
-    if (!leagueSelect || !teamHomeSelect || !teamAwaySelect) {
-        console.error('[calculateAll] Elementos DOM no encontrados: leagueSelect=', !!leagueSelect, 'teamHome=', !!teamHomeSelect, 'teamAway=', !!teamAwaySelect);
-        const details = $('details');
-        if (details) {
-            details.innerHTML = '<div class="error"><strong>Error:</strong> Problema con la interfaz HTML. Verifica los elementos select.</div>';
-        }
-        return;
-    }
-    const leagueCode = leagueSelect.value;
-    const teamHome = teamHomeSelect.value;
-    const teamAway = teamAwaySelect.value;
-    console.log('[calculateAll] Valores actuales: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway);
+// CÁLCULO DE TODAS LAS PREDICCIONES
+async function calculateAll() {
+    const leagueCode = $('leagueSelect').value;
+    const teamHome = $('teamHome').value;
+    const teamAway = $('teamAway').value;
+    console.log('[calculateAll] Iniciando cálculo:', { leagueCode, teamHome, teamAway });
+
     if (!leagueCode || !teamHome || !teamAway) {
+        console.warn('[calculateAll] Faltan datos: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway);
         const details = $('details');
         if (details) {
-            details.innerHTML = '<div class="warning"><strong>Advertencia:</strong> Selecciona una liga y ambos equipos para calcular el pronóstico.</div>';
+            details.innerHTML = '<div class="error"><strong>Error:</strong> Selecciona una liga y ambos equipos para calcular el pronóstico.</div>';
         }
-        console.log('[calculateAll] Faltan datos: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway);
         return;
     }
+
     const tH = findTeam(leagueCode, teamHome);
     const tA = findTeam(leagueCode, teamAway);
     if (!tH || !tA) {
+        console.error('[calculateAll] Equipo(s) no encontrado(s):', { tH, tA });
         const details = $('details');
         if (details) {
-            details.innerHTML = `<div class="error"><strong>Error:</strong> Uno o ambos equipos no encontrados en la liga seleccionada.</div>`;
+            details.innerHTML = `<div class="error"><strong>Error:</strong> No se encontraron datos para ${!tH ? teamHome : ''} ${!tA ? teamAway : ''}.</div>`;
         }
-        console.error('[calculateAll] Equipos no encontrados: tH=', tH, 'tA=', tA);
         return;
     }
+
     const stats = dixonColesProbabilities(tH, tA, leagueCode);
     console.log('[calculateAll] Probabilidades estadísticas:', stats);
+
+    const matchData = {
+        local: teamHome,
+        visitante: teamAway
+    };
+
+    let event = null;
     const ligaName = leagueCodeToName[leagueCode];
-    const event = allData.calendario[ligaName]?.find(e => normalizeName(e.local) === normalizeName(teamHome) && normalizeName(e.visitante) === normalizeName(teamAway));
-    const matchData = { local: teamHome, visitante: teamAway };
-    
+    if (allData.calendario && allData.calendario[ligaName]) {
+        event = allData.calendario[ligaName].find(e =>
+            normalizeName(e.local) === normalizeName(teamHome) &&
+            normalizeName(e.visitante) === normalizeName(teamAway)
+        );
+        console.log('[calculateAll] Evento encontrado:', event);
+    }
+
     const integrated = getIntegratedPrediction(stats, event || {}, matchData);
-    
-    // Actualiza tiles con probabilidades
-    integrated.probabilities.forEach(p => {
-        const el = $(p.id);
+
+    ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25'].forEach(id => {
+        const el = $(id);
         if (el) {
-            el.innerHTML = p.ia !== null ? `${formatPct(p.stats)} / ${formatPct(p.ia)} <small>(Stats/IA)</small>` : `${formatPct(p.value)} <small>(Stats)</small>`;
+            const prob = integrated.probabilities.find(p => p.id === id);
+            el.textContent = prob ? formatPct(prob.value) : '--';
         }
     });
-    
-    // Pobla sugerencias
+
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = integrated.recsHtml;
     }
-    
-    // Pobla análisis integrado
+
     const integratedPrediction = $('integrated-prediction');
     if (integratedPrediction) {
-        integratedPrediction.innerHTML = `<h3>${integrated.header}</h3>${integrated.analysisHtml}`;
-        integratedPrediction.querySelectorAll('.rec-bet button').forEach(btn => btn.addEventListener('click', toggleText));
+        integratedPrediction.innerHTML = `
+            <h3>${integrated.header}</h3>
+            ${integrated.analysisHtml}
+        `;
+        integratedPrediction.querySelectorAll('.rec-bet.truncated button').forEach(button => {
+            button.addEventListener('click', toggleText);
+        });
+    }
+
+    const details = $('details');
+    if (details) {
+        details.innerHTML = `<div class="success"><strong>Veredicto:</strong> ${integrated.verdict}</div>`;
     }
 }
 
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
-        e.preventDefault();
-        alert('Las herramientas de desarrollo están deshabilitadas.');
-    }
-});
+// INICIAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', init);

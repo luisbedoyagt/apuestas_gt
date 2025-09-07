@@ -1,8 +1,7 @@
 /* ========================================================================== */
-/* ESTILOS GLOBALES Y VARIABLES (APLICAN A AMBOS) */
+/* ESTILOS GLOBALES Y VARIABLES */
 /* ========================================================================== */
 
-/* Variables de color y tipografía */
 :root {
     --primary-bg: #121212;
     --secondary-bg: #1e1e1e;
@@ -83,7 +82,7 @@ body {
 }
 
 .app-header h1 {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 700;
     font-size: clamp(2rem, 5vw, 3.5rem);
     color: var(--highlight-blue);
@@ -559,18 +558,10 @@ select:focus {
 }
 
 @keyframes border-flow {
-    0% {
-        border-color: rgba(255, 99, 71, 0.7);
-    }
-    33% {
-        border-color: rgba(255, 223, 0, 0.7);
-    }
-    66% {
-        border-color: rgba(0, 224, 255, 0.7);
-    }
-    100% {
-        border-color: rgba(255, 99, 71, 0.7);
-    }
+    0% { border-color: rgba(255, 99, 71, 0.7); }
+    33% { border-color: rgba(255, 223, 0, 0.7); }
+    66% { border-color: rgba(0, 224, 255, 0.7); }
+    100% { border-color: rgba(255, 99, 71, 0.7); }
 }
 
 .probability-tile .label {
@@ -594,6 +585,127 @@ select:focus {
 .probability-tile:nth-child(1) .value { color: var(--accent-green); text-shadow: 0 0 5px rgba(55, 204, 142, 0.5); }
 .probability-tile:nth-child(2) .value { color: var(--accent-yellow); text-shadow: 0 0 5px rgba(229, 192, 123, 0.5); }
 .probability-tile:nth-child(3) .value { color: var(--accent-red); text-shadow: 0 0 5px rgba(224, 108, 117, 0.5); }
+
+/* Estilos para secciones de pronósticos */
+.rec-suggestion {
+    background: var(--metal-gradient-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 5px 15px var(--shadow-color), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.rec-suggestion h3, .rec-suggestion h4 {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    color: var(--highlight-blue);
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.7);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rec-suggestion h4 {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+}
+
+.rec-suggestion ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, var(--dark-blue), #0090a0);
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rec-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+.rec-rank {
+    background: rgba(0, 224, 255, 0.2);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--highlight-blue);
+    border: 1px solid var(--highlight-blue);
+    flex-shrink: 0;
+}
+
+.rec-bet {
+    flex-grow: 1;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin: 0 15px;
+    overflow-wrap: break-word;
+    max-width: 65%;
+    line-height: 1.4;
+}
+
+.rec-bet.truncated {
+    max-height: 4.2rem; /* 3 líneas a 1.4rem por línea */
+    overflow: hidden;
+    position: relative;
+}
+
+.rec-bet.truncated::after {
+    content: '...';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(to right, transparent, var(--secondary-bg));
+    padding: 0 5px;
+}
+
+.rec-bet.expanded {
+    max-height: none;
+}
+
+.rec-bet button {
+    background: none;
+    border: none;
+    color: var(--highlight-blue);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px;
+    text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
+}
+
+.rec-bet button:hover {
+    text-decoration: underline;
+}
+
+.rec-prob {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--highlight-blue);
+    text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 100px;
+}
 
 .recommendation-box {
     background: linear-gradient(to bottom, #2a3a4a, #1a1a1a);
@@ -628,102 +740,40 @@ select:focus {
     letter-spacing: 1px;
 }
 
-.rec-suggestion ul {
-    list-style: none;
+/* Diseño del texto de pronóstico detallado y combinado */
+#detailed-prediction, #combined-prediction {
+    padding: 1.5rem;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+#detailed-prediction::before, #combined-prediction::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 10% 10%, rgba(0, 224, 255, 0.1), transparent 50%);
+    pointer-events: none;
+}
+
+#detailed-prediction p, #combined-prediction p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-color);
+    text-align: justify;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    font-style: normal;
 }
 
-/* Estilos para los elementos generados por script2.js */
-.rec-suggestion h3 {
-    font-size: 1.2rem;
-    color: var(--highlight-blue);
-    margin-bottom: 1rem;
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(0, 224, 255, 0.8);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.rec-suggestion ul li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(90deg, #005668, #0090a0);
-    color: #fff;
-    padding: 12px 18px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255,255,255,0.1);
-    font-weight: bold;
-    font-size: 1.2em;
-    border: 1px solid #007c8a;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.rec-suggestion ul li:hover {
-    transform: translateX(5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
-}
-
-.rec-suggestion ul li strong {
-    flex-grow: 1;
-    text-align: left;
-    margin-right: 20px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
-
-.rec-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(90deg, #005668, #0090a0);
-    color: #fff;
-    padding: 12px 18px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255,255,255,0.1);
-    font-weight: bold;
-    font-size: 1.2em;
-    border: 1px solid #007c8a;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.rec-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
-}
-
-.rec-rank {
-    background-color: rgba(0, 224, 255, 0.2);
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.9em;
-    border: 1px solid var(--highlight-blue);
-    color: var(--highlight-blue);
-    flex-shrink: 0;
-}
-
-.rec-bet {
-    flex-grow: 1;
-    text-align: left;
-    margin-left: 20px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
-
-.rec-prob {
-    font-family: var(--font-heading);
-    font-size: 1.4em;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    flex-shrink: 0;
-}
-
+/* Estilos para mensajes de error e información */
 .error, .warning {
     color: #ff8c00;
     background-color: #33281a;
@@ -751,94 +801,10 @@ select:focus {
     color: var(--highlight-blue);
     text-shadow: 0 0 8px rgba(0, 224, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.8);
 }
+
 .ia-card .fas {
     font-size: 1.4rem;
     text-shadow: 0 0 5px var(--highlight-blue);
-}
-
-/* Diseño del texto de pronóstico detallado */
-#detailed-prediction {
-    padding: 1.5rem;
-    background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-    position: relative;
-    overflow: hidden;
-}
-
-#detailed-prediction::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 10% 10%, rgba(0, 224, 255, 0.1), transparent 50%);
-    pointer-events: none;
-}
-
-#detailed-prediction p {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: var(--text-color);
-    text-align: justify;
-    padding: 0;
-    margin: 0;
-    font-style: normal;
-}
-
-/* Estilo para la ficha de Pronóstico Combinado (agregado) */
-#combined-prediction {
-    padding: 1.5rem;
-    background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-    position: relative;
-    overflow: hidden;
-}
-
-#combined-prediction::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 10% 10%, rgba(0, 224, 255, 0.1), transparent 50%);
-    pointer-events: none;
-}
-
-.transition-message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--highlight-blue);
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(32, 35, 42, 0.8);
-    padding: 1rem;
-    border-radius: 8px;
-    backdrop-filter: blur(3px);
-    border: 1px solid var(--highlight-blue);
-    box-shadow: 0 0 10px rgba(97, 218, 251, 0.5);
-    z-index: 10;
-    width: 80%;
-}
-
-.loading-text {
-    font-style: italic;
-    opacity: 0.8;
-}
-
-.loading .card-body {
-    filter: blur(5px);
-    pointer-events: none;
 }
 
 /* Estilos para los grupos de ligas */
@@ -876,6 +842,7 @@ select option {
     color: var(--highlight-blue);
     text-shadow: 0 0 8px rgba(0, 224, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.8);
 }
+
 .recommendation-ia-grid .card-header .fas {
     text-shadow: 0 0 5px var(--highlight-blue);
 }
@@ -911,28 +878,22 @@ select option {
     animation: slide-in-right 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-
-/* ========================================= */
-/* EFECTOS DE LUZ Y ESTILOS DE LOGOS */
-/* ========================================= */
+/* Efectos de luz y estilos de logos */
 .team-logo-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px; /* Espacio entre el nombre del equipo, logo y "vs" */
+    gap: 10px;
 }
 
 .team-logo {
-    width: 40px; /* Ajusta el tamaño según necesites */
-    height: 40px; /* Mantener la proporción */
-    object-fit: contain; /* Asegura que el logo se vea completo */
-    /* border-radius: 50%; <--- Eliminado para que no sea circular */
-    
-    /* Brillo inicial que simula un rayo */
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
     filter: drop-shadow(0 0 3px rgba(0, 191, 255, 0.5)) drop-shadow(0 0 8px rgba(0, 191, 255, 0.3));
-    transition: filter 0.4s ease-in-out, transform 0.3s ease; /* Transición suave para el brillo y la escala */
-    padding: 2px; /* Pequeño padding si se necesita */
-    background-color: transparent; /* Fondo transparente para que el brillo sea el protagonista */
+    transition: filter 0.4s ease-in-out, transform 0.3s ease;
+    padding: 2px;
+    background-color: transparent;
 }
 
 .team-logo.hidden {
@@ -940,30 +901,25 @@ select option {
 }
 
 .team-logo:hover {
-    /* Efecto de rayo más intenso y 'pulsante' al pasar el cursor */
     filter: drop-shadow(0 0 6px rgba(0, 191, 255, 0.7)) drop-shadow(0 0 15px rgba(0, 191, 255, 0.5)) drop-shadow(0 0 25px rgba(0, 191, 255, 0.3));
-    transform: scale(1.1); /* Ligeramente más grande al pasar el ratón */
-    animation: neon-pulse 1.2s ease-in-out infinite alternate; /* Animación de pulsación sutil */
+    transform: scale(1.1);
+    animation: neon-pulse 1.2s ease-in-out infinite alternate;
 }
 
-/* Estilos para logos en las tarjetas de equipo */
 .card-home .team-logo,
 .card-away .team-logo {
-    width: 50px; /* Un poco más grandes en las tarjetas */
+    width: 50px;
     height: 50px;
-    /* Efecto de rayo inicial para tarjetas */
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
 }
 
 .card-home .team-logo:hover,
 .card-away .team-logo:hover {
-    /* Efecto de rayo dorado/amarillo al pasar el cursor */
     filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.8)) drop-shadow(0 0 18px rgba(255, 255, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 255, 0, 0.4));
     transform: scale(1.1);
     animation: neon-pulse-yellow 1.2s ease-in-out infinite alternate;
 }
 
-/* Animación de pulsación para el efecto de rayo */
 @keyframes neon-pulse {
     from {
         filter: drop-shadow(0 0 6px rgba(0, 191, 255, 0.7)) drop-shadow(0 0 15px rgba(0, 191, 255, 0.5));
@@ -1102,6 +1058,55 @@ select option {
         font-size: 0.6rem;
     }
 
+    /* Ajustes para secciones de pronósticos */
+    .rec-suggestion {
+        padding: 0.8rem;
+        margin: 0.6rem 0;
+    }
+    .rec-suggestion h3, .rec-suggestion h4 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .rec-suggestion h4 {
+        font-size: 0.9rem;
+    }
+    .rec-suggestion ul {
+        gap: 5px;
+    }
+    .rec-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+    .rec-rank {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+    .rec-bet {
+        margin: 5px 0;
+        font-size: 0.8rem;
+        max-width: 100%;
+        max-height: 2.8rem; /* 2 líneas */
+    }
+    .rec-bet.truncated::after {
+        background: linear-gradient(to right, transparent, var(--secondary-bg));
+    }
+    .rec-prob {
+        font-size: 0.8rem;
+        text-align: left;
+        min-width: unset;
+    }
+    #detailed-prediction, #combined-prediction {
+        padding: 0.8rem;
+        margin: 0.6rem 0;
+    }
+    #detailed-prediction p, #combined-prediction p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
     /* Resto de las secciones */
     .recommendation-ia-grid {
         grid-template-columns: 1fr;
@@ -1110,22 +1115,6 @@ select option {
     }
     .recommendation-ia-grid .card-header h3 {
         font-size: 1.15rem;
-    }
-    .rec-suggestion h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.5rem;
-    }
-    .rec-suggestion ul {
-        gap: 5px;
-    }
-    .rec-suggestion ul li {
-        padding: 6px 8px;
-        font-size: 0.75em;
-        gap: 8px;
-    }
-    .rec-suggestion ul li strong {
-        font-size: 0.7em;
-        margin-right: 6px;
     }
     #details {
         margin-bottom: 0.2rem;
@@ -1159,26 +1148,6 @@ select option {
     .rec-title {
         font-size: 0.95rem;
         margin-bottom: 0.5rem;
-    }
-    .rec-suggestion ul {
-        gap: 5px;
-    }
-    .rec-item {
-        padding: 6px 8px;
-        font-size: 0.75em;
-        gap: 8px;
-    }
-    .rec-rank {
-        width: 18px;
-        height: 18px;
-        font-size: 0.65em;
-    }
-    .rec-bet {
-        margin-left: 6px;
-        font-size: 0.7em;
-    }
-    .rec-prob {
-        font-size: 0.9em;
     }
     .reset-container {
         padding: 1.5rem 0;

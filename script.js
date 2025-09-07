@@ -11,7 +11,6 @@ const parseNumberString = val => {
     const n = Number(s);
     return isFinite(n) ? n : 0;
 };
-
 // Funciones auxiliares para Poisson y Dixon-Coles
 function poissonProbability(lambda, k) {
     if (lambda <= 0 || k < 0) return 0;
@@ -23,7 +22,6 @@ function factorial(n) {
     for (let i = 2; i <= n; i++) res *= i;
     return res;
 }
-
 // CONFIGURACIÓN DE LIGAS
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMxspSR-2vpzbRjft59hAERHL-07gK3xFH9W_uew_ORcMdZGpWuPrav3q7MpkovDt2/exec";
 let teamsByLeague = {};
@@ -120,7 +118,6 @@ const leagueRegions = {
     "fifa.worldq.concacaf": "Eliminatorias Mundiales",
     "fifa.worldq.uefa": "Eliminatorias Mundiales"
 };
-
 // NORMALIZACIÓN DE DATOS
 function normalizeTeam(raw) {
     if (!raw) return null;
@@ -150,7 +147,6 @@ function normalizeTeam(raw) {
     r.logoUrl = raw.logoUrl || '';
     return r;
 }
-
 // PARSEO DE PRONÓSTICO DE TEXTO PLANO (RESPALDO)
 function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Procesando texto para ${matchData.local} vs ${matchData.visitante}`);
@@ -227,7 +223,6 @@ function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Resultado final:`, result);
     return result;
 }
-
 // FETCH DATOS COMPLETOS
 async function fetchAllData() {
     const leagueSelect = $('leagueSelect');
@@ -272,7 +267,6 @@ async function fetchAllData() {
         return {};
     }
 }
-
 // MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
 function displaySelectedLeagueEvents(leagueCode) {
     const selectedEventsList = $('selected-league-events');
@@ -386,7 +380,6 @@ function displaySelectedLeagueEvents(leagueCode) {
         eventInterval = setInterval(showCurrentPage, 10000);
     }
 }
-
 // INICIALIZACIÓN
 async function init() {
     console.log('[init] Iniciando aplicación a las', new Date().toLocaleString('es-ES', { timeZone: 'America/Guatemala' }));
@@ -502,7 +495,6 @@ async function init() {
     }
     displaySelectedLeagueEvents('');
 }
-
 // FUNCIONES AUXILIARES DE UI
 function onLeagueChange() {
     const code = $('leagueSelect').value;
@@ -557,12 +549,12 @@ function onLeagueChange() {
     clearTeamData('Away');
     displaySelectedLeagueEvents(code);
 }
-
 function selectEvent(homeTeamName, awayTeamName) {
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
     const leagueSelect = $('leagueSelect');
     
+    // Encuentra la liga a la que pertenece el evento
     let eventLeagueCode = '';
     const ligaName = Object.keys(allData.calendario).find(liga =>
         (allData.calendario[liga] || []).some(e =>
@@ -574,8 +566,10 @@ function selectEvent(homeTeamName, awayTeamName) {
         eventLeagueCode = Object.keys(leagueCodeToName).find(key => leagueCodeToName[key] === ligaName) || '';
     }
     
+    // Si se encontró la liga del evento, la selecciona en el dropdown
     if (eventLeagueCode && leagueSelect) {
         leagueSelect.value = eventLeagueCode;
+        // Dispara el evento de cambio para cargar los equipos de esa liga
         const changeEvent = new Event('change');
         leagueSelect.dispatchEvent(changeEvent);
     } else {
@@ -591,6 +585,7 @@ function selectEvent(homeTeamName, awayTeamName) {
     const homeTeamNameNormalized = normalizeName(homeTeamName);
     const awayTeamNameNormalized = normalizeName(awayTeamName);
 
+    // Espera a que los select se llenen con los equipos de la liga correcta
     setTimeout(() => {
         const homeOption = Array.from(teamHomeSelect.options).find(opt => normalizeName(opt.text) === homeTeamNameNormalized);
         const awayOption = Array.from(teamAwaySelect.options).find(opt => normalizeName(opt.text) === awayTeamNameNormalized);
@@ -617,9 +612,8 @@ function selectEvent(homeTeamName, awayTeamName) {
             }
             console.error('[selectEvent] Fallo al seleccionar equipos:', { homeTeamName, awayTeamName, homeOption, awayOption });
         }
-    }, 500);
+    }, 500); // Pequeña espera para asegurar que el DOM se actualice
 }
-
 function restrictSameTeam() {
     const teamHome = $('teamHome').value;
     const teamAway = $('teamAway').value;
@@ -642,7 +636,6 @@ function restrictSameTeam() {
     }
     return true;
 }
-
 function clearTeamData(type) {
     const typeLower = type.toLowerCase();
     $(`pos${type}`).textContent = '--';
@@ -687,7 +680,6 @@ function clearTeamData(type) {
         logoImg.remove();
     }
 }
-
 function clearAll() {
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '--');
     document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
@@ -695,6 +687,10 @@ function clearAll() {
         const el = $(id);
         if (el) el.textContent = '--';
     });
+    const detailedPrediction = $('detailed-prediction');
+    if (detailedPrediction) {
+        detailedPrediction.innerHTML = '<p>Esperando pronóstico detallado...</p>';
+    }
     const details = $('details');
     if (details) {
         details.innerHTML = '<div class="info"><strong>Instrucciones:</strong> Selecciona una liga y los equipos local y visitante para obtener el pronóstico.</div>';
@@ -711,13 +707,13 @@ function clearAll() {
     clearTeamData('Away');
     displaySelectedLeagueEvents('');
 }
-
 // BÚSQUEDA Y LLENADO DE EQUIPO
 function findTeam(leagueCode, teamName) {
     if (leagueCode) {
         if (!teamsByLeague[leagueCode]) return null;
         return teamsByLeague[leagueCode].find(t => t.name.trim().toLowerCase() === teamName.trim().toLowerCase()) || null;
     } else {
+        // Si no se da un código de liga, busca en todas las ligas
         if (!teamsByLeague) return null;
         for (const code in teamsByLeague) {
             const team = teamsByLeague[code].find(t => t.name.trim().toLowerCase() === teamName.trim().toLowerCase());
@@ -726,7 +722,6 @@ function findTeam(leagueCode, teamName) {
         return null;
     }
 }
-
 function fillTeamData(teamName, leagueCode, type) {
     const t = findTeam(leagueCode, teamName);
     const typeLower = type.toLowerCase();
@@ -792,7 +787,6 @@ function fillTeamData(teamName, leagueCode, type) {
         logoImg.style.display = t.logoUrl ? 'inline-block' : 'none';
     }
 }
-
 // CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE
 function dixonColesProbabilities(tH, tA, league) {
     const rho = -0.11;
@@ -867,66 +861,16 @@ function dixonColesProbabilities(tH, tA, league) {
         pO25H
     };
 }
-
-// FUNCIÓN PARA TRUNCAR JUSTIFICACIONES LARGAS
-function truncateText(text, maxWords = 20) {
-    const words = text.split(' ');
-    if (words.length > maxWords) {
-        return {
-            text: words.slice(0, maxWords).join(' ') + '...',
-            needsButton: true,
-            fullText: text
-        };
-    }
-    return {
-        text: text,
-        needsButton: false,
-        fullText: text
-    };
-}
-
-// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
-function toggleText(event) {
-    const button = event.target;
-    const recBet = button.closest('.rec-bet');
-    if (!recBet) return;
-    recBet.classList.toggle('expanded');
-    const isExpanded = recBet.classList.contains('expanded');
-    const fullText = recBet.dataset.fullText;
-    recBet.firstChild.textContent = isExpanded ? fullText : truncateText(fullText).text;
-    button.textContent = isExpanded ? 'Leer menos' : 'Leer más';
-}
-
 // COMBINACIÓN DE PRONÓSTICOS
 function getCombinedPrediction(stats, event, matchData) {
     const combined = {};
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
-    
     if (!ai || !ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
         combined.header = "Análisis Estadístico Principal";
-        combined.body = `
-            <div class="rec-suggestion">
-                <p>No se encontró un pronóstico de IA válido. Análisis basado en estadísticas:</p>
-                <ul>
-                    <li class="rec-item">
-                        <span class="rec-bet">${matchData.local}</span>
-                        <span class="rec-prob">${formatPct(stats.finalHome)}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">Empate</span>
-                        <span class="rec-prob">${formatPct(stats.finalDraw)}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">${matchData.visitante}</span>
-                        <span class="rec-prob">${formatPct(stats.finalAway)}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
+        combined.body = `<p>No se encontró un pronóstico de IA válido. El análisis se basa únicamente en datos estadísticos.</p>`;
         console.log('[getCombinedPrediction] Sin pronóstico IA válido, usando solo estadísticas');
         return combined;
     }
-
     const statProbs = {
         home: stats.finalHome,
         draw: stats.finalDraw,
@@ -941,66 +885,30 @@ function getCombinedPrediction(stats, event, matchData) {
     const aiMax = Math.max(aiProbs.home, aiProbs.draw, aiProbs.away);
     const statBest = Object.keys(statProbs).find(k => statProbs[k] === statMax);
     const aiBest = Object.keys(aiProbs).find(k => aiProbs[k] === aiMax);
-
-    let header = statBest === aiBest
-        ? `¡Consenso! Apuesta Fuerte en la ${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} ⭐`
-        : "Discrepancia en Pronósticos ⚠️";
-
-    // Procesar justificaciones con truncamiento
-    const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin justificación detallada.");
-    const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin justificación detallada.");
-    const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.");
-
+    let header = "Pronóstico Combinado (Estadística + IA)";
     let body = `
-        <div class="rec-suggestion">
-            <h4>Análisis del Partido</h4>
-            <ul>
-                <li class="rec-item">
-                    <span class="rec-bet${homeJust.needsButton ? ' truncated' : ''}" data-full-text="${homeJust.fullText}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
-                    <span class="rec-prob">IA: ${formatPct(aiProbs.home)} | Stats: ${formatPct(statProbs.home)}</span>
-                </li>
-                <li class="rec-item">
-                    <span class="rec-bet${drawJust.needsButton ? ' truncated' : ''}" data-full-text="${drawJust.fullText}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
-                    <span class="rec-prob">IA: ${formatPct(aiProbs.draw)} | Stats: ${formatPct(statProbs.draw)}</span>
-                </li>
-                <li class="rec-item">
-                    <span class="rec-bet${awayJust.needsButton ? ' truncated' : ''}" data-full-text="${awayJust.fullText}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
-                    <span class="rec-prob">IA: ${formatPct(aiProbs.away)} | Stats: ${formatPct(statProbs.away)}</span>
-                </li>
-            </ul>
-            <h4>Otros Mercados</h4>
-            <ul>
-                <li class="rec-item">
-                    <span class="rec-bet">Ambos Anotan (Sí)</span>
-                    <span class="rec-prob">${ai.BTTS.si.probabilidad || '0%'}</span>
-                </li>
-                <li class="rec-item">
-                    <span class="rec-bet">Ambos Anotan (No)</span>
-                    <span class="rec-prob">${ai.BTTS.no.probabilidad || '0%'}</span>
-                </li>
-                <li class="rec-item">
-                    <span class="rec-bet">Más de 2.5 Goles</span>
-                    <span class="rec-prob">${ai.Goles.mas_2_5.probabilidad || '0%'}</span>
-                </li>
-                <li class="rec-item">
-                    <span class="rec-bet">Menos de 2.5 Goles</span>
-                    <span class="rec-prob">${ai.Goles.menos_2_5.probabilidad || '0%'}</span>
-                </li>
-            </ul>
-            <p><strong>Veredicto:</strong> ${
-                statBest === aiBest
-                    ? `Ambos modelos coinciden en que la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong> es el resultado más probable.`
-                    : `Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>. Analiza los detalles para decidir.`
-            }</p>
-        </div>
+        <p><strong>Modelo Estadístico:</strong> Victoria Local: ${formatPct(statProbs.home)}, Empate: ${formatPct(statProbs.draw)}, Victoria Visitante: ${formatPct(statProbs.away)}.</p>
+        <p><strong>Modelo de IA:</strong> Victoria Local: ${formatPct(aiProbs.home)}, Empate: ${formatPct(aiProbs.draw)}, Victoria Visitante: ${formatPct(aiProbs.away)}.</p>
     `;
-
+    if (statBest === aiBest) {
+        const resultText = statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
+        const reason = ai["1X2"][statBest === 'home' ? 'victoria_local' : statBest === 'draw' ? 'empate' : 'victoria_visitante']?.justificacion || "Sin justificación detallada.";
+        header = `¡Consenso! Apuesta Fuerte en la ${resultText} ⭐`;
+        body += `<p>Ambos modelos coinciden en que la **${resultText}** es el resultado más probable.</p>`;
+        body += `<p><strong>Justificación de la IA:</strong> ${reason}</p>`;
+    } else {
+        const statResult = statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
+        const aiResult = aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
+        header = "Discrepancia en Pronósticos ⚠️";
+        body += `<p>El modelo estadístico (${formatPct(statMax)}) favorece la **${statResult}**, mientras que la IA (${formatPct(aiMax)}) se inclina por la **${aiResult}**.</p>`;
+        body += `<p><strong>Análisis de la IA:</strong> ${ai["1X2"][aiBest === 'home' ? 'victoria_local' : aiBest === 'draw' ? 'empate' : 'victoria_visitante']?.justificacion || "Sin justificación detallada."}</p>`;
+        body += `<p>Se recomienda cautela. Analiza la justificación de la IA para entender los factores externos que no considera el modelo estadístico.</p>`;
+    }
     combined.header = header;
     combined.body = body;
     console.log('[getCombinedPrediction] Pronóstico combinado:', combined);
     return combined;
 }
-
 // CÁLCULO COMPLETO
 function calculateAll() {
     const leagueSelect = $('leagueSelect');
@@ -1024,7 +932,11 @@ function calculateAll() {
         if (details) {
             details.innerHTML = '<div class="warning"><strong>Advertencia:</strong> Selecciona una liga y ambos equipos para calcular el pronóstico.</div>';
         }
-        console.log('[calculateAll] Faltan datos: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway);
+        console.log('[calculateAll] Faltan datos: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway, 'DOM values=', {
+            leagueSelect: leagueSelect.value,
+            teamHome: teamHomeSelect.value,
+            teamAway: teamAwaySelect.value
+        });
         return;
     }
     const tH = findTeam(leagueCode, teamHome);
@@ -1054,38 +966,53 @@ function calculateAll() {
         if (el) el.textContent = formatPct(p.value);
     });
     const recommendations = probabilities.filter(p => p.value >= 0.3)
-                                       .sort((a, b) => b.value - a.value)
-                                       .slice(0, 3);
+                                         .sort((a, b) => b.value - a.value)
+                                         .slice(0, 3);
     console.log('[calculateAll] Recomendaciones:', recommendations);
-    let suggestionText = `
-        <div class="rec-suggestion">
-            <h3>Recomendaciones de Apuesta</h3>
-            <ul>
-                ${recommendations.map((r, index) => `
-                    <li class="rec-item">
-                        <span class="rec-rank">${index + 1}</span>
-                        <span class="rec-bet">${r.label}</span>
-                        <span class="rec-prob">${formatPct(r.value)}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>
-    `;
+    let suggestionText = '<h3>Recomendaciones de Apuesta</h3><ul>';
+    recommendations.forEach(r => {
+        suggestionText += `<li><strong>${r.label} (${formatPct(r.value)})</strong> - ${r.type}</li>`;
+    });
+    suggestionText += '</ul>';
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = suggestionText;
+    }
+    const detailedPredictionBox = $('detailed-prediction');
+    if (event && event.pronostico_json) {
+        const json = event.pronostico_json;
+        let html = `<h3>Análisis de la IA</h3><div class="ia-prediction">`;
+        html += `<h4>Análisis del Partido: ${teamHome} vs. ${teamAway}</h4>`;
+        html += `<p><strong>${teamHome}:</strong> ${json["1X2"].victoria_local.justificacion} (Probabilidad: ${json["1X2"].victoria_local.probabilidad})</p>`;
+        html += `<p><strong>Empate:</strong> ${json["1X2"].empate.justificacion} (Probabilidad: ${json["1X2"].empate.probabilidad})</p>`;
+        html += `<p><strong>${teamAway}:</strong> ${json["1X2"].victoria_visitante.justificacion} (Probabilidad: ${json["1X2"].victoria_visitante.probabilidad})</p>`;
+        html += `<h4>Ambos Anotan (BTTS):</h4>`;
+        html += `<p><strong>Sí:</strong> ${json.BTTS.si.probabilidad} ${json.BTTS.si.justificacion ? ` - ${json.BTTS.si.justificacion}` : ''}</p>`;
+        html += `<p><strong>No:</strong> ${json.BTTS.no.probabilidad} ${json.BTTS.no.justificacion ? ` - ${json.BTTS.no.justificacion}` : ''}</p>`;
+        html += `<h4>Goles Totales (Más/Menos 2.5):</h4>`;
+        html += `<p><strong>Más de 2.5:</strong> ${json.Goles.mas_2_5.probabilidad} ${json.Goles.mas_2_5.justificacion ? ` - ${json.Goles.mas_2_5.justificacion}` : ''}</p>`;
+        html += `<p><strong>Menos de 2.5:</strong> ${json.Goles.menos_2_5.probabilidad} ${json.Goles.menos_2_5.justificacion ? ` - ${json.Goles.menos_2_5.justificacion}` : ''}</p>`;
+        html += `</div>`;
+        if (detailedPredictionBox) {
+            detailedPredictionBox.innerHTML = html;
+            console.log('[calculateAll] Mostrando pronóstico JSON:', json);
+        }
+    } else if (event && event.pronostico) {
+        const formattedPrediction = event.pronostico.replace(/\n/g, '<br>').replace(/###\s*(.*)/g, '<h4>$1</h4>');
+        if (detailedPredictionBox) {
+            detailedPredictionBox.innerHTML = `<h3>Análisis de la IA</h3><div class="ia-prediction">${formattedPrediction}</div>`;
+            console.log('[calculateAll] Mostrando pronóstico de texto plano:', event.pronostico);
+        }
+    } else if (detailedPredictionBox) {
+        detailedPredictionBox.innerHTML = `<p>No hay un pronóstico de la IA disponible para este partido en la hoja de cálculo.</p>`;
+        console.log('[calculateAll] Sin pronóstico disponible para', teamHome, 'vs', teamAway);
     }
     const combined = getCombinedPrediction(stats, event || {}, matchData);
     const combinedPrediction = $('combined-prediction');
     if (combinedPrediction) {
         combinedPrediction.innerHTML = `<h3>${combined.header}</h3>${combined.body}`;
-        // Añadir manejadores de eventos para los botones "Leer más"
-        combinedPrediction.querySelectorAll('.rec-bet button').forEach(button => {
-            button.addEventListener('click', toggleText);
-        });
     }
 }
-
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
     if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
@@ -1094,3 +1021,4 @@ document.addEventListener('keydown', e => {
     }
 });
 document.addEventListener('DOMContentLoaded', init);
+

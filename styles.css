@@ -673,14 +673,21 @@ select:focus {
     overflow-wrap: break-word;
     max-width: 65%;
     line-height: 1.4;
-    display: flex;
-    align-items: center;
 }
 
 .rec-bet.truncated {
     max-height: 4.2rem; /* 3 líneas a 1.4rem por línea */
     overflow: hidden;
-    text-overflow: clip;
+    position: relative;
+}
+
+.rec-bet.truncated::after {
+    content: '...';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(to right, transparent, var(--secondary-bg));
+    padding: 0 5px;
 }
 
 .rec-bet.expanded {
@@ -693,16 +700,13 @@ select:focus {
     color: var(--highlight-blue);
     font-size: 0.85rem;
     cursor: pointer;
-    padding: 2px 8px;
-    margin-left: 8px;
+    padding: 0;
+    margin-left: 5px;
     text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
-    text-decoration: underline;
-    display: inline-block;
-    transition: color 0.2s ease;
 }
 
 .rec-bet button:hover {
-    color: #00b7eb;
+    text-decoration: underline;
 }
 
 .rec-prob {
@@ -1037,16 +1041,9 @@ select:focus {
         font-size: 0.8rem;
         max-width: 100%;
         max-height: 2.8rem; /* 2 líneas */
-        display: flex;
-        align-items: center;
     }
-    .rec-bet.truncated {
-        text-overflow: clip;
-    }
-    .rec-bet button {
-        padding: 2px 6px;
-        font-size: 0.75rem;
-        margin-left: 6px;
+    .rec-bet.truncated::after {
+        background: linear-gradient(to right, transparent, var(--secondary-bg));
     }
     .rec-prob {
         font-size: 0.8rem;

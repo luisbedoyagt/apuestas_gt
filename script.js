@@ -160,7 +160,7 @@ function parsePlainText(text, matchData) {
         draw: "Sin justificación detallada.",
         away: "Sin justificación detallada."
     };
-    const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$)/s);
+    const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$s)/s);
     if (probsMatch && probsMatch[1]) {
         const probsText = probsMatch[1];
         const percentages = probsText.match(/(\d+)%/g) || [];
@@ -175,7 +175,7 @@ function parsePlainText(text, matchData) {
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de probabilidades en el texto: ${text}`);
     }
-    const analysisMatch = text.match(/Análisis del Partido:(.*?)Probabilidades:/s);
+    const analysisMatch = text.match(/Análisis del Partido:(.*?)Prob probabilities:/s);
     if (analysisMatch && analysisMatch[1]) {
         const analysisText = analysisMatch[1];
         const localJustification = analysisText.match(new RegExp(`${matchData.local}:(.*?)(?:Empate:|$)`, 's'));
@@ -873,7 +873,7 @@ function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         return {
-            text: words.slice(0, maxWords).join(' '), // Eliminamos los "..."
+            text: words.slice(0, maxWords).join(' '),
             needsButton: true,
             fullText: text
         };
@@ -1093,11 +1093,4 @@ function calculateAll() {
     }
 }
 
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
-        e.preventDefault();
-        alert('Las herramientas de desarrollo están deshabilitadas.');
-    }
-});
 document.addEventListener('DOMContentLoaded', init);

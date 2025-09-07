@@ -882,6 +882,40 @@ select:focus {
     }
 }
 
+
+.rec-item .rec-bet {
+    display: block;
+    flex-grow: 1;
+    max-height: 4.5em; /* Limita la altura del contenedor. Ajusta este valor si quieres más o menos texto inicial. */
+    overflow: hidden; /* Oculta cualquier contenido que se salga del área definida por max-height. */
+    text-overflow: ellipsis; /* Muestra puntos suspensivos (...) para indicar que hay más texto. */
+    white-space: normal;
+    position: relative;
+    font-size: 1em; /* Asegúrate de que el tamaño de fuente sea consistente */
+    line-height: 1.5em; /* Esto define la altura de la línea. 3 líneas * 1.5em = 4.5em */
+}
+
+.rec-item .rec-bet.expanded {
+    max-height: none; /* Cuando se expande, elimina la restricción de altura. */
+    overflow: visible; /* Permite que se vea todo el contenido. */
+}
+
+/* Estilo para los botones "Leer más/menos" */
+.rec-item .rec-bet button {
+    background: none;
+    border: none;
+    color: #007bff; /* Color de enlace */
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px;
+    font-size: 0.9em;
+    text-decoration: underline;
+}
+
+/* Regla específica para el veredicto, si deseas que tenga un truncamiento diferente */
+.rec-item.verdict-item .rec-bet {
+    max-height: 6em; /* Opcional: Dale un poco más de altura al veredicto */
+}
 /* ========================================================================== */
 /* AJUSTES PARA MÓVIL (MENOS DE 767PX) */
 /* ========================================================================== */
@@ -1151,3 +1185,4 @@ select:focus {
         padding-left: 8px;
     }
 }
+

@@ -160,9 +160,12 @@
             <section class="card integrated-card">
                 <header class="card-header">
                     <i class="fas fa-brain"></i>
-                    <h3>Pronóstico Integrado</h3>
+                    <h3>Pronóstico Integrado: Estadísticas + IA</h3>
                 </header>
                 <div class="card-body">
+                    <div id="details">
+                        Detalles del Pronóstico
+                    </div>
                     <div class="probabilities-grid">
                         <div class="probability-tile">
                             <span class="label">Victoria Local</span>
@@ -176,12 +179,23 @@
                             <span class="label">Victoria Visitante</span>
                             <span class="value" id="pAway">-- <small>(Stats/IA)</small></span>
                         </div>
+                        <div class="probability-tile">
+                            <span class="label">Ambos Anotan</span>
+                            <span class="value" id="pBTTS">-- <small>(IA/Stats)</small></span>
+                        </div>
+                        <div class="probability-tile">
+                            <span class="label">Más de 2.5 Goles</span>
+                            <span class="value" id="pO25">-- <small>(IA/Stats)</small></span>
+                        </div>
                     </div>
                     <div class="recommendation-box">
-                        <h4 class="rec-title">Recomendaciones</h4>
+                        <h4 class="rec-title">Recomendaciones Fusionadas (Top 3)</h4>
                         <div class="rec-suggestion" id="suggestion">
                             <p>Esperando datos...</p>
                         </div>
+                    </div>
+                    <div id="integrated-prediction">
+                        <p>Esperando análisis integrado...</p>
                     </div>
                 </div>
             </section>

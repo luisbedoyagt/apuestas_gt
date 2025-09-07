@@ -12,6 +12,18 @@ const parseNumberString = val => {
     return isFinite(n) ? n : 0;
 };
 
+// Nueva función para normalizar nombres de equipos
+function normalizeName(name) {
+    if (!name) return '';
+    return name
+        .trim()
+        .toLowerCase()
+        .normalize('NFD') // Descompone caracteres con acentos
+        .replace(/[\u0300-\u036f]/g, '') // Elimina diacríticos
+        .replace(/[^a-z0-9\s]/g, '') // Elimina caracteres especiales
+        .replace(/\s+/g, ' '); // Normaliza espacios
+}
+
 // Funciones auxiliares para Poisson y Dixon-Coles
 function poissonProbability(lambda, k) {
     if (lambda <= 0 || k < 0) return 0;
@@ -28,7 +40,6 @@ function factorial(n) {
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMxspSR-2vpzbRjft59hAERHL-07gK3xFH9W_uew_ORcMdZGpWuPrav3q7MpkovDt2/exec";
 let teamsByLeague = {};
 let allData = {};
-let currentEventPage = 0;
 let eventInterval;
 const leagueNames = {
     "esp.1": "LaLiga España",
@@ -570,71 +581,120 @@ function onLeagueChange() {
 }
 
 function selectEvent(homeTeamName, awayTeamName) {
+    console.log(`[selectEvent] Seleccionando evento: ${homeTeamName} vs ${awayTeamName}`);
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
     const leagueSelect = $('leagueSelect');
     
-    let eventLeagueCode = '';
-    const ligaName = Object.keys(allData.calendario).find(liga =>
-        (allData.calendario[liga] || []).some(e =>
-            e.local.trim().toLowerCase() === homeTeamName.trim().toLowerCase() &&
-            e.visitante.trim().toLowerCase() === awayTeamName.trim().toLowerCase()
-        )
-    );
-    if (ligaName) {
-        eventLeagueCode = Object.keys(leagueCodeToName).find(key => leagueCodeToName[key] === ligaName) || '';
-    }
-    
-    if (eventLeagueCode && leagueSelect) {
-        leagueSelect.value = eventLeagueCode;
-        const changeEvent = new Event('change');
-        leagueSelect.dispatchEvent(changeEvent);
-    } else {
-        console.error('[selectEvent] No se pudo encontrar la liga para el evento.');
+    if (!teamHomeSelect || !teamAwaySelect || !leagueSelect) {
+        console.error('[selectEvent] Elementos DOM no encontrados: teamHomeSelect=', !!teamHomeSelect, 'teamAwaySelect=', !!teamAwaySelect, 'leagueSelect=', !!leagueSelect);
         const details = $('details');
         if (details) {
-            details.innerHTML = '<div class="error"><strong>Error:</strong> No se pudo encontrar la liga del evento.</div>';
+            details.innerHTML = '<div class="error"><strong>Error:</strong> Problema con la interfaz HTML. Verifica los elementos select.</div>';
         }
         return;
     }
 
-    constydneyName = name => name.trim().toLowerCase();
-    const homeTeamNameNormalized = normalizeName(homeTeamName);
-    const awayTeamNameNormalized = normalizeName(awayTeamName);
+    // Buscar la liga correspondiente al evento
+    let eventLeagueCode = '';
+    const ligaName = Object.keys(allData.calendario).find(liga =>
+        (allData.calendario[liga] || []).some(e =>
+            normalizeName(e.local) === normalizeName(homeTeamName) &&
+            normalizeName(e.visitante) === normalizeName(awayTeamName)
+        )
+    );
+    if (ligaName) {
+        eventLeagueCode = Object.keys(leagueCodeToName).find(key => leagueCodeToName[key] === ligaName) || '';
+        console.log(`[selectEvent] Liga encontrada: ${ligaName} (code: ${eventLeagueCode})`);
+    } else {
+        console.error('[selectEvent] No se pudo encontrar la liga para el evento:', { homeTeamName, awayTeamName });
+        const details = $('details');
+        if (details) {
+            details.innerHTML = `<div class="error"><strong>Error:</strong> No se pudo encontrar la liga del evento ${homeTeamName} vs ${awayTeamName}.</div>`;
+        }
+        return;
+    }
 
-    setTimeout(() => {
+    // Actualizar el selector de liga
+    if (eventLeagueCode) {
+        leagueSelect.value = eventLeagueCode;
+        const changeEvent = new Event('change');
+        leagueSelect.dispatchEvent(changeEvent);
+    } else {
+        console.error('[selectEvent] Código de liga no encontrado para el evento.');
+        const details = $('details');
+        if (details) {
+            details.innerHTML = `<div class="error"><strong>Error:</strong> No se pudo encontrar el código de la liga para el evento.</div>`;
+        }
+        return;
+    }
+
+    // Esperar a que los selectores de equipos se llenen
+    const waitForTeams = async () => {
+        let attempts = 0;
+        const maxAttempts = 10;
+        while (teamHomeSelect.options.length <= 1 && teamAwaySelect.options.length <= 1 && attempts < maxAttempts) {
+            console.log(`[selectEvent] Esperando a que los selectores de equipos se llenen... (intento ${attempts + 1})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        if (attempts >= maxAttempts) {
+            console.error('[selectEvent] Tiempo de espera agotado para llenar los selectores de equipos.');
+            const details = $('details');
+            if (details) {
+                details.innerHTML = `<div class="error"><strong>Error:</strong> No se pudieron cargar los equipos para la liga seleccionada.</div>`;
+            }
+            return false;
+        }
+        return true;
+    };
+
+    waitForTeams().then(success => {
+        if (!success) return;
+
+        const homeTeamNameNormalized = normalizeName(homeTeamName);
+        const awayTeamNameNormalized = normalizeName(awayTeamName);
+
+        // Buscar opciones en los selectores
         const homeOption = Array.from(teamHomeSelect.options).find(opt => normalizeName(opt.text) === homeTeamNameNormalized);
         const awayOption = Array.from(teamAwaySelect.options).find(opt => normalizeName(opt.text) === awayTeamNameNormalized);
-        
-        if (homeOption) {
+
+        if (!homeOption) {
+            console.error('[selectEvent] Equipo local no encontrado en el selector:', homeTeamName, { normalized: homeTeamNameNormalized });
+        }
+        if (!awayOption) {
+            console.error('[selectEvent] Equipo visitante no encontrado en el selector:', awayTeamName, { normalized: awayTeamNameNormalized });
+        }
+
+        if (homeOption && awayOption) {
             teamHomeSelect.value = homeOption.value;
-        } else {
-            console.error('[selectEvent] Equipo local no encontrado:', homeTeamName);
-        }
-        if (awayOption) {
             teamAwaySelect.value = awayOption.value;
-        } else {
-            console.error('[selectEvent] Equipo visitante no encontrado:', awayTeamName);
-        }
-        
-        if (homeOption && awayOption && restrictSameTeam()) {
-            fillTeamData(homeTeamName, eventLeagueCode, 'Home');
-            fillTeamData(awayTeamName, eventLeagueCode, 'Away');
-            calculateAll();
+            console.log('[selectEvent] Equipos seleccionados:', { home: teamHomeSelect.value, away: teamAwaySelect.value });
+
+            if (restrictSameTeam()) {
+                fillTeamData(homeTeamName, eventLeagueCode, 'Home');
+                fillTeamData(awayTeamName, eventLeagueCode, 'Away');
+                calculateAll();
+            } else {
+                console.error('[selectEvent] Fallo en restrictSameTeam');
+                const details = $('details');
+                if (details) {
+                    details.innerHTML = `<div class="error"><strong>Error:</strong> No se pueden seleccionar los mismos equipos para local y visitante.</div>`;
+                }
+            }
         } else {
             const details = $('details');
             if (details) {
-                details.innerHTML = `<div class="error"><strong>Error:</strong> No se pudo encontrar uno o ambos equipos en la lista de la liga.</div>`;
+                details.innerHTML = `<div class="error"><strong>Error:</strong> No se pudo encontrar uno o ambos equipos (${homeTeamName} vs ${awayTeamName}) en la lista de la liga.</div>`;
             }
-            console.error('[selectEvent] Fallo al seleccionar equipos:', { homeTeamName, awayTeamName, homeOption, awayOption });
         }
-    }, 500);
+    });
 }
 
 function restrictSameTeam() {
     const teamHome = $('teamHome').value;
     const teamAway = $('teamAway').value;
-    if (teamHome && teamAway && teamHome === teamAway) {
+    if (teamHome && teamAway && normalizeName(teamHome) === normalizeName(teamAway)) {
         const details = $('details');
         if (details) {
             details.innerHTML = '<div class="error"><strong>Error:</strong> No puedes seleccionar el mismo equipo para local y visitante.</div>';
@@ -727,11 +787,11 @@ function clearAll() {
 function findTeam(leagueCode, teamName) {
     if (leagueCode) {
         if (!teamsByLeague[leagueCode]) return null;
-        return teamsByLeague[leagueCode].find(t => t.name.trim().toLowerCase() === teamName.trim().toLowerCase()) || null;
+        return teamsByLeague[leagueCode].find(t => normalizeName(t.name) === normalizeName(teamName)) || null;
     } else {
         if (!teamsByLeague) return null;
         for (const code in teamsByLeague) {
-            const team = teamsByLeague[code].find(t => t.name.trim().toLowerCase() === teamName.trim().toLowerCase());
+            const team = teamsByLeague[code].find(t => normalizeName(t.name) === normalizeName(teamName));
             if (team) return team;
         }
         return null;
@@ -1110,7 +1170,7 @@ function calculateAll() {
     const stats = dixonColesProbabilities(tH, tA, leagueCode);
     console.log('[calculateAll] Probabilidades estadísticas:', stats);
     const ligaName = leagueCodeToName[leagueCode];
-    const event = allData.calendario[ligaName]?.find(e => e.local.trim().toLowerCase() === teamHome.trim().toLowerCase() && e.visitante.trim().toLowerCase() === teamAway.trim().toLowerCase());
+    const event = allData.calendario[ligaName]?.find(e => normalizeName(e.local) === normalizeName(teamHome) && normalizeName(e.visitante) === normalizeName(teamAway));
     const matchData = { local: teamHome, visitante: teamAway };
     
     const integrated = getIntegratedPrediction(stats, event || {}, matchData);

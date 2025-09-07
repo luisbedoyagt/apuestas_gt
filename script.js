@@ -872,8 +872,9 @@ function dixonColesProbabilities(tH, tA, league) {
 function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
+        const truncated = words.slice(0, maxWords).join(' ') + '...';
         return {
-            text: words.slice(0, maxWords).join(' ') + '...',
+            text: truncated,
             needsButton: true,
             fullText: text
         };
@@ -890,22 +891,27 @@ function toggleText(event) {
     const button = event.target;
     const parentSpan = button.closest('.rec-bet');
     if (!parentSpan) return;
+
     const isExpanded = parentSpan.classList.contains('expanded');
-    const fullText = parentSpan.dataset.fullText;
-    const truncatedText = truncateText(fullText).text;
+    const fullText = parentSpan.dataset.fullText; // Siempre el texto completo con HTML
+    const originalContent = parentSpan.dataset.originalContent; // Contenido inicial truncado con HTML y botón
 
     if (isExpanded) {
+        // Si está expandido, volvemos al estado truncado
         parentSpan.classList.remove('expanded');
-        parentSpan.innerHTML = parentSpan.dataset.originalContent;
+        parentSpan.innerHTML = originalContent; // Restauramos el HTML original que incluye el botón "Leer más"
+        parentSpan.querySelector('button').addEventListener('click', toggleText);
     } else {
+        // Si está truncado, expandimos
         parentSpan.classList.add('expanded');
-        parentSpan.innerHTML = fullText;
+        parentSpan.innerHTML = fullText; // Mostramos el texto completo, que ya incluye el HTML
         const newButton = document.createElement('button');
         newButton.textContent = 'Leer menos';
         newButton.addEventListener('click', toggleText);
         parentSpan.appendChild(newButton);
     }
 }
+
 
 // COMBINACIÓN DE PRONÓSTICOS
 function getCombinedPrediction(stats, event, matchData) {
@@ -956,31 +962,48 @@ function getCombinedPrediction(stats, event, matchData) {
         ? `¡Consenso! Apuesta Fuerte en la ${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} ⭐`
         : "Discrepancia en Pronósticos ⚠️";
 
-    // Procesar justificaciones con truncamiento
-    const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin justificación detallada.");
-    const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin justificación detallada.");
-    const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.");
+    // Procesar justificaciones con truncamiento, manteniendo el HTML
+    const getJustificationHtml = (text, team) => {
+        const truncated = truncateText(text);
+        let content = `<strong>${team}:</strong> ${truncated.text}`;
+        if (truncated.needsButton) {
+            content += ` <button>Leer más</button>`;
+        }
+        return {
+            truncatedHtml: content,
+            fullHtml: `<strong>${team}:</strong> ${truncated.fullText}`
+        };
+    };
+
+    const homeJustHtml = getJustificationHtml(ai["1X2"].victoria_local.justificacion || "Sin justificación detallada.", matchData.local);
+    const drawJustHtml = getJustificationHtml(ai["1X2"].empate.justificacion || "Sin justificación detallada.", "Empate");
+    const awayJustHtml = getJustificationHtml(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.", matchData.visitante);
 
     // Procesar el veredicto
-    const verdictText = statBest === aiBest
+    const verdictRawText = statBest === aiBest
         ? `Ambos modelos coinciden en que la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong> es el resultado más probable.`
         : `Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>. Analiza los detalles para decidir.`;
-    const verdictJust = truncateText(verdictText);
+    
+    const verdictTruncated = truncateText(verdictRawText, 30); // Usar un número de palabras mayor para el veredicto si se desea
+    let verdictContent = `<strong>Veredicto:</strong> ${verdictTruncated.text}`;
+    if (verdictTruncated.needsButton) {
+        verdictContent += ` <button>Leer más</button>`;
+    }
 
     let body = `
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>
             <ul>
                 <li class="rec-item">
-                    <span class="rec-bet" data-full-text="${homeJust.fullText}" data-original-content="<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${escapeHtml(homeJustHtml.fullHtml)}" data-original-content="${escapeHtml(homeJustHtml.truncatedHtml)}">${homeJustHtml.truncatedHtml}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.home)} | Stats: ${formatPct(statProbs.home)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet" data-full-text="${drawJust.fullText}" data-original-content="<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${escapeHtml(drawJustHtml.fullHtml)}" data-original-content="${escapeHtml(drawJustHtml.truncatedHtml)}">${drawJustHtml.truncatedHtml}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.draw)} | Stats: ${formatPct(statProbs.draw)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet" data-full-text="${awayJust.fullText}" data-original-content="<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${escapeHtml(awayJustHtml.fullHtml)}" data-original-content="${escapeHtml(awayJustHtml.truncatedHtml)}">${awayJustHtml.truncatedHtml}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.away)} | Stats: ${formatPct(statProbs.away)}</span>
                 </li>
             </ul>
@@ -1006,7 +1029,7 @@ function getCombinedPrediction(stats, event, matchData) {
             <h4>Veredicto</h4>
             <ul>
                 <li class="rec-item verdict-item">
-                    <span class="rec-bet" data-full-text="${verdictText}" data-original-content="<strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${escapeHtml(verdictRawText)}" data-original-content="${escapeHtml(verdictContent)}">${verdictContent}</span>
                 </li>
             </ul>
         </div>
@@ -1017,6 +1040,19 @@ function getCombinedPrediction(stats, event, matchData) {
     console.log('[getCombinedPrediction] Pronóstico combinado:', combined);
     return combined;
 }
+
+// Función auxiliar para escapar HTML, necesaria para data-full-text y data-original-content
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 
 // CÁLCULO COMPLETO
 function calculateAll() {
@@ -1095,10 +1131,21 @@ function calculateAll() {
     const combined = getCombinedPrediction(stats, event || {}, matchData);
     const combinedPrediction = $('combined-prediction');
     if (combinedPrediction) {
-        combinedPrediction.innerHTML = combined.body;
+        // Limpiamos el contenido anterior
+        combinedPrediction.innerHTML = ''; 
+
+        // Creamos el encabezado y lo añadimos
         const headerElement = document.createElement('h3');
-        headerElement.textContent = combined.header;
-        combinedPrediction.prepend(headerElement);
+        headerElement.innerHTML = combined.header; // Usar innerHTML para interpretar posibles HTML en el header
+        combinedPrediction.appendChild(headerElement);
+
+        // Creamos un div temporal para contener el cuerpo y luego lo añadimos
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = combined.body;
+        while (tempDiv.firstChild) {
+            combinedPrediction.appendChild(tempDiv.firstChild);
+        }
+        
         // Añadir manejadores de eventos para los botones "Leer más"
         combinedPrediction.querySelectorAll('.rec-bet button').forEach(button => {
             button.addEventListener('click', toggleText);

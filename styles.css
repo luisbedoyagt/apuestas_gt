@@ -182,16 +182,6 @@ body {
     top: 8px;
     right: 8px;
 }
-.team-card .card-header::before,
-.team-card .card-header::after,
-.event-card .card-header::before,
-.event-card .card-header::after,
-.result-card .card-header::before,
-.result-card .card-header::after,
-.combined-card .card-header::before,
-.combined-card .card-header::after {
-    content: '';
-}
 
 .team-card .card-header {
     justify-content: center;
@@ -370,18 +360,6 @@ select:focus {
     box-shadow: none;
 }
 
-.disabled-event {
-    cursor: not-allowed;
-    opacity: 0.6;
-    filter: grayscale(80%);
-    transition: none;
-}
-
-.disabled-event:hover {
-    transform: none;
-    box-shadow: none;
-}
-
 /* Estadísticas de equipos */
 .stats-grid {
     display: grid;
@@ -523,8 +501,6 @@ select:focus {
 
 .probability-tile {
     flex: 1 1 0;
-    min-width: unset;
-    max-width: unset;
     background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
     border: 2px solid transparent;
     border-radius: 6px;

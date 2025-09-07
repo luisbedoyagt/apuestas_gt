@@ -678,16 +678,7 @@ select:focus {
 .rec-bet.truncated {
     max-height: 4.2rem; /* 3 líneas a 1.4rem por línea */
     overflow: hidden;
-    position: relative;
-}
-
-.rec-bet.truncated::after {
-    content: '...';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background: linear-gradient(to right, transparent, var(--secondary-bg));
-    padding: 0 5px;
+    text-overflow: clip;
 }
 
 .rec-bet.expanded {
@@ -701,12 +692,13 @@ select:focus {
     font-size: 0.85rem;
     cursor: pointer;
     padding: 0;
-    margin-left: 5px;
+    margin-left: 8px;
     text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
+    text-decoration: underline;
 }
 
 .rec-bet button:hover {
-    text-decoration: underline;
+    color: #00b7eb;
 }
 
 .rec-prob {
@@ -1042,8 +1034,8 @@ select:focus {
         max-width: 100%;
         max-height: 2.8rem; /* 2 líneas */
     }
-    .rec-bet.truncated::after {
-        background: linear-gradient(to right, transparent, var(--secondary-bg));
+    .rec-bet.truncated {
+        text-overflow: clip;
     }
     .rec-prob {
         font-size: 0.8rem;

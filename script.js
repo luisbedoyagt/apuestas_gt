@@ -651,8 +651,8 @@ function dixonColesProbabilities(tH, tA, league) {
     return { finalHome: homeWin, finalDraw: adjustedDraw, finalAway: awayWin, pBTTSH, pO25H };
 }
 
-// FUNCIÓN PARA TRUNCAR TEXTO DEL VEREDICTO
-function truncateVerdict(text, maxWords = 20) {
+// FUNCIÓN PARA TRUNCAR TEXTO
+function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         const truncated = words.slice(0, maxWords).join(' ') + '...';
@@ -661,24 +661,24 @@ function truncateVerdict(text, maxWords = 20) {
     return { text: text, needsButton: false, fullText: text };
 }
 
-// FUNCIÓN PARA ALTERNAR TEXTO DEL VEREDICTO
-function toggleVerdictText(event) {
+// FUNCIÓN PARA ALTERNAR TEXTO
+function toggleText(event) {
     const button = event.target;
-    const parentP = button.closest('.verdict-text');
-    if (!parentP) return;
-    const isExpanded = parentP.classList.contains('expanded');
-    const fullText = parentP.dataset.fullText;
-    const originalContent = parentP.dataset.originalContent;
+    const parentContainer = button.closest('.rec-bet, .verdict-text');
+    if (!parentContainer) return;
+    const isExpanded = parentContainer.classList.contains('expanded');
+    const fullText = parentContainer.dataset.fullText;
+    const originalContent = parentContainer.dataset.originalContent;
     if (isExpanded) {
-        parentP.classList.remove('expanded');
-        parentP.innerHTML = originalContent;
-        const newButton = parentP.querySelector('button');
-        if (newButton) newButton.addEventListener('click', toggleVerdictText);
+        parentContainer.classList.remove('expanded');
+        parentContainer.innerHTML = originalContent;
+        const newButton = parentContainer.querySelector('button');
+        if (newButton) newButton.addEventListener('click', toggleText);
     } else {
-        parentP.classList.add('expanded');
-        parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
-        const newButton = parentP.querySelector('button');
-        if (newButton) newButton.addEventListener('click', toggleVerdictText);
+        parentContainer.classList.add('expanded');
+        parentContainer.innerHTML = `<p>${fullText}</p><button class="btn btn-secondary">Leer menos &lt;</button>`;
+        const newButton = parentContainer.querySelector('button');
+        if (newButton) newButton.addEventListener('click', toggleText);
     }
 }
 
@@ -729,10 +729,18 @@ function getIntegratedPrediction(stats, event, matchData) {
             const just = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
                 : key === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
                 : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
-            const justData = truncateVerdict(just);
-            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet ${justData.needsButton ? 'truncated' : ''}" data-full-text="${justData.fullText}" data-original-content="${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</span><span class="rec-prob">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span></li>`;
+            const justData = truncateText(just);
+            return `
+                <li class="rec-item">
+                    <span class="rec-rank">${i+1}</span>
+                    <span class="rec-bet ${justData.needsButton ? 'truncated' : ''}" data-full-text="${justData.fullText}" data-original-content="${justData.text}${justData.needsButton ? '<button class="btn btn-secondary">Leer más &gt;</button>' : ''}">
+                        <p>${justData.text}</p>
+                        ${justData.needsButton ? '<button class="btn btn-secondary">Leer más &gt;</button>' : ''}
+                    </span>
+                    <span class="rec-prob">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span>
+                </li>`;
         }).join('');
-    const verdictData = truncateVerdict(verdict);
+    const verdictData = truncateText(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
     const analysisHtml = `
         <div class="rec-suggestion">
@@ -744,7 +752,10 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
             <h4>RECOMENDACIÓN FINAL</h4>
-            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
+            <span class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? '<button class="btn btn-secondary">Leer más &gt;</button>' : ''}">
+                <p>${verdictData.text}</p>
+                ${verdictData.needsButton ? '<button class="btn btn-secondary">Leer más &gt;</button>' : ''}
+            </span>
         </div>
     `;
     return { header, probabilities, recsHtml, analysisHtml };
@@ -775,7 +786,7 @@ function calculateAll() {
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
-        suggestion.querySelectorAll('.rec-bet button, .verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
+        suggestion.querySelectorAll('.rec-bet button, .verdict-text button').forEach(btn => btn.addEventListener('click', toggleText));
     }
 }
 

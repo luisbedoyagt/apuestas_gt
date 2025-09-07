@@ -154,7 +154,7 @@ function normalizeTeam(raw) {
 // PARSEO DE PRONÓSTICO DE TEXTO PLANO (RESPALDO)
 function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Procesando texto para ${matchData.local} vs ${matchData.visitante}`);
-    const aiProbs = {};
+    const aiProbs = { home: null, draw: null, away: null };
     const aiJustification = {
         home: "Sin justificación detallada.",
         draw: "Sin justificación detallada.",
@@ -163,12 +163,21 @@ function parsePlainText(text, matchData) {
     const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$)/s);
     if (probsMatch && probsMatch[1]) {
         const probsText = probsMatch[1];
-        const percentages = probsText.match(/(\d+)%/g) || [];
+        const percentages = probsText.match(/(\d+\.?\d*)%/g) || [];
         if (percentages.length >= 3) {
             aiProbs.home = parseFloat(percentages[0]) / 100;
             aiProbs.draw = parseFloat(percentages[1]) / 100;
             aiProbs.away = parseFloat(percentages[2]) / 100;
-            console.log(`[parsePlainText] Probabilidades extraídas: Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
+            // Validar que las probabilidades sumen aproximadamente 100% y no sean todas 0
+            const total = aiProbs.home + aiProbs.draw + aiProbs.away;
+            if (total < 0.9 || total > 1.1 || (aiProbs.home === 0 && aiProbs.draw === 0 && aiProbs.away === 0)) {
+                console.warn(`[parsePlainText] Probabilidades de IA inválidas (suma=${total.toFixed(2)}): Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
+                aiProbs.home = null;
+                aiProbs.draw = null;
+                aiProbs.away = null;
+            } else {
+                console.log(`[parsePlainText] Probabilidades extraídas: Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
+            }
         } else {
             console.warn(`[parsePlainText] No se encontraron suficientes probabilidades en el texto: ${probsText}`);
         }
@@ -188,38 +197,40 @@ function parsePlainText(text, matchData) {
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de análisis en el texto: ${text}`);
     }
+    const bttsProb = text.match(/BTTS.*Sí:\s*(\d+\.?\d*)%/)?.[1];
+    const o25Prob = text.match(/Más de 2\.5:\s*(\d+\.?\d*)%/)?.[1];
     const result = {
         "1X2": {
             victoria_local: {
-                probabilidad: (aiProbs.home * 100 || 0).toFixed(0) + '%',
+                probabilidad: aiProbs.home != null ? (aiProbs.home * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.home
             },
             empate: {
-                probabilidad: (aiProbs.draw * 100 || 0).toFixed(0) + '%',
+                probabilidad: aiProbs.draw != null ? (aiProbs.draw * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.draw
             },
             victoria_visitante: {
-                probabilidad: (aiProbs.away * 100 || 0).toFixed(0) + '%',
+                probabilidad: aiProbs.away != null ? (aiProbs.away * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.away
             }
         },
         "BTTS": {
             si: {
-                probabilidad: (text.match(/BTTS.*Sí:\s*(\d+)%/)?.[1] || '0') + '%',
+                probabilidad: bttsProb && parseFloat(bttsProb) > 0 ? bttsProb + '%' : '0%',
                 justificacion: ""
             },
             no: {
-                probabilidad: (text.match(/BTTS.*No:\s*(\d+)%/)?.[1] || '0') + '%',
+                probabilidad: bttsProb && parseFloat(bttsProb) > 0 ? (100 - parseFloat(bttsProb)).toFixed(0) + '%' : '0%',
                 justificacion: ""
             }
         },
         "Goles": {
             mas_2_5: {
-                probabilidad: (text.match(/Más de 2\.5:\s*(\d+)%/)?.[1] || '0') + '%',
+                probabilidad: o25Prob && parseFloat(o25Prob) > 0 ? o25Prob + '%' : '0%',
                 justificacion: ""
             },
             menos_2_5: {
-                probabilidad: (text.match(/Menos de 2\.5:\s*(\d+)%/)?.[1] || '0') + '%',
+                probabilidad: o25Prob && parseFloat(o25Prob) > 0 ? (100 - parseFloat(o25Prob)).toFixed(0) + '%' : '0%',
                 justificacion: ""
             }
         }
@@ -587,7 +598,7 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
-    const normalizeName = name => name.trim().toLowerCase();
+    constydneyName = name => name.trim().toLowerCase();
     const homeTeamNameNormalized = normalizeName(homeTeamName);
     const awayTeamNameNormalized = normalizeName(awayTeamName);
 
@@ -925,7 +936,9 @@ function escapeHtml(text) {
 // FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
 function getIntegratedPrediction(stats, event, matchData) {
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
-    if (!ai || !ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
+    const hasValidIA = ai && ai["1X2"] && !Object.values(ai["1X2"]).every(p => !p?.probabilidad || parseFloat(p.probabilidad) === 0);
+    
+    if (!hasValidIA) {
         // Fallback: Solo Stats si no IA
         return {
             header: "Análisis Estadístico (Sin IA)",
@@ -955,18 +968,33 @@ function getIntegratedPrediction(stats, event, matchData) {
                         <li class="rec-item"><span class="rec-bet">Empate: ${formatPct(stats.finalDraw)}</span></li>
                         <li class="rec-item"><span class="rec-bet">Victoria ${matchData.visitante}: ${formatPct(stats.finalAway)}</span></li>
                     </ul>
+                    <h4>Otras Apuestas</h4>
+                    <ul>
+                        <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${formatPct(stats.pBTTSH)}</span></li>
+                        <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(stats.pO25H)}</span></li>
+                    </ul>
+                    <h4>Apuesta Recomendada</h4>
+                    <div class="rec-item verdict-item"><span class="rec-bet">Apuesta por la opción con mayor probabilidad (${formatPct(Math.max(stats.finalHome, stats.finalDraw, stats.finalAway))}) si supera el 50%.</span></div>
                 </div>
             `,
-            verdict: "Recomendación: Apuesta por la opción con mayor probabilidad si supera el 50%."
+            verdict: `Apuesta por la opción con mayor probabilidad si supera el 50%.`
         };
     }
 
     // Probs IA
     const aiProbs = {
-        home: parseFloat(ai["1X2"].victoria_local.probabilidad) / 100 || 0,
-        draw: parseFloat(ai["1X2"].empate.probabilidad) / 100 || 0,
-        away: parseFloat(ai["1X2"].victoria_visitante.probabilidad) / 100 || 0,
+        home: parseFloat(ai["1X2"].victoria_local.probabilidad) / 100 || stats.finalHome,
+        draw: parseFloat(ai["1X2"].empate.probabilidad) / 100 || stats.finalDraw,
+        away: parseFloat(ai["1X2"].victoria_visitante.probabilidad) / 100 || stats.finalAway,
     };
+    // Normalizar si la suma no está cerca de 100%
+    const totalAiProbs = aiProbs.home + aiProbs.draw + aiProbs.away;
+    if (totalAiProbs < 0.9 || totalAiProbs > 1.1) {
+        console.warn(`[getIntegratedPrediction] Suma de probabilidades IA inválida (${totalAiProbs.toFixed(2)}), usando estadísticas como respaldo`);
+        aiProbs.home = stats.finalHome;
+        aiProbs.draw = stats.finalDraw;
+        aiProbs.away = stats.finalAway;
+    }
     const statProbs = { home: stats.finalHome, draw: stats.finalDraw, away: stats.finalAway };
 
     // Lógica de fusión: Promedio ponderado (60% Stats, 40% IA - Stats más "duros")
@@ -994,12 +1022,14 @@ function getIntegratedPrediction(stats, event, matchData) {
     }
 
     // Probabilidades para tiles
+    const bttsValue = ai.BTTS?.si?.probabilidad && parseFloat(ai.BTTS.si.probabilidad) > 0 ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH;
+    const o25Value = ai.Goles?.mas_2_5?.probabilidad && parseFloat(ai.Goles.mas_2_5.probabilidad) > 0 ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : stats.pO25H;
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, label: `Victoria ${matchData.local}`, stats: statProbs.home, ia: aiProbs.home },
         { id: 'pDraw', value: integratedProbs.draw, label: 'Empate', stats: statProbs.draw, ia: aiProbs.draw },
         { id: 'pAway', value: integratedProbs.away, label: `Victoria ${matchData.visitante}`, stats: statProbs.away, ia: aiProbs.away },
-        { id: 'pBTTS', value: ai.BTTS?.si?.probabilidad ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH, label: 'Ambos Anotan', stats: stats.pBTTSH, ia: ai.BTTS?.si?.probabilidad ? parseFloat(ai.BTTS.si.probabilidad) / 100 : null },
-        { id: 'pO25', value: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : stats.pO25H, label: 'Más de 2.5 Goles', stats: stats.pO25H, ia: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : null }
+        { id: 'pBTTS', value: bttsValue, label: 'Ambos Anotan', stats: stats.pBTTSH, ia: ai.BTTS?.si?.probabilidad ? parseFloat(ai.BTTS.si.probabilidad) / 100 : null },
+        { id: 'pO25', value: o25Value, label: 'Más de 2.5 Goles', stats: stats.pO25H, ia: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : null }
     ];
 
     // Top Recomendaciones: Basadas en integratedProbs, filtrando >30%
@@ -1030,8 +1060,8 @@ function getIntegratedPrediction(stats, event, matchData) {
             </ul>
             <h4>Otras Apuestas</h4>
             <ul>
-                <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${ai.BTTS?.si?.probabilidad || formatPct(stats.pBTTSH)}</span></li>
-                <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
+                <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${formatPct(bttsValue)}</span></li>
+                <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(o25Value)}</span></li>
             </ul>
             <h4>Apuesta Recomendada</h4>
             <div class="rec-item verdict-item"><span class="rec-bet">${truncateText(verdictText, 25).text}</span></div>

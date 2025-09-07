@@ -873,7 +873,7 @@ function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         return {
-            text: words.slice(0, maxWords).join(' ') + '...',
+            text: words.slice(0, maxWords).join(' '), // Eliminamos los "..."
             needsButton: true,
             fullText: text
         };
@@ -890,11 +890,11 @@ function toggleText(event) {
     const button = event.target;
     const recBet = button.closest('.rec-bet');
     if (!recBet) return;
-    recBet.classList.toggle('expanded');
     const isExpanded = recBet.classList.contains('expanded');
+    recBet.classList.toggle('expanded');
     const fullText = recBet.dataset.fullText;
-    recBet.firstChild.textContent = isExpanded ? fullText : truncateText(fullText).text;
-    button.textContent = isExpanded ? 'Leer menos' : 'Leer más';
+    recBet.firstChild.textContent = isExpanded ? truncateText(fullText).text : fullText;
+    button.textContent = isExpanded ? 'Leer más' : 'Leer menos';
 }
 
 // COMBINACIÓN DE PRONÓSTICOS
@@ -951,6 +951,12 @@ function getCombinedPrediction(stats, event, matchData) {
     const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin justificación detallada.");
     const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.");
 
+    // Procesar el veredicto
+    const verdictText = statBest === aiBest
+        ? `Ambos modelos coinciden en que la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong> es el resultado más probable.`
+        : `Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>. Analiza los detalles para decidir.`;
+    const verdictJust = truncateText(verdictText);
+
     let body = `
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>
@@ -987,11 +993,12 @@ function getCombinedPrediction(stats, event, matchData) {
                     <span class="rec-prob">${ai.Goles.menos_2_5.probabilidad || '0%'}</span>
                 </li>
             </ul>
-            <p><strong>Veredicto:</strong> ${
-                statBest === aiBest
-                    ? `Ambos modelos coinciden en que la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong> es el resultado más probable.`
-                    : `Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>. Analiza los detalles para decidir.`
-            }</p>
+            <h4>Veredicto</h4>
+            <ul>
+                <li class="rec-item verdict-item">
+                    <span class="rec-bet${verdictJust.needsButton ? ' truncated' : ''}" data-full-text="${verdictJust.fullText}"><strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                </li>
+            </ul>
         </div>
     `;
 

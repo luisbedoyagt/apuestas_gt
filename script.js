@@ -938,7 +938,7 @@ function getIntegratedPrediction(stats, event, matchData) {
             ],
             recsHtml: `
                 <div class="rec-suggestion">
-                    <h4>Top Recomendaciones (Stats)</h4>
+                    <h4>Top Recomendaciones (Estadísticas)</h4>
                     <ul>
                         <li class="rec-item"><span class="rec-rank">1</span><span class="rec-bet">Victoria ${matchData.local}</span><span class="rec-prob">${formatPct(stats.finalHome)}</span></li>
                         <li class="rec-item"><span class="rec-rank">2</span><span class="rec-bet">Empate</span><span class="rec-prob">${formatPct(stats.finalDraw)}</span></li>
@@ -948,7 +948,8 @@ function getIntegratedPrediction(stats, event, matchData) {
             `,
             analysisHtml: `
                 <div class="rec-suggestion">
-                    <p>No hay pronóstico IA. Basado en Stats (Dixon-Coles):</p>
+                    <h4>Análisis Estadístico</h4>
+                    <p>No hay datos de IA disponibles. Recomendaciones basadas en estadísticas:</p>
                     <ul>
                         <li class="rec-item"><span class="rec-bet">Victoria ${matchData.local}: ${formatPct(stats.finalHome)}</span></li>
                         <li class="rec-item"><span class="rec-bet">Empate: ${formatPct(stats.finalDraw)}</span></li>
@@ -956,7 +957,7 @@ function getIntegratedPrediction(stats, event, matchData) {
                     </ul>
                 </div>
             `,
-            verdict: "Recomendación: Apuesta en el máximo de Stats si >50%."
+            verdict: "Recomendación: Apuesta por la opción con mayor probabilidad si supera el 50%."
         };
     }
 
@@ -985,11 +986,11 @@ function getIntegratedPrediction(stats, event, matchData) {
     let header = '';
     let verdictText = '';
     if (statMaxKey === aiMaxKey && diff < 0.1) {  // Consenso fuerte (<10% diff)
-        header = `¡Consenso Fuerte! ⭐ Apuesta en ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])} Integrado)`;
-        verdictText = `Ambos modelos coinciden: Stats (${formatPct(statProbs[statMaxKey])}) + IA (${formatPct(aiProbs[aiMaxKey])}) = ${(integratedProbs[integratedMaxKey] * 100).toFixed(1)}%. Recomendación exacta: Apuesta fuerte si cuota < ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
+        header = `Recomendación Segura: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
+        verdictText = `Ambos análisis coinciden: la mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Apuesta si la cuota es menor a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
-        header = `Análisis Integrado ⚠️ (Discrepancia ${diff.toFixed(1)*100}%) - Máximo: ${integratedMaxKey.toUpperCase()}`;
-        verdictText = `Discrepancia: Stats favorece ${statMaxKey.toUpperCase()} (${formatPct(statProbs[statMaxKey])}), IA ${aiMaxKey.toUpperCase()} (${formatPct(aiProbs[aiMaxKey])}). Integrado: ${integratedMaxKey.toUpperCase()} al ${(integratedProbs[integratedMaxKey] * 100).toFixed(1)}%. Sugerencia: Verifica cuotas y forma reciente; prioriza si >55%.`;
+        header = `Apuesta Recomendada: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
+        verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
     }
 
     // Probabilidades para tiles
@@ -1007,32 +1008,32 @@ function getIntegratedPrediction(stats, event, matchData) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
         .map(([key, val], i) => {
-            const just = key === 'home' ? `${matchData.local}: Stats (ataque local fuerte) + IA (${ai["1X2"].victoria_local.justificacion?.slice(0,50) || 'sin datos'}...)`
-                : key === 'draw' ? `Empate: Equipos equilibrados per Stats + IA (${ai["1X2"].empate.justificacion?.slice(0,50) || 'sin datos'}...)`
-                : `${matchData.visitante}: Stats (defensa visitante sólida) + IA (${ai["1X2"].victoria_visitante.justificacion?.slice(0,50) || 'sin datos'}...)`;
-            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? `Victoria ${matchData.local}` : key === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(val)} Integrado)</span><span class="rec-prob">${just}</span></li>`;
+            const just = key === 'home' ? `${matchData.local}: Basado en buen ataque local y análisis de IA.`
+                : key === 'draw' ? `Empate: Equipos con fuerzas similares según estadísticas e IA.`
+                : `${matchData.visitante}: Basado en sólida defensa visitante y análisis de IA.`;
+            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? `Victoria ${matchData.local}` : key === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(val)})</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
 
-    const recsHtml = `<div class="rec-suggestion"><h4>Top Recomendaciones (Integradas)</h4><ul>${recs || '<li><span>No hay recs >30%</span></li>'}</ul></div>`;
+    const recsHtml = `<div class="rec-suggestion"><h4>Top Recomendaciones</h4><ul>${recs || '<li><span>No hay recomendaciones con probabilidad mayor al 30%</span></li>'}</ul></div>`;
 
     // Análisis detallado (1X2 con dual probs + justificaciones truncadas)
-    const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin IA.", 15);
-    const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin IA.", 15);
-    const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin IA.", 15);
+    const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin datos de IA.", 15);
+    const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin datos de IA.", 15);
+    const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin datos de IA.", 15);
     const analysisHtml = `
         <div class="rec-suggestion">
-            <h4>Análisis 1X2 (Stats vs IA)</h4>
+            <h4>Análisis del Partido</h4>
             <ul>
-                <li class="rec-item"><span class="rec-bet ${homeJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Stats: ${formatPct(statProbs.home)} | IA: ${formatPct(aiProbs.home)} | Int: ${formatPct(integratedProbs.home)}</span></li>
-                <li class="rec-item"><span class="rec-bet ${drawJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>Empate:</strong> ${drawJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Stats: ${formatPct(statProbs.draw)} | IA: ${formatPct(aiProbs.draw)} | Int: ${formatPct(integratedProbs.draw)}</span></li>
-                <li class="rec-item"><span class="rec-bet ${awayJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Stats: ${formatPct(statProbs.away)} | IA: ${formatPct(aiProbs.away)} | Int: ${formatPct(integratedProbs.away)}</span></li>
+                <li class="rec-item"><span class="rec-bet ${homeJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.home)} | IA: ${formatPct(aiProbs.home)} | Combinado: ${formatPct(integratedProbs.home)}</span></li>
+                <li class="rec-item"><span class="rec-bet ${drawJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>Empate:</strong> ${drawJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.draw)} | IA: ${formatPct(aiProbs.draw)} | Combinado: ${formatPct(integratedProbs.draw)}</span></li>
+                <li class="rec-item"><span class="rec-bet ${awayJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span><span class="rec-prob">Estadísticas: ${formatPct(statProbs.away)} | IA: ${formatPct(aiProbs.away)} | Combinado: ${formatPct(integratedProbs.away)}</span></li>
             </ul>
-            <h4>Otros Mercados (Prioridad IA)</h4>
+            <h4>Otras Apuestas</h4>
             <ul>
-                <li class="rec-item"><span class="rec-bet">BTTS Sí</span><span class="rec-prob">${ai.BTTS?.si?.probabilidad || formatPct(stats.pBTTSH)}</span></li>
-                <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
+                <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${ai.BTTS?.si?.probabilidad || formatPct(stats.pBTTSH)}</span></li>
+                <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
-            <h4>Veredicto Integrado</h4>
+            <h4>Apuesta Recomendada</h4>
             <div class="rec-item verdict-item"><span class="rec-bet">${truncateText(verdictText, 25).text}</span></div>
         </div>
     `;

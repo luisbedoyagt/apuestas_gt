@@ -865,12 +865,22 @@ function dixonColesProbabilities(tH, tA, league) {
 function getCombinedPrediction(stats, event, matchData) {
     const combined = {};
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
+    
+    // Caso sin pronóstico de IA válido
     if (!ai || !ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
         combined.header = "Análisis Estadístico Principal";
-        combined.body = `<p>No se encontró un pronóstico de IA válido. El análisis se basa únicamente en datos estadísticos.</p>`;
+        combined.body = `
+            <p>No se encontró un pronóstico de IA válido. El análisis se basa únicamente en datos estadísticos.</p>
+            <ul>
+                <li><strong>${matchData.local}:</strong> ${formatPct(stats.finalHome)}</li>
+                <li><strong>Empate:</strong> ${formatPct(stats.finalDraw)}</li>
+                <li><strong>${matchData.visitante}:</strong> ${formatPct(stats.finalAway)}</li>
+            </ul>
+        `;
         console.log('[getCombinedPrediction] Sin pronóstico IA válido, usando solo estadísticas');
         return combined;
     }
+
     const statProbs = {
         home: stats.finalHome,
         draw: stats.finalDraw,
@@ -885,25 +895,87 @@ function getCombinedPrediction(stats, event, matchData) {
     const aiMax = Math.max(aiProbs.home, aiProbs.draw, aiProbs.away);
     const statBest = Object.keys(statProbs).find(k => statProbs[k] === statMax);
     const aiBest = Object.keys(aiProbs).find(k => aiProbs[k] === aiMax);
+
+    // Encabezado según consenso o discrepancia
     let header = "Pronóstico Combinado (Estadística + IA)";
-    let body = `
-        <p><strong>Modelo Estadístico:</strong> Victoria Local: ${formatPct(statProbs.home)}, Empate: ${formatPct(statProbs.draw)}, Victoria Visitante: ${formatPct(statProbs.away)}.</p>
-        <p><strong>Modelo de IA:</strong> Victoria Local: ${formatPct(aiProbs.home)}, Empate: ${formatPct(aiProbs.draw)}, Victoria Visitante: ${formatPct(aiProbs.away)}.</p>
-    `;
     if (statBest === aiBest) {
         const resultText = statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
-        const reason = ai["1X2"][statBest === 'home' ? 'victoria_local' : statBest === 'draw' ? 'empate' : 'victoria_visitante']?.justificacion || "Sin justificación detallada.";
         header = `¡Consenso! Apuesta Fuerte en la ${resultText} ⭐`;
-        body += `<p>Ambos modelos coinciden en que la **${resultText}** es el resultado más probable.</p>`;
-        body += `<p><strong>Justificación de la IA:</strong> ${reason}</p>`;
+    } else {
+        header = "Discrepancia en Pronósticos ⚠️";
+    }
+
+    // Cuerpo del pronóstico combinado
+    let body = `
+        <h4>Análisis del Partido: ${matchData.local} vs. ${matchData.visitante}</h4>
+        <ul class="rec-suggestion">
+            <li class="rec-item">
+                <span class="rec-bet"><strong>${matchData.local}:</strong> ${ai["1X2"].victoria_local.justificacion || "Sin justificación detallada."}</span>
+                <span class="rec-prob">IA: ${formatPct(aiProbs.home)} | Stats: ${formatPct(statProbs.home)}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet"><strong>Empate:</strong> ${ai["1X2"].empate.justificacion || "Sin justificación detallada."}</span>
+                <span class="rec-prob">IA: ${formatPct(aiProbs.draw)} | Stats: ${formatPct(statProbs.draw)}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet"><strong>${matchData.visitante}:</strong> ${ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada."}</span>
+                <span class="rec-prob">IA: ${formatPct(aiProbs.away)} | Stats: ${formatPct(statProbs.away)}</span>
+            </li>
+        </ul>
+        <h4>Probabilidades:</h4>
+        <ul class="rec-suggestion">
+            <li class="rec-item">
+                <span class="rec-bet">${matchData.local}</span>
+                <span class="rec-prob">${formatPct(aiProbs.home)}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet">Empate</span>
+                <span class="rec-prob">${formatPct(aiProbs.draw)}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet">${matchData.visitante}</span>
+                <span class="rec-prob">${formatPct(aiProbs.away)}</span>
+            </li>
+        </ul>
+        <h4>Ambos Anotan (BTTS):</h4>
+        <ul class="rec-suggestion">
+            <li class="rec-item">
+                <span class="rec-bet">Sí</span>
+                <span class="rec-prob">${ai.BTTS.si.probabilidad || '0%'}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet">No</span>
+                <span class="rec-prob">${ai.BTTS.no.probabilidad || '0%'}</span>
+            </li>
+        </ul>
+        <h4>Goles Totales (Más/Menos 2.5):</h4>
+        <ul class="rec-suggestion">
+            <li class="rec-item">
+                <span class="rec-bet">Más de 2.5</span>
+                <span class="rec-prob">${ai.Goles.mas_2_5.probabilidad || '0%'}</span>
+            </li>
+            <li class="rec-item">
+                <span class="rec-bet">Menos de 2.5</span>
+                <span class="rec-prob">${ai.Goles.menos_2_5.probabilidad || '0%'}</span>
+            </li>
+        </ul>
+    `;
+
+    // Agregar mensaje de consenso o discrepancia
+    if (statBest === aiBest) {
+        const resultText = statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
+        body += `
+            <p><strong>Veredicto:</strong> Ambos modelos coinciden en que la <strong>${resultText}</strong> es el resultado más probable.</p>
+        `;
     } else {
         const statResult = statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
         const aiResult = aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`;
-        header = "Discrepancia en Pronósticos ⚠️";
-        body += `<p>El modelo estadístico (${formatPct(statMax)}) favorece la **${statResult}**, mientras que la IA (${formatPct(aiMax)}) se inclina por la **${aiResult}**.</p>`;
-        body += `<p><strong>Análisis de la IA:</strong> ${ai["1X2"][aiBest === 'home' ? 'victoria_local' : aiBest === 'draw' ? 'empate' : 'victoria_visitante']?.justificacion || "Sin justificación detallada."}</p>`;
-        body += `<p>Se recomienda cautela. Analiza la justificación de la IA para entender los factores externos que no considera el modelo estadístico.</p>`;
+        body += `
+            <p><strong>Veredicto:</strong> Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statResult}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiResult}</strong>.</p>
+            <p>Se recomienda analizar las justificaciones de la IA y los datos estadísticos para tomar una decisión informada.</p>
+        `;
     }
+
     combined.header = header;
     combined.body = body;
     console.log('[getCombinedPrediction] Pronóstico combinado:', combined);
@@ -969,11 +1041,20 @@ function calculateAll() {
                                          .sort((a, b) => b.value - a.value)
                                          .slice(0, 3);
     console.log('[calculateAll] Recomendaciones:', recommendations);
-    let suggestionText = '<h3>Recomendaciones de Apuesta</h3><ul>';
-    recommendations.forEach(r => {
-        suggestionText += `<li><strong>${r.label} (${formatPct(r.value)})</strong> - ${r.type}</li>`;
-    });
-    suggestionText += '</ul>';
+    let suggestionText = `
+        <h3>Recomendaciones de Apuesta</h3>
+        <div class="rec-suggestion">
+            <ul>
+                ${recommendations.map((r, index) => `
+                    <li class="rec-item">
+                        <span class="rec-rank">${index + 1}</span>
+                        <span class="rec-bet">${r.label}</span>
+                        <span class="rec-prob">${formatPct(r.value)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = suggestionText;
@@ -1021,5 +1102,3 @@ document.addEventListener('keydown', e => {
     }
 });
 document.addEventListener('DOMContentLoaded', init);
-
-

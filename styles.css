@@ -56,23 +56,6 @@ body {
     gap: 2rem;
 }
 
-/* Grid principal para alinear tarjetas */
-.main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-areas:
-        "event home away"
-        "result result result"
-        "ia ia ia";
-    gap: 2rem;
-}
-
-.event-card { grid-area: event; }
-#card-home { grid-area: home; }
-#card-away { grid-area: away; }
-.result-card { grid-area: result; }
-.recommendation-ia-grid { grid-area: ia; }
-
 /* Encabezado de la app */
 .app-header {
     text-align: center;
@@ -199,6 +182,16 @@ body {
     top: 8px;
     right: 8px;
 }
+.team-card .card-header::before,
+.team-card .card-header::after,
+.event-card .card-header::before,
+.event-card .card-header::after,
+.result-card .card-header::before,
+.result-card .card-header::after,
+.combined-card .card-header::before,
+.combined-card .card-header::after {
+    content: '';
+}
 
 .team-card .card-header {
     justify-content: center;
@@ -251,17 +244,6 @@ select {
     background-repeat: no-repeat;
     background-position: right 0.8rem top 50%;
     background-size: 1.5rem auto;
-    font-family: var(--font-main);
-}
-
-select optgroup {
-    font-weight: 500;
-    padding: 0.5rem 0;
-}
-
-select option {
-    padding: 0.5rem 1rem;
-    font-weight: 400;
 }
 
 select:focus {
@@ -292,7 +274,6 @@ select:focus {
     width: 100%;
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
 }
 
 .event-item::before {
@@ -354,9 +335,6 @@ select:focus {
     flex: 1;
     white-space: normal;
     word-wrap: break-word;
-    min-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .vs {
@@ -384,11 +362,22 @@ select:focus {
     border: 1px dashed var(--border-color);
     padding: 1rem;
     transition: none;
-    cursor: default;
 }
 
 .event-item.placeholder:hover {
     background-color: #2a2a2a;
+    transform: none;
+    box-shadow: none;
+}
+
+.disabled-event {
+    cursor: not-allowed;
+    opacity: 0.6;
+    filter: grayscale(80%);
+    transition: none;
+}
+
+.disabled-event:hover {
     transform: none;
     box-shadow: none;
 }
@@ -466,7 +455,6 @@ select:focus {
     font-size: 0.9rem;
     color: var(--label-color);
     gap: 0.75rem;
-    justify-content: space-around;
 }
 
 .stat-metrics span {
@@ -535,6 +523,8 @@ select:focus {
 
 .probability-tile {
     flex: 1 1 0;
+    min-width: unset;
+    max-width: unset;
     background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
     border: 2px solid transparent;
     border-radius: 6px;
@@ -765,7 +755,7 @@ select:focus {
 }
 
 /* Estilos para mensajes de error e información */
-.error, .warning, .info {
+.error, .warning {
     color: #ff8c00;
     background-color: #33281a;
     border: 1px solid #ff8c00;
@@ -781,12 +771,6 @@ select:focus {
     color: #ff4500;
     background-color: #401f1a;
     border-color: #ff4500;
-}
-
-.info {
-    color: var(--text-color);
-    background-color: var(--secondary-bg);
-    border-color: var(--border-color);
 }
 
 /* Cuadrícula de recomendaciones */
@@ -1012,7 +996,6 @@ select:focus {
     }
     .stat-metrics {
         gap: 0.2rem;
-        justify-content: space-around;
     }
     .stat-metrics span {
         padding: 0.1rem 0.3rem;
@@ -1126,20 +1109,6 @@ select:focus {
         background-position: right 0.4rem top 50%;
         background-size: 0.8rem auto;
     }
-    select optgroup {
-        font-size: 0.9em;
-        margin-top: 6px;
-        padding-bottom: 3px;
-        font-weight: 500;
-    }
-    select optgroup:not(:first-child) {
-        margin-top: 12px;
-    }
-    select option {
-        font-size: 0.8em;
-        padding-left: 8px;
-        font-weight: 400;
-    }
     .event-list {
         gap: 0.8rem;
     }
@@ -1147,12 +1116,10 @@ select:focus {
         padding: 0.8rem;
         font-size: 0.85rem;
         max-width: 350px;
-        flex-wrap: wrap;
     }
     .team-name {
         font-size: 0.85rem;
         text-align: center;
-        min-width: 60px;
     }
     .vs {
         font-size: 0.85rem;
@@ -1170,5 +1137,17 @@ select:focus {
     }
     .event-item.placeholder {
         padding: 0.8rem;
+    }
+    select optgroup {
+        font-size: 0.9em;
+        margin-top: 6px;
+        padding-bottom: 3px;
+    }
+    select optgroup:not(:first-child) {
+        margin-top: 12px;
+    }
+    select option {
+        font-size: 0.8em;
+        padding-left: 8px;
     }
 }

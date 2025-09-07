@@ -325,8 +325,6 @@ function displaySelectedLeagueEvents(leagueCode) {
                 div.style.animationDelay = `${index * 0.1}s`;
                 div.dataset.homeTeam = event.local.trim();
                 div.dataset.awayTeam = event.visitante.trim();
-                div.setAttribute('role', 'button');
-                div.setAttribute('tabindex', '0');
                 
                 const homeTeam = findTeam(leagueCode, event.local.trim());
                 const awayTeam = findTeam(leagueCode, event.visitante.trim());
@@ -376,12 +374,6 @@ function displaySelectedLeagueEvents(leagueCode) {
                 } else {
                     div.addEventListener('click', () => {
                         selectEvent(event.local.trim(), event.visitante.trim());
-                    });
-                    div.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            selectEvent(event.local.trim(), event.visitante.trim());
-                        }
                     });
                 }
                 selectedEventsList.appendChild(div);
@@ -625,7 +617,7 @@ function selectEvent(homeTeamName, awayTeamName) {
             }
             console.error('[selectEvent] Fallo al seleccionar equipos:', { homeTeamName, awayTeamName, homeOption, awayOption });
         }
-    }, 300); // Reducido timeout para mejor UX
+    }, 500);
 }
 
 function restrictSameTeam() {
@@ -689,7 +681,8 @@ function clearTeamData(type) {
         `;
     }
     const cardHeader = $(`card-${typeLower}`)?.querySelector('.card-header');
-    const logoImg = cardHeader?.querySelector('.team-logo');
+    const h3 = cardHeader ? cardHeader.querySelector('h3') : null;
+    const logoImg = h3 ? cardHeader.querySelector('.team-logo') : null;
     if (logoImg) {
         logoImg.remove();
     }
@@ -880,7 +873,7 @@ function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         return {
-            text: words.slice(0, maxWords).join(' '),
+            text: words.slice(0, maxWords).join(' '), // Eliminamos los "..."
             needsButton: true,
             fullText: text
         };
@@ -1100,4 +1093,11 @@ function calculateAll() {
     }
 }
 
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+        e.preventDefault();
+        alert('Las herramientas de desarrollo están deshabilitadas.');
+    }
+});
 document.addEventListener('DOMContentLoaded', init);

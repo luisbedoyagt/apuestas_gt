@@ -504,6 +504,27 @@ select:focus {
     box-shadow: 0 6px 15px rgba(0,0,0,0.6);
 }
 
+/* Estilo para los botones "Leer más" y "Leer menos" */
+.rec-bet button, .verdict-text button {
+    background: none;
+    border: none;
+    color: var(--highlight-blue);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 0.5rem;
+    display: block;
+    text-align: left;
+    font-weight: 500;
+    text-decoration: none;
+    text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
+}
+
+.rec-bet button:hover, .verdict-text button:hover {
+    color: #00b7eb;
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.7);
+}
+
 /* Probabilidades y recomendaciones */
 #details {
     font-weight: bold;
@@ -676,7 +697,7 @@ select:focus {
 }
 
 .rec-bet.truncated {
-    max-height: 4.2rem; /* 3 líneas a 1.4rem por línea */
+    max-height: 4.2rem;
     overflow: hidden;
     text-overflow: clip;
 }
@@ -685,30 +706,22 @@ select:focus {
     max-height: none;
 }
 
-.rec-bet button {
-    background: none;
-    border: none;
-    color: var(--highlight-blue);
-    font-size: 0.85rem;
-    cursor: pointer;
-    padding: 0;
-    margin-left: 8px;
-    text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
-    text-decoration: underline;
+.verdict-text {
+    display: block;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    line-height: 1.4;
 }
 
-.rec-bet button:hover {
-    color: #00b7eb;
+.verdict-text.truncated {
+    max-height: 4.2rem;
+    overflow: hidden;
+    text-overflow: clip;
 }
 
-.rec-prob {
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    color: var(--highlight-blue);
-    text-shadow: 0 0 5px rgba(0, 224, 255, 0.5);
-    text-align: right;
-    flex-shrink: 0;
-    min-width: 100px;
+.verdict-text.expanded {
+    max-height: none;
 }
 
 /* Diseño del pronóstico combinado */
@@ -776,7 +789,7 @@ select:focus {
 /* Cuadrícula de recomendaciones */
 .recommendation-ia-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Una sola columna ahora */
+    grid-template-columns: 1fr;
     gap: 2rem;
     margin-top: 2rem;
 }
@@ -882,44 +895,30 @@ select:focus {
     }
 }
 
-
+/* Ajustes para el truncamiento y botones */
 .rec-item .rec-bet {
     display: block;
     flex-grow: 1;
-    max-height: 4.5em; /* Limita la altura del contenedor. Ajusta este valor si quieres más o menos texto inicial. */
-    overflow: hidden; /* Oculta cualquier contenido que se salga del área definida por max-height. */
-    text-overflow: ellipsis; /* Muestra puntos suspensivos (...) para indicar que hay más texto. */
+    max-height: 4.2rem;
+    overflow: hidden;
+    text-overflow: clip;
     white-space: normal;
     position: relative;
-    font-size: 1em; /* Asegúrate de que el tamaño de fuente sea consistente */
-    line-height: 1.5em; /* Esto define la altura de la línea. 3 líneas * 1.5em = 4.5em */
+    font-size: 0.95rem;
+    line-height: 1.4rem;
 }
 
 .rec-item .rec-bet.expanded {
-    max-height: none; /* Cuando se expande, elimina la restricción de altura. */
-    overflow: visible; /* Permite que se vea todo el contenido. */
+    max-height: none;
+    overflow: visible;
 }
 
-/* Estilo para los botones "Leer más/menos" */
-.rec-item .rec-bet button {
-    background: none;
-    border: none;
-    color: #007bff; /* Color de enlace */
-    cursor: pointer;
-    padding: 0;
-    margin-left: 5px;
-    font-size: 0.9em;
-    text-decoration: underline;
+/* Estilo para el texto del veredicto */
+.verdict-text p {
+    margin: 0 0 0.5rem 0;
 }
 
-/* Regla específica para el veredicto, si deseas que tenga un truncamiento diferente */
-.rec-item.verdict-item .rec-bet {
-    max-height: 6em; /* Opcional: Dale un poco más de altura al veredicto */
-}
-/* ========================================================================== */
-/* AJUSTES PARA MÓVIL (MENOS DE 767PX) */
-/* ========================================================================== */
-
+/* Ajustes para móviles (menos de 767px) */
 @media (max-width: 767px) {
     body {
         padding: 0.8rem;
@@ -1066,10 +1065,17 @@ select:focus {
         margin: 5px 0;
         font-size: 0.8rem;
         max-width: 100%;
-        max-height: 2.8rem; /* 2 líneas */
+        max-height: 2.8rem;
     }
     .rec-bet.truncated {
         text-overflow: clip;
+    }
+    .rec-bet button, .verdict-text button {
+        font-size: 0.8rem;
+        margin-top: 0.3rem;
+    }
+    .verdict-text.truncated {
+        max-height: 2.8rem;
     }
     .rec-prob {
         font-size: 0.8rem;
@@ -1093,10 +1099,6 @@ select:focus {
     }
     .recommendation-ia-grid .card-header h3 {
         font-size: 1.15rem;
-    }
-    #details {
-        margin-bottom: 0.2rem;
-        font-size: 0.85em;
     }
     .probabilities-grid {
         gap: 0.25rem;

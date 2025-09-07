@@ -174,9 +174,9 @@ function parsePlainText(text, matchData) {
         const localJustification = analysisText.match(new RegExp(`${matchData.local}:(.*?)(?:Empate:|$)`, 's'));
         const drawJustification = analysisText.match(/Empate:(.*?)(?:(?:[^:]+:)|$)/s);
         const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}:(.*?)(?:Probabilidades:|$)`, 's'));
-        if (localJustification) aiJustification.home = localJustification[1].trim();
-        if (drawJustification) aiJustification.draw = drawJustification[1].trim();
-        if (awayJustification) aiJustification.away = awayJustification[1].trim();
+        if (localJustification) aiJustification.home = localJustification[1].trim().slice(0, 50);
+        if (drawJustification) aiJustification.draw = drawJustification[1].trim().slice(0, 50);
+        if (awayJustification) aiJustification.away = awayJustification[1].trim().slice(0, 50);
     }
     return {
         "1X2": {
@@ -651,41 +651,32 @@ function dixonColesProbabilities(tH, tA, league) {
     return { finalHome: homeWin, finalDraw: adjustedDraw, finalAway: awayWin, pBTTSH, pO25H };
 }
 
-// FUNCIÓN PARA TRUNCAR TEXTO
-function truncateText(text, maxWords = 15) {
-    if (!text) return { text: '', needsButton: false, fullText: '' };
+// FUNCIÓN PARA TRUNCAR TEXTO DEL VEREDICTO
+function truncateVerdict(text, maxWords = 15) {
     const words = text.split(' ');
     if (words.length > maxWords) {
-        const truncated = words.slice(0, maxWords).join(' ');
-        return {
-            text: truncated,
-            needsButton: true,
-            fullText: text
-        };
+        const truncated = words.slice(0, maxWords).join(' ') + '...';
+        return { text: truncated, needsButton: true, fullText: text };
     }
-    return {
-        text: text,
-        needsButton: false,
-        fullText: text
-    };
+    return { text: text, needsButton: false, fullText: text };
 }
 
-// FUNCIÓN PARA ALTERNAR TEXTO
-function toggleText(event) {
+// FUNCIÓN PARA ALTERNAR TEXTO DEL VEREDICTO
+function toggleVerdictText(event) {
     const button = event.target;
-    const parent = button.closest('.text-toggleable');
-    if (!parent) return;
-    const isExpanded = parent.classList.contains('expanded');
-    const fullText = parent.dataset.fullText;
-    const originalContent = parent.dataset.originalContent;
+    const parentP = button.closest('.verdict-text');
+    if (!parentP) return;
+    const isExpanded = parentP.classList.contains('expanded');
+    const fullText = parentP.dataset.fullText;
+    const originalContent = parentP.dataset.originalContent;
     if (isExpanded) {
-        parent.classList.remove('expanded');
-        parent.innerHTML = originalContent;
-        parent.querySelector('button').addEventListener('click', toggleText);
+        parentP.classList.remove('expanded');
+        parentP.innerHTML = originalContent;
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
     } else {
-        parent.classList.add('expanded');
-        parent.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
-        parent.querySelector('button').addEventListener('click', toggleText);
+        parentP.classList.add('expanded');
+        parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
     }
 }
 
@@ -709,16 +700,15 @@ function getIntegratedPrediction(stats, event, matchData) {
     const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
     const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
     let header, verdict;
-    const teamOutcome = integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante;
     if (!ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
         header = `Pronóstico Estadístico`;
-        verdict = `Apuesta en ${teamOutcome} si >50%.`;
+        verdict = `Apuesta en ${integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante} si >50%.`;
     } else if (statMaxKey === aiMaxKey && diff < 0.1) {
-        header = `⭐ Consenso: ${teamOutcome}`;
+        header = `⭐ Consenso: ${integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante}`;
         verdict = `Fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Cuota <${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
-        header = `⚠️ Discrepancia: ${teamOutcome}`;
-        verdict = `Prioriza ${teamOutcome} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
+        header = `⚠️ Discrepancia: ${integratedMaxKey.toUpperCase()}`;
+        verdict = `Prioriza ${integratedMaxKey.toUpperCase()} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
     }
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, stats: statProbs.home, ia: aiProbs.home },
@@ -730,18 +720,12 @@ function getIntegratedPrediction(stats, event, matchData) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 2)
         .map(([key, val], i) => {
-            const justText = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
-                : key === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
-                : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
-            const justData = truncateText(justText, 15);
-            return `
-                <li class="rec-item">
-                    <span class="rec-rank">${i+1}</span>
-                    <span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span>
-                    <span class="rec-prob text-toggleable ${justData.needsButton ? 'truncated' : ''}" data-full-text="${justData.fullText}" data-original-content="${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</span>
-                </li>`;
+            const just = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion?.slice(0, 30) || 'Ataque local fuerte') + '...'
+                : key === 'draw' ? (ai["1X2"]?.empate?.justificacion?.slice(0, 30) || 'Equipos equilibrados') + '...'
+                : (ai["1X2"]?.victoria_visitante?.justificacion?.slice(0, 30) || 'Defensa visitante sólida') + '...';
+            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
-    const verdictData = truncateText(verdict, 15);
+    const verdictData = truncateVerdict(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
     const analysisHtml = `
         <div class="rec-suggestion">
@@ -752,8 +736,8 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">BTTS Sí</span><span class="rec-prob">${ai.BTTS?.si?.probabilidad || formatPct(stats.pBTTSH)}</span></li>
                 <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
-            <h4>Recomendación Final</h4>
-            <p class="verdict-text text-toggleable ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
+            <h4>Veredicto</h4>
+            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
         </div>
     `;
     return { header, probabilities, recsHtml, analysisHtml };
@@ -784,7 +768,7 @@ function calculateAll() {
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
-        suggestion.querySelectorAll('.text-toggleable button').forEach(btn => btn.addEventListener('click', toggleText));
+        suggestion.querySelectorAll('.verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
     }
 }
 

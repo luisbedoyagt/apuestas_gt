@@ -171,7 +171,9 @@ function parsePlainText(text, matchData) {
         draw: "Sin justificación detallada.",
         away: "Sin justificación detallada."
     };
-    const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$)/s);
+
+    // Extraer probabilidades
+    const probsMatch = text.match(/Probabilidades:\s*([\s\S]*?)(?:Ambos Anotan|$)/i);
     if (probsMatch && probsMatch[1]) {
         const probsText = probsMatch[1];
         const percentages = probsText.match(/(\d+\.?\d*)%/g) || [];
@@ -194,21 +196,50 @@ function parsePlainText(text, matchData) {
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de probabilidades en el texto: ${text}`);
     }
-    const analysisMatch = text.match(/Análisis del Partido:(.*?)Probabilidades:/s);
+
+    // Extraer análisis del partido con expresiones regulares más robustas
+    const analysisMatch = text.match(/Análisis del Partido:([\s\S]*?)Probabilidades:/i);
     if (analysisMatch && analysisMatch[1]) {
-        const analysisText = analysisMatch[1];
-        const localJustification = analysisText.match(new RegExp(`${matchData.local}:(.*?)(?:Empate:|$)`, 's'));
-        const drawJustification = analysisText.match(/Empate:(.*?)(?:(?:[^:]+:)|$)/s);
-        const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}:(.*?)(?:Probabilidades:|$)`, 's'));
-        if (localJustification) aiJustification.home = localJustification[1].trim();
-        if (drawJustification) aiJustification.draw = drawJustification[1].trim();
-        if (awayJustification) aiJustification.away = awayJustification[1].trim();
-        console.log(`[parsePlainText] Justificaciones extraídas: Local=${aiJustification.home}, Empate=${aiJustification.draw}, Visitante=${aiJustification.away}`);
+        const analysisText = analysisMatch[1].trim();
+        console.log(`[parsePlainText] Texto de análisis encontrado: ${analysisText}`);
+
+        // Normalizar nombres de equipos para coincidencias robustas
+        const normalizedLocal = normalizeName(matchData.local);
+        const normalizedVisitante = normalizeName(matchData.visitante);
+
+        // Extraer justificaciones con expresiones más flexibles
+        const localJustification = analysisText.match(new RegExp(`${matchData.local}\\s*:([\\s\\S]*?)(?=(?:Empate\\s*:|${matchData.visitante}\\s*:|$))`, 'i'));
+        const drawJustification = analysisText.match(/Empate\s*:([\s\S]*?)(?=(?:(?:[^:]+:)|$))/i);
+        const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}\\s*:([\\s\\S]*?)(?=(?:Probabilidades:|$))`, 'i'));
+
+        if (localJustification && localJustification[1].trim()) {
+            aiJustification.home = localJustification[1].trim();
+            console.log(`[parsePlainText] Justificación Local: ${aiJustification.home}`);
+        } else {
+            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.local}`);
+        }
+
+        if (drawJustification && drawJustification[1].trim()) {
+            aiJustification.draw = drawJustification[1].trim();
+            console.log(`[parsePlainText] Justificación Empate: ${aiJustification.draw}`);
+        } else {
+            console.warn(`[parsePlainText] No se encontró justificación para Empate`);
+        }
+
+        if (awayJustification && awayJustification[1].trim()) {
+            aiJustification.away = awayJustification[1].trim();
+            console.log(`[parsePlainText] Justificación Visitante: ${aiJustification.away}`);
+        } else {
+            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.visitante}`);
+        }
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de análisis en el texto: ${text}`);
     }
-    const bttsProb = text.match(/BTTS.*Sí:\s*(\d+\.?\d*)%/)?.[1];
-    const o25Prob = text.match(/Más de 2\.5:\s*(\d+\.?\d*)%/)?.[1];
+
+    // Extraer BTTS y Over 2.5
+    const bttsProb = text.match(/BTTS.*Sí\s*:\s*(\d+\.?\d*)%/i)?.[1];
+    const o25Prob = text.match(/Más de 2\.5\s*:\s*(\d+\.?\d*)%/i)?.[1];
+
     const result = {
         "1X2": {
             victoria_local: {
@@ -245,7 +276,7 @@ function parsePlainText(text, matchData) {
             }
         }
     };
-    console.log(`[parsePlainText] Resultado final:`, result);
+    console.log(`[parsePlainText] Resultado final:`, JSON.stringify(result, null, 2));
     return result;
 }
 
@@ -929,7 +960,7 @@ function dixonColesProbabilities(tH, tA, league) {
     const homeDefense = leagueAvgGaHome > 0 ? (homeDefenseRaw / leagueAvgGaHome) * shrinkageHome + (1 - shrinkageHome) : 1;
     const awayAttack = leagueAvgGfAway > 0 ? (awayAttackRaw / leagueAvgGfAway) * shrinkageAway + (1 - shrinkageAway) : 1;
     const awayDefense = leagueAvgGaAway > 0 ? (awayDefenseRaw / leagueAvgGaAway) * shrinkageAway + (1 - shrinkageAway) : 1;
-    console.log(`[dixonColesProbabilities] Métricas ajustadas: homeAttack=${homeAttack.toFixed(2)}, homeDefense=${homeDefense.toFixed(2)}, awayAttack=${awayAttack.toFixed(2)}, awayDefense=${awayDefenseRaw.toFixed(2)}`);
+    console.log(`[dixonColesProbabilities] Métricas ajustadas: homeAttack=${homeAttack.toFixed(2)}, homeDefense=${homeDefense.toFixed(2)}, awayAttack=${awayAttack.toFixed(2)}, awayDefense=${awayDefense.toFixed(2)}`);
 
     // Calcular goles esperados
     const expectedHomeGoals = Math.max(0, homeAttack * awayDefense * leagueAvgGfHome);
@@ -1073,10 +1104,14 @@ function escapeHtml(text) {
 function getIntegratedPrediction(stats, event, matchData) {
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
     const hasValidIA = ai && ai["1X2"] && !Object.values(ai["1X2"]).every(p => !p?.probabilidad || parseFloat(p.probabilidad) === 0);
-    
-    if (!hasValidIA) {
+
+    // Validar justificaciones para evitar "Sin datos de IA"
+    const hasValidJustifications = ai && ai["1X2"] && Object.values(ai["1X2"]).every(p => p?.justificacion && p.justificacion !== "Sin justificación detallada.");
+
+    if (!hasValidIA || !hasValidJustifications) {
+        console.warn(`[getIntegratedPrediction] Usando solo estadísticas. hasValidIA=${hasValidIA}, hasValidJustifications=${hasValidJustifications}`);
         return {
-            header: "Análisis Estadístico (Sin IA)",
+            header: "Análisis Estadístico (Sin IA completa)",
             probabilities: [
                 { id: 'pHome', value: stats.finalHome, label: `Victoria ${matchData.local}` },
                 { id: 'pDraw', value: stats.finalDraw, label: 'Empate' },
@@ -1097,7 +1132,7 @@ function getIntegratedPrediction(stats, event, matchData) {
             analysisHtml: `
                 <div class="rec-suggestion">
                     <h4>Análisis Estadístico</h4>
-                    <p>No hay datos de IA disponibles. Recomendaciones basadas en estadísticas:</p>
+                    <p>No hay datos de IA completos disponibles. Recomendaciones basadas en estadísticas:</p>
                     <ul>
                         <li class="rec-item"><span class="rec-bet">Victoria ${matchData.local}: ${formatPct(stats.finalHome)}</span></li>
                         <li class="rec-item"><span class="rec-bet">Empate: ${formatPct(stats.finalDraw)}</span></li>
@@ -1175,9 +1210,16 @@ function getIntegratedPrediction(stats, event, matchData) {
 
     const recsHtml = `<div class="rec-suggestion"><h4>Top Recomendaciones</h4><ul>${recs || '<li><span>No hay recomendaciones con probabilidad mayor al 30%</span></li>'}</ul></div>`;
 
+    // Usar justificaciones de IA si están disponibles
     const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin datos de IA.", 15);
     const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin datos de IA.", 15);
     const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin datos de IA.", 15);
+    console.log(`[getIntegratedPrediction] Justificaciones:`, {
+        home: homeJust.fullText,
+        draw: drawJust.fullText,
+        away: awayJust.fullText
+    });
+
     const analysisHtml = `
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>

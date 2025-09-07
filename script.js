@@ -672,13 +672,11 @@ function toggleVerdictText(event) {
     if (isExpanded) {
         parentP.classList.remove('expanded');
         parentP.innerHTML = originalContent;
-        const btn = parentP.querySelector('button');
-        if (btn) btn.addEventListener('click', toggleVerdictText);
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
     } else {
         parentP.classList.add('expanded');
         parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
-        const btn = parentP.querySelector('button');
-        if (btn) btn.addEventListener('click', toggleVerdictText);
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
     }
 }
 
@@ -700,33 +698,24 @@ function getIntegratedPrediction(stats, event, matchData) {
     const statMaxKey = Object.keys(statProbs).reduce((a, b) => statProbs[a] > statProbs[b] ? a : b);
     const aiMaxKey = Object.keys(aiProbs).reduce((a, b) => aiProbs[a] > aiProbs[b] ? a : b);
     const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
+    const outcomeName = integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante;
     const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
-
-    const keyToName = key => key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante;
-    const titlePrefix = 'RECOMENDACIÓN FINAL';
-
-    let smallHeader = '';
-    let verdict = '';
-
+    let header, verdict;
     if (!ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
-        smallHeader = `Pronóstico Estadístico`;
-        verdict = `Apuesta en ${keyToName(integratedMaxKey)} si >50%.`;
+        header = `Pronóstico Estadístico`;
+        verdict = `Apuesta en ${outcomeName} si >50%.`;
     } else if (statMaxKey === aiMaxKey && diff < 0.1) {
-        smallHeader = `⭐ Consenso: ${keyToName(integratedMaxKey)}`;
+        header = `⭐ Consenso: ${outcomeName}`;
         verdict = `Fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Cuota <${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
-        smallHeader = `⚠️ Discrepancia: ${integratedMaxKey.toUpperCase()}`;
-        verdict = `Prioriza ${keyToName(integratedMaxKey)} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
+        header = `⚠️ Discrepancia: ${outcomeName}`;
+        verdict = `Prioriza ${outcomeName} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas, puede mejorarse.`;
     }
-
-    const header = `${titlePrefix} - ${smallHeader}`;
-
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, stats: statProbs.home, ia: aiProbs.home },
         { id: 'pDraw', value: integratedProbs.draw, stats: statProbs.draw, ia: aiProbs.draw },
         { id: 'pAway', value: integratedProbs.away, stats: statProbs.away, ia: aiProbs.away }
     ];
-
     const recs = Object.entries(integratedProbs)
         .filter(([key, val]) => val >= 0.3)
         .sort((a, b) => b[1] - a[1])
@@ -737,10 +726,8 @@ function getIntegratedPrediction(stats, event, matchData) {
                 : (ai["1X2"]?.victoria_visitante?.justificacion?.slice(0, 30) || 'Defensa visitante sólida') + '...';
             return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
-
     const verdictData = truncateVerdict(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
-
     const analysisHtml = `
         <div class="rec-suggestion">
             <ul>
@@ -751,10 +738,9 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
             <h4>RECOMENDACIÓN FINAL</h4>
-            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class=\"btn btn-secondary\">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class=\"btn btn-secondary\">Leer más</button>' : ''}</p>
+            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
         </div>
     `;
-
     return { header, probabilities, recsHtml, analysisHtml };
 }
 
@@ -783,7 +769,6 @@ function calculateAll() {
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
-        // inicializa los botones "Leer más" de veredicto
         suggestion.querySelectorAll('.verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
     }
 }

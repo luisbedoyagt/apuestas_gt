@@ -174,9 +174,9 @@ function parsePlainText(text, matchData) {
         const localJustification = analysisText.match(new RegExp(`${matchData.local}:(.*?)(?:Empate:|$)`, 's'));
         const drawJustification = analysisText.match(/Empate:(.*?)(?:(?:[^:]+:)|$)/s);
         const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}:(.*?)(?:Probabilidades:|$)`, 's'));
-        if (localJustification) aiJustification.home = localJustification[1].trim().slice(0, 50);
-        if (drawJustification) aiJustification.draw = drawJustification[1].trim().slice(0, 50);
-        if (awayJustification) aiJustification.away = awayJustification[1].trim().slice(0, 50);
+        if (localJustification) aiJustification.home = localJustification[1].trim();
+        if (drawJustification) aiJustification.draw = drawJustification[1].trim();
+        if (awayJustification) aiJustification.away = awayJustification[1].trim();
     }
     return {
         "1X2": {
@@ -703,13 +703,17 @@ function getIntegratedPrediction(stats, event, matchData) {
     let header, verdict;
     if (!ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
         header = `Pronóstico Estadístico`;
-        verdict = `Apuesta en ${outcomeName} si >50%.`;
+        verdict = `Apuesta en ${outcomeName} si la probabilidad es superior al 50%.`;
     } else if (statMaxKey === aiMaxKey && diff < 0.1) {
         header = `⭐ Consenso: ${outcomeName}`;
-        verdict = `Fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Cuota <${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
+        verdict = `Recomendación fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Busca cuotas menores a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
         header = `⚠️ Discrepancia: ${outcomeName}`;
-        verdict = `Prioriza ${outcomeName} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas, puede mejorarse.`;
+        // Combinamos justificaciones de IA para un veredicto más completo
+        const just = integratedMaxKey === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
+            : integratedMaxKey === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
+            : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
+        verdict = `Prioriza a ${outcomeName} (${formatPct(integratedProbs[integratedMaxKey])}) si la probabilidad es mayor al 55%. Justificación: ${just}. Verifica forma reciente y cuotas para confirmar.`;
     }
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, stats: statProbs.home, ia: aiProbs.home },
@@ -721,9 +725,9 @@ function getIntegratedPrediction(stats, event, matchData) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 2)
         .map(([key, val], i) => {
-            const just = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion?.slice(0, 30) || 'Ataque local fuerte') + '...'
-                : key === 'draw' ? (ai["1X2"]?.empate?.justificacion?.slice(0, 30) || 'Equipos equilibrados') + '...'
-                : (ai["1X2"]?.victoria_visitante?.justificacion?.slice(0, 30) || 'Defensa visitante sólida') + '...';
+            const just = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
+                : key === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
+                : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
             return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
     const verdictData = truncateVerdict(verdict);

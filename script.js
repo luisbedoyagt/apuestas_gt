@@ -695,10 +695,6 @@ function clearAll() {
         const el = $(id);
         if (el) el.textContent = '--';
     });
-    const detailedPrediction = $('detailed-prediction');
-    if (detailedPrediction) {
-        detailedPrediction.innerHTML = '<p>Esperando pronóstico detallado...</p>';
-    }
     const details = $('details');
     if (details) {
         details.innerHTML = '<div class="info"><strong>Instrucciones:</strong> Selecciona una liga y los equipos local y visitante para obtener el pronóstico.</div>';
@@ -876,9 +872,29 @@ function dixonColesProbabilities(tH, tA, league) {
 function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
-        return words.slice(0, maxWords).join(' ') + '...';
+        return {
+            text: words.slice(0, maxWords).join(' ') + '...',
+            needsButton: true,
+            fullText: text
+        };
     }
-    return text;
+    return {
+        text: text,
+        needsButton: false,
+        fullText: text
+    };
+}
+
+// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
+function toggleText(event) {
+    const button = event.target;
+    const recBet = button.closest('.rec-bet');
+    if (!recBet) return;
+    recBet.classList.toggle('expanded');
+    const isExpanded = recBet.classList.contains('expanded');
+    const fullText = recBet.dataset.fullText;
+    recBet.firstChild.textContent = isExpanded ? fullText : truncateText(fullText).text;
+    button.textContent = isExpanded ? 'Leer menos' : 'Leer más';
 }
 
 // COMBINACIÓN DE PRONÓSTICOS
@@ -930,20 +946,25 @@ function getCombinedPrediction(stats, event, matchData) {
         ? `¡Consenso! Apuesta Fuerte en la ${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} ⭐`
         : "Discrepancia en Pronósticos ⚠️";
 
+    // Procesar justificaciones con truncamiento
+    const homeJust = truncateText(ai["1X2"].victoria_local.justificacion || "Sin justificación detallada.");
+    const drawJust = truncateText(ai["1X2"].empate.justificacion || "Sin justificación detallada.");
+    const awayJust = truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.");
+
     let body = `
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>
             <ul>
                 <li class="rec-item">
-                    <span class="rec-bet"><strong>${matchData.local}:</strong> ${truncateText(ai["1X2"].victoria_local.justificacion || "Sin justificación detallada.")}</span>
+                    <span class="rec-bet${homeJust.needsButton ? ' truncated' : ''}" data-full-text="${homeJust.fullText}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.home)} | Stats: ${formatPct(statProbs.home)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet"><strong>Empate:</strong> ${truncateText(ai["1X2"].empate.justificacion || "Sin justificación detallada.")}</span>
+                    <span class="rec-bet${drawJust.needsButton ? ' truncated' : ''}" data-full-text="${drawJust.fullText}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.draw)} | Stats: ${formatPct(statProbs.draw)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet"><strong>${matchData.visitante}:</strong> ${truncateText(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.")}</span>
+                    <span class="rec-bet${awayJust.needsButton ? ' truncated' : ''}" data-full-text="${awayJust.fullText}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.away)} | Stats: ${formatPct(statProbs.away)}</span>
                 </li>
             </ul>
@@ -1033,8 +1054,8 @@ function calculateAll() {
         if (el) el.textContent = formatPct(p.value);
     });
     const recommendations = probabilities.filter(p => p.value >= 0.3)
-                                         .sort((a, b) => b.value - a.value)
-                                         .slice(0, 3);
+                                       .sort((a, b) => b.value - a.value)
+                                       .slice(0, 3);
     console.log('[calculateAll] Recomendaciones:', recommendations);
     let suggestionText = `
         <div class="rec-suggestion">
@@ -1054,62 +1075,14 @@ function calculateAll() {
     if (suggestion) {
         suggestion.innerHTML = suggestionText;
     }
-    const detailedPredictionBox = $('detailed-prediction');
-    if (event && event.pronostico_json) {
-        const json = event.pronostico_json;
-        let html = `
-            <div class="rec-suggestion">
-                <h3>Análisis de la IA</h3>
-                <ul>
-                    <li class="rec-item">
-                        <span class="rec-bet"><strong>${teamHome}:</strong> ${truncateText(json["1X2"].victoria_local.justificacion || "Sin justificación detallada.")}</span>
-                        <span class="rec-prob">${json["1X2"].victoria_local.probabilidad}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet"><strong>Empate:</strong> ${truncateText(json["1X2"].empate.justificacion || "Sin justificación detallada.")}</span>
-                        <span class="rec-prob">${json["1X2"].empate.probabilidad}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet"><strong>${teamAway}:</strong> ${truncateText(json["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.")}</span>
-                        <span class="rec-prob">${json["1X2"].victoria_visitante.probabilidad}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">Ambos Anotan (Sí)</span>
-                        <span class="rec-prob">${json.BTTS.si.probabilidad || '0%'}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">Ambos Anotan (No)</span>
-                        <span class="rec-prob">${json.BTTS.no.probabilidad || '0%'}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">Más de 2.5 Goles</span>
-                        <span class="rec-prob">${json.Goles.mas_2_5.probabilidad || '0%'}</span>
-                    </li>
-                    <li class="rec-item">
-                        <span class="rec-bet">Menos de 2.5 Goles</span>
-                        <span class="rec-prob">${json.Goles.menos_2_5.probabilidad || '0%'}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-        if (detailedPredictionBox) {
-            detailedPredictionBox.innerHTML = html;
-            console.log('[calculateAll] Mostrando pronóstico JSON:', json);
-        }
-    } else if (event && event.pronostico) {
-        const formattedPrediction = event.pronostico.replace(/\n/g, '<br>').replace(/###\s*(.*)/g, '<h4>$1</h4>');
-        if (detailedPredictionBox) {
-            detailedPredictionBox.innerHTML = `<div class="rec-suggestion"><h3>Análisis de la IA</h3><div class="ia-prediction">${formattedPrediction}</div></div>`;
-            console.log('[calculateAll] Mostrando pronóstico de texto plano:', event.pronostico);
-        }
-    } else if (detailedPredictionBox) {
-        detailedPredictionBox.innerHTML = `<div class="rec-suggestion"><p>No hay un pronóstico de la IA disponible para este partido.</p></div>`;
-        console.log('[calculateAll] Sin pronóstico disponible para', teamHome, 'vs', teamAway);
-    }
     const combined = getCombinedPrediction(stats, event || {}, matchData);
     const combinedPrediction = $('combined-prediction');
     if (combinedPrediction) {
         combinedPrediction.innerHTML = `<h3>${combined.header}</h3>${combined.body}`;
+        // Añadir manejadores de eventos para los botones "Leer más"
+        combinedPrediction.querySelectorAll('.rec-bet button').forEach(button => {
+            button.addEventListener('click', toggleText);
+        });
     }
 }
 

@@ -959,15 +959,17 @@ function getCombinedPrediction(stats, event, matchData) {
         ? `¡Consenso! Apuesta Fuerte en la ${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} ⭐`
         : "Discrepancia en Pronósticos ⚠️";
 
-    const getJustificationHtml = (text, team) => {
-        const truncated = truncateText(text);
-        let content = `<strong>${team}:</strong> ${truncated.text}`;
-        if (truncated.needsButton) {
-            content += ` <button>Leer más</button>`;
-        }
+    const getJustificationHtml = (text, team, isVerdict = false) => {
+        const maxWords = isVerdict ? 30 : 20;
+        const truncated = truncateText(text, maxWords);
+        let contentPrefix = isVerdict ? `<strong>Veredicto:</strong> ` : `<strong>${team}:</strong> `;
+        let contentText = `${truncated.text}`;
+        let buttonHtml = truncated.needsButton ? ` <button>Leer más</button>` : '';
+        let fullContentText = isVerdict ? `<strong>Veredicto:</strong> ${truncated.fullText}` : `<strong>${team}:</strong> ${truncated.fullText}`;
+
         return {
-            truncatedHtml: content,
-            fullHtml: `<strong>${team}:</strong> ${truncated.fullText}`
+            truncatedHtml: contentPrefix + contentText + buttonHtml,
+            fullHtml: fullContentText
         };
     };
 
@@ -975,24 +977,11 @@ function getCombinedPrediction(stats, event, matchData) {
     const drawJustHtml = getJustificationHtml(ai["1X2"].empate.justificacion || "Sin justificación detallada.", "Empate");
     const awayJustHtml = getJustificationHtml(ai["1X2"].victoria_visitante.justificacion || "Sin justificación detallada.", matchData.visitante);
 
-    // CORRECCIÓN: Procesamiento del veredicto
     const verdictRawText = statBest === aiBest
         ? `Ambos modelos coinciden en que la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong> es el resultado más probable.`
         : `Discrepancia detectada. El modelo estadístico (${formatPct(statMax)}) favorece la <strong>${statBest === 'home' ? `Victoria ${matchData.local}` : statBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>, mientras que la IA (${formatPct(aiMax)}) se inclina por la <strong>${aiBest === 'home' ? `Victoria ${matchData.local}` : aiBest === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`}</strong>. Analiza los detalles para decidir.`;
     
-    const getVerdictHtml = (text) => {
-        const truncated = truncateText(text, 30);
-        let content = `<strong>Veredicto:</strong> ${truncated.text}`;
-        if (truncated.needsButton) {
-            content += ` <button>Leer más</button>`;
-        }
-        return {
-            truncatedHtml: content,
-            fullHtml: `<strong>Veredicto:</strong> ${truncated.fullText}`
-        };
-    };
-    
-    const verdictHtml = getVerdictHtml(verdictRawText);
+    const verdictHtml = getJustificationHtml(verdictRawText, '', true);
 
     let body = `
         <div class="rec-suggestion">

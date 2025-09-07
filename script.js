@@ -873,7 +873,7 @@ function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         return {
-            text: words.slice(0, maxWords).join(' '),
+            text: words.slice(0, maxWords).join(' ') + '...',
             needsButton: true,
             fullText: text
         };
@@ -890,24 +890,11 @@ function toggleText(event) {
     const button = event.target;
     const recBet = button.closest('.rec-bet');
     if (!recBet) return;
-
+    recBet.classList.toggle('expanded');
     const isExpanded = recBet.classList.contains('expanded');
     const fullText = recBet.dataset.fullText;
-    const truncatedText = truncateText(fullText).text;
-
-    if (isExpanded) {
-        // Pasar de expandido a truncado
-        recBet.classList.remove('expanded');
-        recBet.classList.add('truncated');
-        recBet.firstChild.textContent = truncatedText;
-        button.textContent = 'Leer más';
-    } else {
-        // Pasar de truncado a expandido
-        recBet.classList.remove('truncated');
-        recBet.classList.add('expanded');
-        recBet.firstChild.textContent = fullText;
-        button.textContent = 'Leer menos';
-    }
+    recBet.firstChild.textContent = isExpanded ? fullText : truncateText(fullText).text;
+    button.textContent = isExpanded ? 'Leer menos' : 'Leer más';
 }
 
 // COMBINACIÓN DE PRONÓSTICOS

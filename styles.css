@@ -709,54 +709,6 @@ select:focus {
     text-align: right;
     flex-shrink: 0;
     min-width: 100px;
-    display: block;
-    flex-grow: 1;
-    max-height: 4.2rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: normal;
-    position: relative;
-    font-size: 1em;
-    line-height: 1.5em;
-}
-
-.rec-prob.expanded {
-    max-height: none;
-    overflow: visible;
-}
-
-.rec-prob button {
-    background: none;
-    border: none;
-    color: var(--highlight-blue);
-    cursor: pointer;
-    padding: 0;
-    margin-left: 5px;
-    font-size: 0.9em;
-    text-decoration: underline;
-}
-
-/* Regla específica para el veredicto, si deseas que tenga un truncamiento diferente */
-.verdict-text {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: var(--text-color);
-    text-align: justify;
-    padding: 0;
-    margin: 0 0 1rem 0;
-    font-style: normal;
-}
-
-.verdict-text.truncated {
-    max-height: 4.2rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: normal;
-}
-
-.verdict-text.expanded {
-    max-height: none;
-    overflow: visible;
 }
 
 /* Diseño del pronóstico combinado */
@@ -964,7 +916,6 @@ select:focus {
 .rec-item.verdict-item .rec-bet {
     max-height: 6em; /* Opcional: Dale un poco más de altura al veredicto */
 }
-
 /* ========================================================================== */
 /* AJUSTES PARA MÓVIL (MENOS DE 767PX) */
 /* ========================================================================== */
@@ -1124,13 +1075,6 @@ select:focus {
         font-size: 0.8rem;
         text-align: left;
         min-width: unset;
-        max-height: 2.8rem;
-    }
-    .rec-prob.truncated {
-        max-height: 2.8rem;
-    }
-    .rec-prob.expanded {
-        max-height: none;
     }
     #combined-prediction {
         padding: 0.8rem;
@@ -1139,16 +1083,6 @@ select:focus {
     #combined-prediction p, #combined-prediction h3 {
         font-size: 0.9rem;
         line-height: 1.6;
-    }
-    .verdict-text {
-        font-size: 0.9rem;
-        max-height: 2.8rem;
-    }
-    .verdict-text.truncated {
-        max-height: 2.8rem;
-    }
-    .verdict-text.expanded {
-        max-height: none;
     }
 
     /* Resto de las secciones */

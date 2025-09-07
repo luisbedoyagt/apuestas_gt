@@ -651,6 +651,35 @@ function dixonColesProbabilities(tH, tA, league) {
     return { finalHome: homeWin, finalDraw: adjustedDraw, finalAway: awayWin, pBTTSH, pO25H };
 }
 
+// FUNCIÓN PARA TRUNCAR TEXTO DEL VEREDICTO
+function truncateVerdict(text, maxWords = 15) {
+    const words = text.split(' ');
+    if (words.length > maxWords) {
+        const truncated = words.slice(0, maxWords).join(' ') + '...';
+        return { text: truncated, needsButton: true, fullText: text };
+    }
+    return { text: text, needsButton: false, fullText: text };
+}
+
+// FUNCIÓN PARA ALTERNAR TEXTO DEL VEREDICTO
+function toggleVerdictText(event) {
+    const button = event.target;
+    const parentP = button.closest('.verdict-text');
+    if (!parentP) return;
+    const isExpanded = parentP.classList.contains('expanded');
+    const fullText = parentP.dataset.fullText;
+    const originalContent = parentP.dataset.originalContent;
+    if (isExpanded) {
+        parentP.classList.remove('expanded');
+        parentP.innerHTML = originalContent;
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+    } else {
+        parentP.classList.add('expanded');
+        parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
+        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+    }
+}
+
 // FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
 function getIntegratedPrediction(stats, event, matchData) {
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
@@ -679,7 +708,7 @@ function getIntegratedPrediction(stats, event, matchData) {
         verdict = `Fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Cuota <${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
         header = `⚠️ Discrepancia: ${integratedMaxKey.toUpperCase()}`;
-        verdict = `Prioriza ${integratedMaxKey.toUpperCase()} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%.`;
+        verdict = `Prioriza ${integratedMaxKey.toUpperCase()} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
     }
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, stats: statProbs.home, ia: aiProbs.home },
@@ -696,6 +725,7 @@ function getIntegratedPrediction(stats, event, matchData) {
                 : (ai["1X2"]?.victoria_visitante?.justificacion?.slice(0, 30) || 'Defensa visitante sólida') + '...';
             return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
+    const verdictData = truncateVerdict(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
     const analysisHtml = `
         <div class="rec-suggestion">
@@ -707,7 +737,7 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
             <h4>Veredicto</h4>
-            <p>${verdict}</p>
+            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
         </div>
     `;
     return { header, probabilities, recsHtml, analysisHtml };
@@ -736,7 +766,10 @@ function calculateAll() {
         if (el) el.innerHTML = p.ia ? `${formatPct(p.stats)}/${formatPct(p.ia)} <small>(Stats/IA)</small>` : `${formatPct(p.value)} <small>(Stats)</small>`;
     });
     const suggestion = $('suggestion');
-    if (suggestion) suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
+    if (suggestion) {
+        suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
+        suggestion.querySelectorAll('.verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
+    }
 }
 
 document.addEventListener('contextmenu', e => e.preventDefault());

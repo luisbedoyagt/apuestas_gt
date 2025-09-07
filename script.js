@@ -154,9 +154,9 @@ function normalizeTeam(raw) {
 function parsePlainText(text, matchData) {
     const aiProbs = {};
     const aiJustification = {
-        home: "Sin datos IA.",
-        draw: "Sin datos IA.",
-        away: "Sin datos IA."
+        home: "_sin_datos_IA",
+        draw: "_sin_datos_IA",
+        away: "_sin_datos_IA"
     };
     const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$)/s);
     if (probsMatch && probsMatch[1]) {
@@ -652,7 +652,7 @@ function dixonColesProbabilities(tH, tA, league) {
 }
 
 // FUNCIÓN PARA TRUNCAR TEXTO DEL VEREDICTO
-function truncateVerdict(text, maxWords = 15) {
+function truncateVerdict(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         const truncated = words.slice(0, maxWords).join(' ') + '...';
@@ -672,11 +672,13 @@ function toggleVerdictText(event) {
     if (isExpanded) {
         parentP.classList.remove('expanded');
         parentP.innerHTML = originalContent;
-        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+        const newButton = parentP.querySelector('button');
+        if (newButton) newButton.addEventListener('click', toggleVerdictText);
     } else {
         parentP.classList.add('expanded');
         parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
-        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+        const newButton = parentP.querySelector('button');
+        if (newButton) newButton.addEventListener('click', toggleVerdictText);
     }
 }
 
@@ -709,7 +711,6 @@ function getIntegratedPrediction(stats, event, matchData) {
         verdict = `Recomendación fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Busca cuotas menores a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
         header = `⚠️ Discrepancia: ${outcomeName}`;
-        // Combinamos justificaciones de IA para un veredicto más completo
         const just = integratedMaxKey === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
             : integratedMaxKey === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
             : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
@@ -728,7 +729,8 @@ function getIntegratedPrediction(stats, event, matchData) {
             const just = key === 'home' ? (ai["1X2"]?.victoria_local?.justificacion || 'Ataque local fuerte')
                 : key === 'draw' ? (ai["1X2"]?.empate?.justificacion || 'Equipos equilibrados')
                 : (ai["1X2"]?.victoria_visitante?.justificacion || 'Defensa visitante sólida');
-            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
+            const justData = truncateVerdict(just);
+            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet ${justData.needsButton ? 'truncated' : ''}" data-full-text="${justData.fullText}" data-original-content="${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${justData.text}${justData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</span><span class="rec-prob">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span></li>`;
         }).join('');
     const verdictData = truncateVerdict(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
@@ -773,7 +775,7 @@ function calculateAll() {
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
-        suggestion.querySelectorAll('.verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
+        suggestion.querySelectorAll('.rec-bet button, .verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
     }
 }
 

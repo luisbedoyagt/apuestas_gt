@@ -819,9 +819,9 @@ function dixonColesProbabilities(tH, tA, league) {
     const homeAttack = (homeAttackRaw / leagueAvgGfHome) * shrinkageFactor;
     const homeDefense = (homeDefenseRaw / leagueAvgGaHome) * shrinkageFactor;
     const awayAttack = (awayAttackRaw / leagueAvgGfAway) * shrinkageFactor;
-    const awayDefense = (awayDefenseRaw / leagueAvgGaAway) * shrinkageFactor;
+    const awayDefense = (awayDefenseRaw / leagueAvgGaHome) * shrinkageFactor;
     const expectedHomeGoals = homeAttack * awayDefense * leagueAvgGfHome;
-    const expectedAwayGoals = awayAttack * homeDefense * leagueAvgGfAway;
+    const expectedAwayGoals = awayAttack * homeDefense * leagueAvgGaHome;
     let homeWin = 0, draw = 0, awayWin = 0;
     for (let i = 0; i <= 10; i++) {
         for (let j = 0; j <= 10; j++) {
@@ -873,7 +873,7 @@ function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
         return {
-            text: words.slice(0, maxWords).join(' '), // Eliminamos los "..."
+            text: words.slice(0, maxWords).join(' ') + '...',
             needsButton: true,
             fullText: text
         };
@@ -888,13 +888,23 @@ function truncateText(text, maxWords = 20) {
 // FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
 function toggleText(event) {
     const button = event.target;
-    const recBet = button.closest('.rec-bet');
-    if (!recBet) return;
-    const isExpanded = recBet.classList.contains('expanded');
-    recBet.classList.toggle('expanded');
-    const fullText = recBet.dataset.fullText;
-    recBet.firstChild.textContent = isExpanded ? truncateText(fullText).text : fullText;
-    button.textContent = isExpanded ? 'Leer más' : 'Leer menos';
+    const parentSpan = button.closest('.rec-bet');
+    if (!parentSpan) return;
+    const isExpanded = parentSpan.classList.contains('expanded');
+    const fullText = parentSpan.dataset.fullText;
+    const truncatedText = truncateText(fullText).text;
+
+    if (isExpanded) {
+        parentSpan.classList.remove('expanded');
+        parentSpan.innerHTML = parentSpan.dataset.originalContent;
+    } else {
+        parentSpan.classList.add('expanded');
+        parentSpan.innerHTML = fullText;
+        const newButton = document.createElement('button');
+        newButton.textContent = 'Leer menos';
+        newButton.addEventListener('click', toggleText);
+        parentSpan.appendChild(newButton);
+    }
 }
 
 // COMBINACIÓN DE PRONÓSTICOS
@@ -962,15 +972,15 @@ function getCombinedPrediction(stats, event, matchData) {
             <h4>Análisis del Partido</h4>
             <ul>
                 <li class="rec-item">
-                    <span class="rec-bet${homeJust.needsButton ? ' truncated' : ''}" data-full-text="${homeJust.fullText}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${homeJust.fullText}" data-original-content="<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.home)} | Stats: ${formatPct(statProbs.home)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet${drawJust.needsButton ? ' truncated' : ''}" data-full-text="${drawJust.fullText}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${drawJust.fullText}" data-original-content="<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.draw)} | Stats: ${formatPct(statProbs.draw)}</span>
                 </li>
                 <li class="rec-item">
-                    <span class="rec-bet${awayJust.needsButton ? ' truncated' : ''}" data-full-text="${awayJust.fullText}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${awayJust.fullText}" data-original-content="<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                     <span class="rec-prob">IA: ${formatPct(aiProbs.away)} | Stats: ${formatPct(statProbs.away)}</span>
                 </li>
             </ul>
@@ -996,7 +1006,7 @@ function getCombinedPrediction(stats, event, matchData) {
             <h4>Veredicto</h4>
             <ul>
                 <li class="rec-item verdict-item">
-                    <span class="rec-bet${verdictJust.needsButton ? ' truncated' : ''}" data-full-text="${verdictJust.fullText}"><strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
+                    <span class="rec-bet" data-full-text="${verdictText}" data-original-content="<strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}"><strong>Veredicto:</strong> ${verdictJust.text}${verdictJust.needsButton ? ' <button>Leer más</button>' : ''}</span>
                 </li>
             </ul>
         </div>
@@ -1061,8 +1071,8 @@ function calculateAll() {
         if (el) el.textContent = formatPct(p.value);
     });
     const recommendations = probabilities.filter(p => p.value >= 0.3)
-                                       .sort((a, b) => b.value - a.value)
-                                       .slice(0, 3);
+                                         .sort((a, b) => b.value - a.value)
+                                         .slice(0, 3);
     console.log('[calculateAll] Recomendaciones:', recommendations);
     let suggestionText = `
         <div class="rec-suggestion">
@@ -1085,7 +1095,10 @@ function calculateAll() {
     const combined = getCombinedPrediction(stats, event || {}, matchData);
     const combinedPrediction = $('combined-prediction');
     if (combinedPrediction) {
-        combinedPrediction.innerHTML = `<h3>${combined.header}</h3>${combined.body}`;
+        combinedPrediction.innerHTML = combined.body;
+        const headerElement = document.createElement('h3');
+        headerElement.textContent = combined.header;
+        combinedPrediction.prepend(headerElement);
         // Añadir manejadores de eventos para los botones "Leer más"
         combinedPrediction.querySelectorAll('.rec-bet button').forEach(button => {
             button.addEventListener('click', toggleText);

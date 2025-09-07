@@ -160,7 +160,7 @@ function parsePlainText(text, matchData) {
         draw: "Sin justificación detallada.",
         away: "Sin justificación detallada."
     };
-    const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$s)/s);
+    const probsMatch = text.match(/Probabilidades:\s*(.*?)(?:Ambos Anotan|$)/s);
     if (probsMatch && probsMatch[1]) {
         const probsText = probsMatch[1];
         const percentages = probsText.match(/(\d+)%/g) || [];
@@ -175,7 +175,7 @@ function parsePlainText(text, matchData) {
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de probabilidades en el texto: ${text}`);
     }
-    const analysisMatch = text.match(/Análisis del Partido:(.*?)Prob probabilities:/s);
+    const analysisMatch = text.match(/Análisis del Partido:(.*?)Probabilidades:/s);
     if (analysisMatch && analysisMatch[1]) {
         const analysisText = analysisMatch[1];
         const localJustification = analysisText.match(new RegExp(`${matchData.local}:(.*?)(?:Empate:|$)`, 's'));
@@ -325,6 +325,8 @@ function displaySelectedLeagueEvents(leagueCode) {
                 div.style.animationDelay = `${index * 0.1}s`;
                 div.dataset.homeTeam = event.local.trim();
                 div.dataset.awayTeam = event.visitante.trim();
+                div.setAttribute('role', 'button');
+                div.setAttribute('tabindex', '0');
                 
                 const homeTeam = findTeam(leagueCode, event.local.trim());
                 const awayTeam = findTeam(leagueCode, event.visitante.trim());
@@ -374,6 +376,12 @@ function displaySelectedLeagueEvents(leagueCode) {
                 } else {
                     div.addEventListener('click', () => {
                         selectEvent(event.local.trim(), event.visitante.trim());
+                    });
+                    div.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            selectEvent(event.local.trim(), event.visitante.trim());
+                        }
                     });
                 }
                 selectedEventsList.appendChild(div);
@@ -617,7 +625,7 @@ function selectEvent(homeTeamName, awayTeamName) {
             }
             console.error('[selectEvent] Fallo al seleccionar equipos:', { homeTeamName, awayTeamName, homeOption, awayOption });
         }
-    }, 500);
+    }, 300); // Reducido timeout para mejor UX
 }
 
 function restrictSameTeam() {
@@ -681,8 +689,7 @@ function clearTeamData(type) {
         `;
     }
     const cardHeader = $(`card-${typeLower}`)?.querySelector('.card-header');
-    const h3 = cardHeader ? cardHeader.querySelector('h3') : null;
-    const logoImg = h3 ? cardHeader.querySelector('.team-logo') : null;
+    const logoImg = cardHeader?.querySelector('.team-logo');
     if (logoImg) {
         logoImg.remove();
     }

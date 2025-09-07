@@ -187,7 +187,9 @@ body {
 .event-card .card-header::before,
 .event-card .card-header::after,
 .result-card .card-header::before,
-.result-card .card-header::after {
+.result-card .card-header::after,
+.combined-card .card-header::before,
+.combined-card .card-header::after {
     content: '';
 }
 
@@ -468,10 +470,6 @@ select:focus {
 }
 
 /* Botones */
-.action-buttons {
-    display: none;
-}
-
 .reset-container {
     display: flex;
     justify-content: center;
@@ -491,25 +489,6 @@ select:focus {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
-
-.btn-green {
-    background: linear-gradient(to right, var(--highlight-blue), #00a0e0);
-    color: var(--primary-bg);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-.btn-green:disabled {
-    background-color: #555;
-    color: #bbb;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.btn-green:enabled:hover {
-    background: linear-gradient(to right, #00f0ff, #00b0f0);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0, 224, 255, 0.5);
 }
 
 .btn-secondary {
@@ -585,6 +564,39 @@ select:focus {
 .probability-tile:nth-child(1) .value { color: var(--accent-green); text-shadow: 0 0 5px rgba(55, 204, 142, 0.5); }
 .probability-tile:nth-child(2) .value { color: var(--accent-yellow); text-shadow: 0 0 5px rgba(229, 192, 123, 0.5); }
 .probability-tile:nth-child(3) .value { color: var(--accent-red); text-shadow: 0 0 5px rgba(224, 108, 117, 0.5); }
+
+.recommendation-box {
+    background: linear-gradient(to bottom, #2a3a4a, #1a1a1a);
+    border: 1px solid var(--highlight-blue);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(0, 224, 255, 0.3);
+    position: relative;
+}
+
+.recommendation-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, transparent, var(--highlight-blue), transparent);
+    opacity: 0.5;
+    border-radius: 8px 8px 0 0;
+}
+
+.rec-title {
+    font-size: 1.2rem;
+    color: var(--highlight-blue);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 224, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
 /* Estilos para secciones de pronósticos */
 .rec-suggestion {
@@ -707,42 +719,9 @@ select:focus {
     min-width: 100px;
 }
 
-.recommendation-box {
-    background: linear-gradient(to bottom, #2a3a4a, #1a1a1a);
-    border: 1px solid var(--highlight-blue);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-top: 2rem;
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(0, 224, 255, 0.3);
-    position: relative;
-}
-
-.recommendation-box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(to right, transparent, var(--highlight-blue), transparent);
-    opacity: 0.5;
-    border-radius: 8px 8px 0 0;
-}
-
-.rec-title {
-    font-size: 1.2rem;
-    color: var(--highlight-blue);
-    margin-bottom: 1rem;
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(0, 224, 255, 0.8);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Diseño del texto de pronóstico detallado y combinado */
-#detailed-prediction, #combined-prediction {
-    padding: 1.5rem;
+/* Diseño del pronóstico combinado */
+#combined-prediction {
+    padding: 1rem;
     background: var(--secondary-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -752,7 +731,7 @@ select:focus {
     margin: 1rem 0;
 }
 
-#detailed-prediction::before, #combined-prediction::before {
+#combined-prediction::before {
     content: '';
     position: absolute;
     top: 0;
@@ -763,14 +742,24 @@ select:focus {
     pointer-events: none;
 }
 
-#detailed-prediction p, #combined-prediction p {
+#combined-prediction p {
     font-size: 1rem;
     line-height: 1.8;
     color: var(--text-color);
     text-align: justify;
     padding: 0;
-    margin: 0;
+    margin: 0 0 1rem 0;
     font-style: normal;
+}
+
+#combined-prediction h3 {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    color: var(--highlight-blue);
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.7);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* Estilos para mensajes de error e información */
@@ -792,58 +781,21 @@ select:focus {
     border-color: #ff4500;
 }
 
-.ia-card {
-    grid-column: 1 / span 1;
-}
-
-.ia-card .card-header {
-    background: var(--metal-gradient-light);
-    color: var(--highlight-blue);
-    text-shadow: 0 0 8px rgba(0, 224, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.ia-card .fas {
-    font-size: 1.4rem;
-    text-shadow: 0 0 5px var(--highlight-blue);
-}
-
-/* Estilos para los grupos de ligas */
-select optgroup {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--highlight-blue);
-    margin-top: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-select optgroup:not(:first-child) {
-    margin-top: 20px;
-}
-
-select option {
-    font-size: 1em;
-    padding-left: 15px;
-}
-
+/* Cuadrícula de recomendaciones */
 .recommendation-ia-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2.5rem;
+    grid-template-columns: 1fr; /* Una sola columna ahora */
+    gap: 2rem;
     margin-top: 2rem;
 }
 
-.recommendation-ia-grid .card {
-    margin-bottom: 0;
-}
-
-.recommendation-ia-grid .card-header {
+.combined-card .card-header {
     background: var(--metal-gradient-light);
     color: var(--highlight-blue);
     text-shadow: 0 0 8px rgba(0, 224, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.recommendation-ia-grid .card-header .fas {
+.combined-card .card-header .fas {
     text-shadow: 0 0 5px var(--highlight-blue);
 }
 
@@ -1098,11 +1050,11 @@ select option {
         text-align: left;
         min-width: unset;
     }
-    #detailed-prediction, #combined-prediction {
+    #combined-prediction {
         padding: 0.8rem;
         margin: 0.6rem 0;
     }
-    #detailed-prediction p, #combined-prediction p {
+    #combined-prediction p, #combined-prediction h3 {
         font-size: 0.9rem;
         line-height: 1.6;
     }

@@ -672,11 +672,13 @@ function toggleVerdictText(event) {
     if (isExpanded) {
         parentP.classList.remove('expanded');
         parentP.innerHTML = originalContent;
-        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+        const btn = parentP.querySelector('button');
+        if (btn) btn.addEventListener('click', toggleVerdictText);
     } else {
         parentP.classList.add('expanded');
         parentP.innerHTML = fullText + ' <button class="btn btn-secondary">Leer menos</button>';
-        parentP.querySelector('button').addEventListener('click', toggleVerdictText);
+        const btn = parentP.querySelector('button');
+        if (btn) btn.addEventListener('click', toggleVerdictText);
     }
 }
 
@@ -699,22 +701,32 @@ function getIntegratedPrediction(stats, event, matchData) {
     const aiMaxKey = Object.keys(aiProbs).reduce((a, b) => aiProbs[a] > aiProbs[b] ? a : b);
     const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
     const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
-    let header, verdict;
+
+    const keyToName = key => key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante;
+    const titlePrefix = 'RECOMENDACIÓN FINAL';
+
+    let smallHeader = '';
+    let verdict = '';
+
     if (!ai["1X2"] || Object.values(ai["1X2"]).every(p => !p?.probabilidad)) {
-        header = `Pronóstico Estadístico`;
-        verdict = `Apuesta en ${integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante} si >50%.`;
+        smallHeader = `Pronóstico Estadístico`;
+        verdict = `Apuesta en ${keyToName(integratedMaxKey)} si >50%.`;
     } else if (statMaxKey === aiMaxKey && diff < 0.1) {
-        header = `⭐ Consenso: ${integratedMaxKey === 'home' ? matchData.local : integratedMaxKey === 'draw' ? 'Empate' : matchData.visitante}`;
+        smallHeader = `⭐ Consenso: ${keyToName(integratedMaxKey)}`;
         verdict = `Fuerte: ${formatPct(integratedProbs[integratedMaxKey])}. Cuota <${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
-        header = `⚠️ Discrepancia: ${integratedMaxKey.toUpperCase()}`;
-        verdict = `Prioriza ${integratedMaxKey.toUpperCase()} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
+        smallHeader = `⚠️ Discrepancia: ${integratedMaxKey.toUpperCase()}`;
+        verdict = `Prioriza ${keyToName(integratedMaxKey)} (${formatPct(integratedProbs[integratedMaxKey])}) si >55%. Verifica forma reciente y cuotas.`;
     }
+
+    const header = `${titlePrefix} - ${smallHeader}`;
+
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, stats: statProbs.home, ia: aiProbs.home },
         { id: 'pDraw', value: integratedProbs.draw, stats: statProbs.draw, ia: aiProbs.draw },
         { id: 'pAway', value: integratedProbs.away, stats: statProbs.away, ia: aiProbs.away }
     ];
+
     const recs = Object.entries(integratedProbs)
         .filter(([key, val]) => val >= 0.3)
         .sort((a, b) => b[1] - a[1])
@@ -725,8 +737,10 @@ function getIntegratedPrediction(stats, event, matchData) {
                 : (ai["1X2"]?.victoria_visitante?.justificacion?.slice(0, 30) || 'Defensa visitante sólida') + '...';
             return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? matchData.local : key === 'draw' ? 'Empate' : matchData.visitante}: ${formatPct(val)}</span><span class="rec-prob">${just}</span></li>`;
         }).join('');
+
     const verdictData = truncateVerdict(verdict);
     const recsHtml = `<ul>${recs || '<li>No hay recomendaciones >30%</li>'}</ul>`;
+
     const analysisHtml = `
         <div class="rec-suggestion">
             <ul>
@@ -736,10 +750,11 @@ function getIntegratedPrediction(stats, event, matchData) {
                 <li class="rec-item"><span class="rec-bet">BTTS Sí</span><span class="rec-prob">${ai.BTTS?.si?.probabilidad || formatPct(stats.pBTTSH)}</span></li>
                 <li class="rec-item"><span class="rec-bet">Más 2.5</span><span class="rec-prob">${ai.Goles?.mas_2_5?.probabilidad || formatPct(stats.pO25H)}</span></li>
             </ul>
-            <h4>Veredicto</h4>
-            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class="btn btn-secondary">Leer más</button>' : ''}</p>
+            <h4>RECOMENDACIÓN FINAL</h4>
+            <p class="verdict-text ${verdictData.needsButton ? 'truncated' : ''}" data-full-text="${verdictData.fullText}" data-original-content="${verdictData.text}${verdictData.needsButton ? ' <button class=\"btn btn-secondary\">Leer más</button>' : ''}">${verdictData.text}${verdictData.needsButton ? ' <button class=\"btn btn-secondary\">Leer más</button>' : ''}</p>
         </div>
     `;
+
     return { header, probabilities, recsHtml, analysisHtml };
 }
 
@@ -768,6 +783,7 @@ function calculateAll() {
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = `<h3>${integrated.header}</h3>${integrated.recsHtml}${integrated.analysisHtml}`;
+        // inicializa los botones "Leer más" de veredicto
         suggestion.querySelectorAll('.verdict-text button').forEach(btn => btn.addEventListener('click', toggleVerdictText));
     }
 }

@@ -25,12 +25,15 @@
                 <div class="card-body">
                     <div class="control-group">
                         <label for="leagueSelect">Selecciona una Liga:</label>
-                        <select id="leagueSelect" aria-label="Selecciona una liga"></select>
+                        <select id="leagueSelect"></select>
                     </div>
                     <div class="control-group">
                         <label>Selecciona un Evento:</label>
                         <div id="selected-league-events" class="event-list">
                             <div class="event-item placeholder"><span>Selecciona una liga para ver eventos próximos.</span></div>
+                        </div>
+                        <div id="transition-message" class="transition-message" style="display: none;">
+                            <span class="loading-text"></span>
                         </div>
                     </div>
                 </div>
@@ -44,7 +47,7 @@
                 <div class="card-body">
                     <div class="control-group">
                         <label for="teamHome">Selecciona el Equipo Local:</label>
-                        <select id="teamHome" aria-label="Selecciona equipo local"></select>
+                        <select id="teamHome"></select>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-box">
@@ -103,7 +106,7 @@
                 <div class="card-body">
                     <div class="control-group">
                         <label for="teamAway">Selecciona el Equipo Visitante:</label>
-                        <select id="teamAway" aria-label="Selecciona equipo visitante"></select>
+                        <select id="teamAway"></select>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-box">

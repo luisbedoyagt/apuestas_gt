@@ -200,7 +200,7 @@
                 </div>
             </section>
 
-            <!-- Plantillas movidas al final del main -->
+            <!-- Plantillas -->
             <template id="event-item-template">
                 <div class="event-item">
                     <div class="event-content">
@@ -257,6 +257,60 @@
                     <h4>Apuesta Recomendada</h4>
                     <div class="rec-item verdict-item">
                         <span class="rec-bet" data-verdict></span>
+                    </div>
+                </div>
+            </template>
+            <template id="stats-only-recs-template">
+                <div class="rec-suggestion">
+                    <h4>Top Recomendaciones (Estadísticas)</h4>
+                    <ul id="stats-recs-list">
+                        <li class="rec-item">
+                            <span class="rec-rank">1</span>
+                            <span class="rec-bet" data-home-bet></span>
+                            <span class="rec-prob" data-home-prob></span>
+                        </li>
+                        <li class="rec-item">
+                            <span class="rec-rank">2</span>
+                            <span class="rec-bet" data-draw-bet></span>
+                            <span class="rec-prob" data-draw-prob></span>
+                        </li>
+                        <li class="rec-item">
+                            <span class="rec-rank">3</span>
+                            <span class="rec-bet" data-away-bet></span>
+                            <span class="rec-prob" data-away-prob></span>
+                        </li>
+                    </ul>
+                </div>
+            </template>
+            <template id="stats-only-analysis-template">
+                <div class="rec-suggestion">
+                    <h4>Análisis Estadístico</h4>
+                    <p>No hay datos de IA completos disponibles. Recomendaciones basadas en estadísticas:</p>
+                    <ul id="stats-analysis-list">
+                        <li class="rec-item">
+                            <span class="rec-bet" data-home-stats></span>
+                        </li>
+                        <li class="rec-item">
+                            <span class="rec-bet" data-draw-stats></span>
+                        </li>
+                        <li class="rec-item">
+                            <span class="rec-bet" data-away-stats></span>
+                        </li>
+                    </ul>
+                    <h4>Otras Apuestas</h4>
+                    <ul id="stats-other-bets">
+                        <li class="rec-item">
+                            <span class="rec-bet">Ambos Anotan (Sí)</span>
+                            <span class="rec-prob" data-btts-stats></span>
+                        </li>
+                        <li class="rec-item">
+                            <span class="rec-bet">Más de 2.5 Goles</span>
+                            <span class="rec-prob" data-o25-stats></span>
+                        </li>
+                    </ul>
+                    <h4>Apuesta Recomendada</h4>
+                    <div class="rec-item verdict-item">
+                        <span class="rec-bet" data-verdict-stats></span>
                     </div>
                 </div>
             </template>

@@ -36,6 +36,22 @@
                             <span class="loading-text"></span>
                         </div>
                     </div>
+                    <!-- Plantilla para evento dinámico -->
+                    <template id="event-item-template">
+                        <div class="event-item">
+                            <div class="event-content">
+                                <div class="team-logo-container">
+                                    <span class="team-name" data-home-team></span>
+                                    <img src="" class="team-logo home-logo hidden" alt="">
+                                    <span class="vs">vs.</span>
+                                    <img src="" class="team-logo away-logo hidden" alt="">
+                                    <span class="team-name" data-away-team></span>
+                                </div>
+                                <span class="event-details" data-datetime></span>
+                                <span class="event-details" data-stadium></span>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </section>
 
@@ -72,25 +88,25 @@
                             <div class="stat-section">
                                 <span class="section-title">General</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>Puntos: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pj">PJ: 0</span>
+                                    <span data-stat="points">Puntos: 0</span>
+                                    <span data-stat="dg">DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Local</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>PG: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pjHome">PJ: 0</span>
+                                    <span data-stat="winsHome">PG: 0</span>
+                                    <span data-stat="dgHome">DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Visitante</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>PG: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pjAway">PJ: 0</span>
+                                    <span data-stat="winsAway">PG: 0</span>
+                                    <span data-stat="dgAway">DG: 0</span>
                                 </div>
                             </div>
                         </div>
@@ -131,25 +147,25 @@
                             <div class="stat-section">
                                 <span class="section-title">General</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>Puntos: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pj">PJ: 0</span>
+                                    <span data-stat="points">Puntos: 0</span>
+                                    <span data-stat="dg">DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Local</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>PG: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pjHome">PJ: 0</span>
+                                    <span data-stat="winsHome">PG: 0</span>
+                                    <span data-stat="dgHome">DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Visitante</span>
                                 <div class="stat-metrics">
-                                    <span>PJ: 0</span>
-                                    <span>PG: 0</span>
-                                    <span>DG: 0</span>
+                                    <span data-stat="pjAway">PJ: 0</span>
+                                    <span data-stat="winsAway">PG: 0</span>
+                                    <span data-stat="dgAway">DG: 0</span>
                                 </div>
                             </div>
                         </div>
@@ -197,6 +213,52 @@
                     <div id="integrated-prediction">
                         <p>Esperando análisis integrado...</p>
                     </div>
+                    <!-- Plantilla para recomendaciones -->
+                    <template id="rec-suggestion-template">
+                        <div class="rec-suggestion">
+                            <h4>Top Recomendaciones</h4>
+                            <ul id="rec-list"></ul>
+                        </div>
+                    </template>
+                    <template id="rec-item-template">
+                        <li class="rec-item">
+                            <span class="rec-rank"></span>
+                            <span class="rec-bet"></span>
+                            <span class="rec-prob"></span>
+                        </li>
+                    </template>
+                    <!-- Plantilla para análisis -->
+                    <template id="analysis-template">
+                        <div class="rec-suggestion">
+                            <h4>Análisis del Partido</h4>
+                            <ul id="analysis-list">
+                                <li class="rec-item">
+                                    <span class="rec-bet" data-home-justification></span>
+                                </li>
+                                <li class="rec-item">
+                                    <span class="rec-bet" data-draw-justification></span>
+                                </li>
+                                <li class="rec-item">
+                                    <span class="rec-bet" data-away-justification></span>
+                                </li>
+                            </ul>
+                            <h4>Otras Apuestas</h4>
+                            <ul id="other-bets">
+                                <li class="rec-item">
+                                    <span class="rec-bet">Ambos Anotan (Sí)</span>
+                                    <span class="rec-prob" data-btts></span>
+                                </li>
+                                <li class="rec-item">
+                                    <span class="rec-bet">Más de 2.5 Goles</span>
+                                    <span class="rec-prob" data-o25></span>
+                                </li>
+                            </ul>
+                            <h4>Apuesta Recomendada</h4>
+                            <div class="rec-item verdict-item">
+                                <span class="rec-bet" data-verdict></span>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </section>
         </main>

@@ -889,8 +889,6 @@ function fillTeamData(teamName, leagueCode, type) {
     }
 }
 
-
-
 // CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
 function dixonColesProbabilities(tH, tA, league) {
     console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
@@ -1062,7 +1060,59 @@ function dixonColesProbabilities(tH, tA, league) {
     };
 }
 
-// ... (El resto del código hasta getIntegratedPrediction permanece igual)
+// FUNCIÓN PARA TRUNCAR JUSTIFICACIONES LARGAS
+function truncateText(text, maxWords = 20) {
+    const words = text.split(' ');
+    if (words.length > maxWords) {
+        const truncated = words.slice(0, maxWords).join(' ') + '...';
+        return {
+            text: truncated,
+            needsButton: true,
+            fullText: text
+        };
+    }
+    return {
+        text: text,
+        needsButton: false,
+        fullText: text
+    };
+}
+
+// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
+function toggleText(event) {
+    const button = event.target;
+    const parentSpan = button.closest('.rec-bet');
+    if (!parentSpan) return;
+
+    const isExpanded = parentSpan.classList.contains('expanded');
+    const fullText = parentSpan.dataset.fullText;
+    const originalContent = parentSpan.dataset.originalContent;
+
+    if (isExpanded) {
+        parentSpan.classList.remove('expanded');
+        parentSpan.innerHTML = originalContent;
+        parentSpan.querySelector('button').addEventListener('click', toggleText);
+    } else {
+        parentSpan.classList.add('expanded');
+        parentSpan.innerHTML = fullText;
+        const newButton = document.createElement('button');
+        newButton.textContent = 'Leer menos';
+        newButton.addEventListener('click', toggleText);
+        parentSpan.appendChild(newButton);
+    }
+}
+
+// Función auxiliar para escapar HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
 
 // FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
 function getIntegratedPrediction(stats, event, matchData) {
@@ -1137,6 +1187,97 @@ function getIntegratedPrediction(stats, event, matchData) {
                         <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${formatPct(stats.pBTTSH)}</span></li>
                         <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(stats.pO25H)}</span></li>
                     </ul>
+                    <h4>Apuesta Recomendada</h4>
+                    <div class="rec-item verdict-item"><span class="rec-bet">Apuesta por la opción con mayor probabilidad (${formatPct(Math.max(stats.finalHome, stats.finalDraw, stats.finalAway))}) si supera el 50%.</span></div>
+                </div>
+            `,
+            verdict: `Apuesta por la opción con mayor probabilidad si supera el 50%.`
+        };
+    }
+
+    const statProbs = { home: stats.finalHome, draw: stats.finalDraw, away: stats.finalAway };
+    const weightStats = hasAIJustifications ? 0.4 : 0.6; // Reducir peso de estadísticas si hay justificaciones de IA
+    const weightIA = hasAIJustifications ? 0.6 : 0.4; // Aumentar peso de IA si hay justificaciones
+    const integratedProbs = {
+        home: (statProbs.home * weightStats + aiProbs.home * weightIA),
+        draw: (statProbs.draw * weightStats + aiProbs.draw * weightIA),
+        away: (statProbs.away * weightStats + aiProbs.away * weightIA)
+    };
+
+    // Normalizar integratedProbs
+    const totalIntegrated = integratedProbs.home + integratedProbs.draw + integratedProbs.away;
+    if (totalIntegrated > 0) {
+        const scale = 1 / totalIntegrated;
+        integratedProbs.home *= scale;
+        integratedProbs.draw *= scale;
+        integratedProbs.away *= scale;
+    } else {
+        console.warn('[getIntegratedPrediction] Suma de probabilidades integradas inválida, usando valores por defecto');
+        integratedProbs.home = 0.333;
+        integratedProbs.draw = 0.333;
+        integratedProbs.away = 0.333;
+    }
+
+    const statMaxKey = Object.keys(statProbs).reduce((a, b) => statProbs[a] > statProbs[b] ? a : b);
+    const aiMaxKey = Object.keys(aiProbs).reduce((a, b) => aiProbs[a] > aiProbs[b] ? a : b);
+    const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
+    const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
+    let header = '';
+    let verdictText = '';
+    if (statMaxKey === aiMaxKey && diff < 0.15) {
+        header = `Recomendación Segura: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
+        verdictText = `Ambos análisis coinciden: la mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Apuesta si la cuota es menor a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
+    } else {
+        header = `Apuesta Recomendada: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
+        verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
+    }
+
+    const bttsValue = ai.BTTS?.si?.probabilidad && parseFloat(ai.BTTS.si.probabilidad) > 0 ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH;
+    const o25Value = ai.Goles?.mas_2_5?.probabilidad && parseFloat(ai.Goles.mas_2_5.probabilidad) > 0 ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : stats.pO25H;
+    const probabilities = [
+        { id: 'pHome', value: integratedProbs.home, label: `Victoria ${matchData.local}`, stats: statProbs.home, ia: aiProbs.home },
+        { id: 'pDraw', value: integratedProbs.draw, label: 'Empate', stats: statProbs.draw, ia: aiProbs.draw },
+        { id: 'pAway', value: integratedProbs.away, label: `Victoria ${matchData.visitante}`, stats: statProbs.away, ia: aiProbs.away },
+        { id: 'pBTTS', value: bttsValue, label: 'Ambos Anotan', stats: stats.pBTTSH, ia: ai.BTTS?.si?.probabilidad ? parseFloat(ai.BTTS.si.probabilidad) / 100 : null },
+        { id: 'pO25', value: o25Value, label: 'Más de 2.5 Goles', stats: stats.pO25H, ia: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : null }
+    ];
+
+    const recs = Object.entries(integratedProbs)
+        .filter(([key, val]) => val >= 0.3)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([key, val], i) => {
+            const just = key === 'home' ? `${matchData.local}: Basado en buen ataque local y análisis de IA.`
+                : key === 'draw' ? `Empate: Equipos con fuerzas similares según estadísticas e IA.`
+                : `${matchData.visitante}: Basado en sólida defensa visitante y análisis de IA.`;
+            return `<li class="rec-item"><span class="rec-rank">${i+1}</span><span class="rec-bet">${key === 'home' ? `Victoria ${matchData.local}` : key === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(val)})</span><span class="rec-prob">${just}</span></li>`;
+        }).join('');
+
+    const recsHtml = `<div class="rec-suggestion"><h4>Top Recomendaciones</h4><ul>${recs || '<li><span>No hay recomendaciones con probabilidad mayor al 30%</span></li>'}</ul></div>`;
+
+    // Usar justificaciones de IA si están disponibles, con respaldo
+    const homeJust = truncateText(ai["1X2"]?.victoria_local?.justificacion || `Análisis basado en estadísticas recientes de ${matchData.local}.`, 15);
+    const drawJust = truncateText(ai["1X2"]?.empate?.justificacion || "Análisis basado en el equilibrio entre ambos equipos.", 15);
+    const awayJust = truncateText(ai["1X2"]?.victoria_visitante?.justificacion || `Análisis basado en estadísticas recientes de ${matchData.visitante}.`, 15);
+    console.log(`[getIntegratedPrediction] Justificaciones:`, {
+        home: homeJust.fullText,
+        draw: drawJust.fullText,
+        away: awayJust.fullText
+    });
+
+    const analysisHtml = `
+        <div class="rec-suggestion">
+            <h4>Análisis del Partido</h4>
+            <ul>
+                <li class="rec-item"><span class="rec-bet ${homeJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.local}:</strong> ${homeJust.text}${homeJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
+                <li class="rec-item"><span class="rec-bet ${drawJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>Empate:</strong> ${drawJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>Empate:</strong> ${drawJust.text}${drawJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
+                <li class="rec-item"><span class="rec-bet ${awayJust.needsButton ? 'truncated' : ''}" data-full-text="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.fullText}`)}" data-original-content="${escapeHtml(`<strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}`)}"><strong>${matchData.visitante}:</strong> ${awayJust.text}${awayJust.needsButton ? ' <button>Leer más</button>' : ''}</span></li>
+            </ul>
+            <h4>Otras Apuestas</h4>
+            <ul>
+                <li class="rec-item"><span class="rec-bet">Ambos Anotan (Sí)</span><span class="rec-prob">${formatPct(bttsValue)}</span></li>
+                <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(o25Value)}</span></li>
+            </ul>
                     <h4>Apuesta Recomendada</h4>
                     <div class="rec-item verdict-item"><span class="rec-bet">Apuesta por la opción con mayor probabilidad (${formatPct(Math.max(stats.finalHome, stats.finalDraw, stats.finalAway))}) si supera el 50%.</span></div>
                 </div>
@@ -1322,4 +1463,5 @@ async function calculateAll() {
 
 // INICIAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', init);
+
 

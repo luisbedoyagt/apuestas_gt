@@ -1,9 +1,3 @@
-tengo este codigo, haz que la IA o recomndacion IA se integre correctamente a los datos de estadisticas locales (webapp) 
-
-al momento me da mensaje que no hay datos de IA pero si los hay
-
-el mensaje es Sin IA Completa, pero si hay datos
-
 // UTILIDADES
 const $ = id => {
     const element = document.getElementById(id);

@@ -252,6 +252,18 @@ select:focus {
     box-shadow: 0 0 0 2px rgba(0, 224, 255, 0.4);
 }
 
+select optgroup {
+    font-weight: bold;
+    font-size: 0.9em;
+    background-color: rgba(0, 224, 255, 0.1);
+}
+
+select option {
+    padding: 8px;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
 .event-list {
     display: flex;
     flex-direction: column;
@@ -676,7 +688,7 @@ select:focus {
 }
 
 .rec-bet.truncated {
-    max-height: 4.2rem; /* 3 líneas a 1.4rem por línea */
+    max-height: 4.2rem;
     overflow: hidden;
     text-overflow: clip;
 }
@@ -712,7 +724,7 @@ select:focus {
 }
 
 /* Diseño del pronóstico combinado */
-#combined-prediction {
+#integrated-prediction {
     padding: 1rem;
     background: var(--secondary-bg);
     border: 1px solid var(--border-color);
@@ -723,7 +735,7 @@ select:focus {
     margin: 1rem 0;
 }
 
-#combined-prediction::before {
+#integrated-prediction::before {
     content: '';
     position: absolute;
     top: 0;
@@ -734,7 +746,7 @@ select:focus {
     pointer-events: none;
 }
 
-#combined-prediction p {
+#integrated-prediction p {
     font-size: 1rem;
     line-height: 1.8;
     color: var(--text-color);
@@ -744,7 +756,7 @@ select:focus {
     font-style: normal;
 }
 
-#combined-prediction h3 {
+#integrated-prediction h3 {
     font-family: var(--font-heading);
     font-size: 1.2rem;
     color: var(--highlight-blue);
@@ -776,7 +788,7 @@ select:focus {
 /* Cuadrícula de recomendaciones */
 .recommendation-ia-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Una sola columna ahora */
+    grid-template-columns: 1fr;
     gap: 2rem;
     margin-top: 2rem;
 }
@@ -882,28 +894,29 @@ select:focus {
     }
 }
 
+
 .rec-item .rec-bet {
     display: block;
     flex-grow: 1;
-    max-height: 4.5em; /* Limita la altura del contenedor. Ajusta este valor si quieres más o menos texto inicial. */
-    overflow: hidden; /* Oculta cualquier contenido que se salga del área definida por max-height. */
-    text-overflow: ellipsis; /* Muestra puntos suspensivos (...) para indicar que hay más texto. */
+    max-height: 4.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: normal;
     position: relative;
-    font-size: 1em; /* Asegúrate de que el tamaño de fuente sea consistente */
-    line-height: 1.5em; /* Esto define la altura de la línea. 3 líneas * 1.5em = 4.5em */
+    font-size: 1em;
+    line-height: 1.5em;
 }
 
 .rec-item .rec-bet.expanded {
-    max-height: none; /* Cuando se expande, elimina la restricción de altura. */
-    overflow: visible; /* Permite que se vea todo el contenido. */
+    max-height: none;
+    overflow: visible;
 }
 
 /* Estilo para los botones "Leer más/menos" */
 .rec-item .rec-bet button {
     background: none;
     border: none;
-    color: #007bff; /* Color de enlace */
+    color: #007bff;
     cursor: pointer;
     padding: 0;
     margin-left: 5px;
@@ -913,7 +926,7 @@ select:focus {
 
 /* Regla específica para el veredicto, si deseas que tenga un truncamiento diferente */
 .rec-item.verdict-item .rec-bet {
-    max-height: 6em; /* Opcional: Dale un poco más de altura al veredicto */
+    max-height: 6em;
 }
 /* ========================================================================== */
 /* AJUSTES PARA MÓVIL (MENOS DE 767PX) */
@@ -1065,7 +1078,7 @@ select:focus {
         margin: 5px 0;
         font-size: 0.8rem;
         max-width: 100%;
-        max-height: 2.8rem; /* 2 líneas */
+        max-height: 2.8rem;
     }
     .rec-bet.truncated {
         text-overflow: clip;
@@ -1075,11 +1088,11 @@ select:focus {
         text-align: left;
         min-width: unset;
     }
-    #combined-prediction {
+    #integrated-prediction {
         padding: 0.8rem;
         margin: 0.6rem 0;
     }
-    #combined-prediction p, #combined-prediction h3 {
+    #integrated-prediction p, #integrated-prediction h3 {
         font-size: 0.9rem;
         line-height: 1.6;
     }
@@ -1130,20 +1143,52 @@ select:focus {
         padding: 1.5rem 0;
     }
     .control-group {
-        margin-bottom: 0;
+        margin-bottom: 1rem;
     }
     .control-group label {
         font-size: 0.8rem;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.5rem;
+        display: block;
     }
     select {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.7rem;
-        background-position: right 0.4rem top 50%;
-        background-size: 0.8rem auto;
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+        padding: 0.6rem;
+        font-size: 16px;
+        line-height: 1.4;
+        background-color: var(--secondary-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px;
+        -webkit-appearance: menulist;
+        -moz-appearance: menulist;
+        appearance: menulist;
+        cursor: pointer;
+        background-image: none !important;
+        background-position: right 0.8rem top 50%;
+        background-size: 1rem auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    select:focus {
+        outline: 2px solid var(--highlight-blue);
+        outline-offset: -2px;
+    }
+    select optgroup {
+        font-size: 0.95em;
+        padding: 4px 0;
+        background-color: rgba(0, 224, 255, 0.05);
+    }
+    select option {
+        font-size: 0.9em;
+        padding: 6px 8px;
+        min-height: 40px;
     }
     .event-list {
         gap: 0.8rem;
+        max-height: 50vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .event-item {
         padding: 0.8rem;

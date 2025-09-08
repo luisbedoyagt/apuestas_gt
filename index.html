@@ -25,7 +25,7 @@
                 <div class="card-body">
                     <div class="control-group">
                         <label for="leagueSelect">Selecciona una Liga:</label>
-                        <select id="leagueSelect" size="1"></select>
+                        <select id="leagueSelect"></select>
                     </div>
                     <div class="control-group">
                         <label>Selecciona un Evento:</label>
@@ -72,25 +72,25 @@
                             <div class="stat-section">
                                 <span class="section-title">General</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pj">PJ: 0</span>
-                                    <span data-stat="points">Puntos: 0</span>
-                                    <span data-stat="dg">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>Puntos: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Local</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pjHome">PJ: 0</span>
-                                    <span data-stat="winsHome">PG: 0</span>
-                                    <span data-stat="dgHome">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>PG: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Visitante</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pjAway">PJ: 0</span>
-                                    <span data-stat="winsAway">PG: 0</span>
-                                    <span data-stat="dgAway">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>PG: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                         </div>
@@ -131,25 +131,25 @@
                             <div class="stat-section">
                                 <span class="section-title">General</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pj">PJ: 0</span>
-                                    <span data-stat="points">Puntos: 0</span>
-                                    <span data-stat="dg">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>Puntos: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Local</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pjHome">PJ: 0</span>
-                                    <span data-stat="winsHome">PG: 0</span>
-                                    <span data-stat="dgHome">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>PG: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                             <div class="stat-section">
                                 <span class="section-title">Visitante</span>
                                 <div class="stat-metrics">
-                                    <span data-stat="pjAway">PJ: 0</span>
-                                    <span data-stat="winsAway">PG: 0</span>
-                                    <span data-stat="dgAway">DG: 0</span>
+                                    <span>PJ: 0</span>
+                                    <span>PG: 0</span>
+                                    <span>DG: 0</span>
                                 </div>
                             </div>
                         </div>
@@ -199,121 +199,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- Plantillas -->
-            <template id="event-item-template">
-                <div class="event-item">
-                    <div class="event-content">
-                        <div class="team-logo-container">
-                            <span class="team-name" data-home-team></span>
-                            <img src="" class="team-logo home-logo hidden" alt="">
-                            <span class="vs">vs.</span>
-                            <img src="" class="team-logo away-logo hidden" alt="">
-                            <span class="team-name" data-away-team></span>
-                        </div>
-                        <span class="event-details" data-datetime></span>
-                        <span class="event-details" data-stadium></span>
-                    </div>
-                </div>
-            </template>
-            <template id="rec-suggestion-template">
-                <div class="rec-suggestion">
-                    <h4>Top Recomendaciones</h4>
-                    <ul id="rec-list"></ul>
-                </div>
-            </template>
-            <template id="rec-item-template">
-                <li class="rec-item">
-                    <span class="rec-rank"></span>
-                    <span class="rec-bet"></span>
-                    <span class="rec-prob"></span>
-                </li>
-            </template>
-            <template id="analysis-template">
-                <div class="rec-suggestion">
-                    <h4>Análisis del Partido</h4>
-                    <ul id="analysis-list">
-                        <li class="rec-item">
-                            <span class="rec-bet" data-home-justification></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet" data-draw-justification></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet" data-away-justification></span>
-                        </li>
-                    </ul>
-                    <h4>Otras Apuestas</h4>
-                    <ul id="other-bets">
-                        <li class="rec-item">
-                            <span class="rec-bet">Ambos Anotan (Sí)</span>
-                            <span class="rec-prob" data-btts></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet">Más de 2.5 Goles</span>
-                            <span class="rec-prob" data-o25></span>
-                        </li>
-                    </ul>
-                    <h4>Apuesta Recomendada</h4>
-                    <div class="rec-item verdict-item">
-                        <span class="rec-bet" data-verdict></span>
-                    </div>
-                </div>
-            </template>
-            <template id="stats-only-recs-template">
-                <div class="rec-suggestion">
-                    <h4>Top Recomendaciones (Estadísticas)</h4>
-                    <ul id="stats-recs-list">
-                        <li class="rec-item">
-                            <span class="rec-rank">1</span>
-                            <span class="rec-bet" data-home-bet></span>
-                            <span class="rec-prob" data-home-prob></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-rank">2</span>
-                            <span class="rec-bet" data-draw-bet></span>
-                            <span class="rec-prob" data-draw-prob></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-rank">3</span>
-                            <span class="rec-bet" data-away-bet></span>
-                            <span class="rec-prob" data-away-prob></span>
-                        </li>
-                    </ul>
-                </div>
-            </template>
-            <template id="stats-only-analysis-template">
-                <div class="rec-suggestion">
-                    <h4>Análisis Estadístico</h4>
-                    <p>No hay datos de IA completos disponibles. Recomendaciones basadas en estadísticas:</p>
-                    <ul id="stats-analysis-list">
-                        <li class="rec-item">
-                            <span class="rec-bet" data-home-stats></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet" data-draw-stats></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet" data-away-stats></span>
-                        </li>
-                    </ul>
-                    <h4>Otras Apuestas</h4>
-                    <ul id="stats-other-bets">
-                        <li class="rec-item">
-                            <span class="rec-bet">Ambos Anotan (Sí)</span>
-                            <span class="rec-prob" data-btts-stats></span>
-                        </li>
-                        <li class="rec-item">
-                            <span class="rec-bet">Más de 2.5 Goles</span>
-                            <span class="rec-prob" data-o25-stats></span>
-                        </li>
-                    </ul>
-                    <h4>Apuesta Recomendada</h4>
-                    <div class="rec-item verdict-item">
-                        <span class="rec-bet" data-verdict-stats></span>
-                    </div>
-                </div>
-            </template>
         </main>
         
         <footer class="reset-container">

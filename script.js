@@ -1465,3 +1465,4 @@ async function calculateAll() {
 document.addEventListener('DOMContentLoaded', init);
 
 
+

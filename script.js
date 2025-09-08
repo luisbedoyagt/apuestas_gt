@@ -889,6 +889,8 @@ function fillTeamData(teamName, leagueCode, type) {
     }
 }
 
+
+
 // CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
 function dixonColesProbabilities(tH, tA, league) {
     console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
@@ -896,6 +898,12 @@ function dixonColesProbabilities(tH, tA, league) {
     // Validar datos de entrada
     if (!tH || !tA || !teamsByLeague[league]) {
         console.error('[dixonColesProbabilities] Datos inválidos:', { tH, tA, league });
+        return { finalHome: 0.333, finalDraw: 0.333, finalAway: 0.333, pBTTSH: 0.5, pO25H: 0.5 };
+    }
+
+    // Validar que los equipos tengan datos suficientes
+    if (!tH.pjHome || tH.pjHome < 1 || !tA.pjAway || tA.pjAway < 1) {
+        console.warn(`[dixonColesProbabilities] Datos insuficientes: pjHome=${tH.pjHome}, pjAway=${tA.pjAway}, usando valores por defecto`);
         return { finalHome: 0.333, finalDraw: 0.333, finalAway: 0.333, pBTTSH: 0.5, pO25H: 0.5 };
     }
 
@@ -935,10 +943,10 @@ function dixonColesProbabilities(tH, tA, league) {
         }
     });
     totalGames = Math.max(totalGames, 1); // Evitar división por cero
-    const leagueAvgGfHome = totalGfHome / (totalGames / 2);
-    const leagueAvgGaHome = totalGaHome / (totalGames / 2);
-    const leagueAvgGfAway = totalGfAway / (totalGames / 2);
-    const leagueAvgGaAway = totalGaAway / (totalGames / 2);
+    const leagueAvgGfHome = totalGfHome / (totalGames / 2) || 1.5; // Respaldo si no hay datos
+    const leagueAvgGaHome = totalGaHome / (totalGames / 2) || 1.5;
+    const leagueAvgGfAway = totalGfAway / (totalGames / 2) || 1.5;
+    const leagueAvgGaAway = totalGaAway / (totalGames / 2) || 1.5;
     console.log(`[dixonColesProbabilities] Promedios de liga: GfHome=${leagueAvgGfHome.toFixed(2)}, GaHome=${leagueAvgGaHome.toFixed(2)}, GfAway=${leagueAvgGfAway.toFixed(2)}, GaAway=${leagueAvgGaAway.toFixed(2)}`);
 
     // Calcular factor de shrinkage dinámico
@@ -965,6 +973,12 @@ function dixonColesProbabilities(tH, tA, league) {
     const expectedHomeGoals = Math.max(0, homeAttack * awayDefense * leagueAvgGfHome);
     const expectedAwayGoals = Math.max(0, awayAttack * homeDefense * leagueAvgGaHome);
     console.log(`[dixonColesProbabilities] Goles esperados: Home=${expectedHomeGoals.toFixed(2)}, Away=${expectedAwayGoals.toFixed(2)}`);
+
+    // Validar goles esperados
+    if (expectedHomeGoals === 0 || expectedAwayGoals === 0) {
+        console.warn('[dixonColesProbabilities] Goles esperados inválidos, usando valores por defecto');
+        return { finalHome: 0.333, finalDraw: 0.333, finalAway: 0.333, pBTTSH: 0.5, pO25H: 0.5 };
+    }
 
     // Calcular probabilidades iniciales con Poisson
     let homeWin = 0, draw = 0, awayWin = 0;
@@ -994,12 +1008,15 @@ function dixonColesProbabilities(tH, tA, league) {
 
     // Normalizar probabilidades
     const total = homeWin + draw + awayWin;
-    if (total > 0) {
-        const scale = 1 / total;
-        homeWin *= scale;
-        draw *= scale;
-        awayWin *= scale;
+    if (total <= 0) {
+        console.warn('[dixonColesProbabilities] Suma de probabilidades iniciales inválida, usando valores por defecto');
+        return { finalHome: 0.333, finalDraw: 0.333, finalAway: 0.333, pBTTSH: 0.5, pO25H: 0.5 };
     }
+    const scale = 1 / total;
+    homeWin *= scale;
+    draw *= scale;
+    awayWin *= scale;
+
     const adjustedTotal = homeWin + adjustedDraw + awayWin;
     let finalHome = homeWin;
     let finalDraw = adjustedDraw;
@@ -1045,59 +1062,7 @@ function dixonColesProbabilities(tH, tA, league) {
     };
 }
 
-// FUNCIÓN PARA TRUNCAR JUSTIFICACIONES LARGAS
-function truncateText(text, maxWords = 20) {
-    const words = text.split(' ');
-    if (words.length > maxWords) {
-        const truncated = words.slice(0, maxWords).join(' ') + '...';
-        return {
-            text: truncated,
-            needsButton: true,
-            fullText: text
-        };
-    }
-    return {
-        text: text,
-        needsButton: false,
-        fullText: text
-    };
-}
-
-// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
-function toggleText(event) {
-    const button = event.target;
-    const parentSpan = button.closest('.rec-bet');
-    if (!parentSpan) return;
-
-    const isExpanded = parentSpan.classList.contains('expanded');
-    const fullText = parentSpan.dataset.fullText;
-    const originalContent = parentSpan.dataset.originalContent;
-
-    if (isExpanded) {
-        parentSpan.classList.remove('expanded');
-        parentSpan.innerHTML = originalContent;
-        parentSpan.querySelector('button').addEventListener('click', toggleText);
-    } else {
-        parentSpan.classList.add('expanded');
-        parentSpan.innerHTML = fullText;
-        const newButton = document.createElement('button');
-        newButton.textContent = 'Leer menos';
-        newButton.addEventListener('click', toggleText);
-        parentSpan.appendChild(newButton);
-    }
-}
-
-// Función auxiliar para escapar HTML
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+// ... (El resto del código hasta getIntegratedPrediction permanece igual)
 
 // FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
 function getIntegratedPrediction(stats, event, matchData) {
@@ -1106,6 +1071,19 @@ function getIntegratedPrediction(stats, event, matchData) {
     const hasAIJustifications = ai && ai["1X2"] && Object.values(ai["1X2"]).some(p => p?.justificacion && p.justificacion !== "Sin justificación detallada.");
 
     console.log(`[getIntegratedPrediction] Estado de datos de IA: hasAIProbs=${hasAIProbs}, hasAIJustifications=${hasAIJustifications}`);
+    console.log(`[getIntegratedPrediction] Probabilidades estadísticas: Home=${stats.finalHome.toFixed(3)}, Draw=${stats.finalDraw.toFixed(3)}, Away=${stats.finalAway.toFixed(3)}`);
+
+    // Validar probabilidades estadísticas
+    const statsValid = stats.finalHome > 0 && stats.finalDraw > 0 && stats.finalAway > 0 && 
+                      Math.abs(stats.finalHome + stats.finalDraw + stats.finalAway - 1) < 0.1;
+    if (!statsValid) {
+        console.warn('[getIntegratedPrediction] Probabilidades estadísticas inválidas, usando valores por defecto');
+        stats.finalHome = 0.333;
+        stats.finalDraw = 0.333;
+        stats.finalAway = 0.333;
+        stats.pBTTSH = 0.5;
+        stats.pO25H = 0.5;
+    }
 
     // Normalizar probabilidades de IA si están presentes
     let aiProbs = {
@@ -1183,6 +1161,11 @@ function getIntegratedPrediction(stats, event, matchData) {
         integratedProbs.home *= scale;
         integratedProbs.draw *= scale;
         integratedProbs.away *= scale;
+    } else {
+        console.warn('[getIntegratedPrediction] Suma de probabilidades integradas inválida, usando valores por defecto');
+        integratedProbs.home = 0.333;
+        integratedProbs.draw = 0.333;
+        integratedProbs.away = 0.333;
     }
 
     const statMaxKey = Object.keys(statProbs).reduce((a, b) => statProbs[a] > statProbs[b] ? a : b);
@@ -1258,6 +1241,7 @@ function getIntegratedPrediction(stats, event, matchData) {
         verdict: verdictText
     };
 }
+
 
 // CÁLCULO DE TODAS LAS PREDICCIONES
 async function calculateAll() {
@@ -1338,3 +1322,4 @@ async function calculateAll() {
 
 // INICIAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', init);
+

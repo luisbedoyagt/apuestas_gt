@@ -1,4 +1,4 @@
-// UTILIDADES GENERALES
+// UTILIDADES
 const $ = id => {
     const element = document.getElementById(id);
     if (!element) console.error(`[Utilidades] Elemento con ID ${id} no encontrado en el DOM`);
@@ -12,7 +12,7 @@ const parseNumberString = val => {
     return isFinite(n) ? n : 0;
 };
 
-// NORMALIZACIÓN DE NOMBRES
+// Normalización de nombres
 function normalizeName(name) {
     if (!name) return '';
     return name
@@ -24,7 +24,7 @@ function normalizeName(name) {
         .replace(/\s+/g, ' ');
 }
 
-// FUNCIONES AUXILIARES PARA CÁLCULOS ESTADÍSTICOS
+// Funciones auxiliares para Poisson y Dixon-Coles
 function poissonProbability(lambda, k) {
     if (lambda <= 0 || k < 0) return 0;
     return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
@@ -99,7 +99,7 @@ const leagueCodeToName = {
     "chn.1": "China_Superliga",
     "fifa.worldq.conmebol": "Eliminatorias_CONMEBOL",
     "fifa.worldq.concacaf": "Eliminatorias_CONCACAF",
-    "fifa.worldq上手: "Eliminatorias_UEFA"
+    "fifa.worldq.uefa": "Eliminatorias_UEFA"
 };
 const leagueRegions = {
     "esp.1": "Europa",
@@ -128,11 +128,11 @@ const leagueRegions = {
     "conmebol.sudamericana": "Copas Internacionales",
     "conmebol.libertadores": "Copas Internacionales",
     "fifa.worldq.conmebol": "Eliminatorias Mundiales",
- "fifa.worldq.concacaf": "Eliminatorias Mundiales",
+    "fifa.worldq.concacaf": "Eliminatorias Mundiales",
     "fifa.worldq.uefa": "Eliminatorias Mundiales"
 };
 
-// NORMALIZACIÓN DE DATOS DE EQUIPOS
+// NORMALIZACIÓN DE DATOS
 function normalizeTeam(raw) {
     if (!raw) return null;
     const r = {};
@@ -162,7 +162,7 @@ function normalizeTeam(raw) {
     return r;
 }
 
-// PARSEO DE PRONÓSTICOS DE IA (RESPALDO)
+// PARSEO DE PRONÓSTICO DE TEXTO PLANO (RESPALDO)
 function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Procesando texto para ${matchData.local} vs ${matchData.visitante}`);
     const aiProbs = { home: null, draw: null, away: null };
@@ -280,7 +280,7 @@ function parsePlainText(text, matchData) {
     return result;
 }
 
-// OBTENCIÓN DE DATOS DE LA API
+// FETCH DATOS COMPLETOS
 async function fetchAllData() {
     const leagueSelect = $('leagueSelect');
     if (leagueSelect) {
@@ -325,7 +325,7 @@ async function fetchAllData() {
     }
 }
 
-// VISUALIZACIÓN DE EVENTOS DE LIGAS
+// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
 function displaySelectedLeagueEvents(leagueCode) {
     const selectedEventsList = $('selected-league-events');
     if (!selectedEventsList) {
@@ -439,7 +439,7 @@ function displaySelectedLeagueEvents(leagueCode) {
     }
 }
 
-// INICIALIZACIÓN DE LA APLICACIÓN
+// INICIALIZACIÓN
 async function init() {
     console.log('[init] Iniciando aplicación a las', new Date().toLocaleString('es-ES', { timeZone: 'America/Guatemala' }));
     clearAll();
@@ -555,7 +555,7 @@ async function init() {
     displaySelectedLeagueEvents('');
 }
 
-// FUNCIONES DE INTERFAZ DE USUARIO
+// FUNCIONES AUXILIARES DE UI
 function onLeagueChange() {
     const code = $('leagueSelect').value;
     console.log('[onLeagueChange] Liga seleccionada:', code);
@@ -634,7 +634,7 @@ function selectEvent(homeTeamName, awayTeamName) {
     );
     if (ligaName) {
         eventLeagueCode = Object.keys(leagueCodeToName).find(key => leagueCodeToName[key] === ligaName) || '';
-        console.log(`[selectEvent]Liga encontrada: ${ligaName} (code: ${eventLeagueCode})`);
+        console.log(`[selectEvent] Liga encontrada: ${ligaName} (code: ${eventLeagueCode})`);
     } else {
         console.error('[selectEvent] No se pudo encontrar la liga para el evento:', { homeTeamName, awayTeamName });
         const details = $('details');
@@ -809,7 +809,7 @@ function clearAll() {
     displaySelectedLeagueEvents('');
 }
 
-// BÚSQUEDA Y LLENADO DE DATOS DE EQUIPOS
+// BÚSQUEDA Y LLENADO DE EQUIPO
 function findTeam(leagueCode, teamName) {
     if (leagueCode) {
         if (!teamsByLeague[leagueCode]) return null;
@@ -858,9 +858,39 @@ function fillTeamData(teamName, leagueCode, type) {
                 <span class="section-title">Local</span>
                 <div class="stat-metrics">
                     <span>PJ: ${t.pjHome || 0}</span>
-                    <span>PG:`
+                    <span>PG: ${t.winsHome || 0}</span>
+                    <span>DG: ${dgHome >= 0 ? '+' + dgHome : dgHome || 0}</span>
+                </div>
+            </div>
+            <div class="stat-section">
+                <span class="section-title">Visitante</span>
+                <div class="stat-metrics">
+                    <span>PJ: ${t.pjAway || 0}</span>
+                    <span>PG: ${t.winsAway || 0}</span>
+                    <span>DG: ${dgAway >= 0 ? '+' + dgAway : dgAway || 0}</span>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+    const cardHeader = $(`card-${typeLower}`)?.querySelector('.card-header');
+    if (cardHeader) {
+        let logoImg = cardHeader.querySelector('.team-logo');
+        if (!logoImg) {
+            logoImg = document.createElement('img');
+            logoImg.className = 'team-logo';
+            logoImg.alt = `Logo de ${t.name}`;
+            const h3 = cardHeader.querySelector('h3');
+            if (h3) {
+                h3.insertAdjacentElement('beforebegin', logoImg);
+            }
+        }
+        logoImg.src = t.logoUrl || '';
+        logoImg.style.display = t.logoUrl ? 'inline-block' : 'none';
+    }
+}
 
-// CÁLCULOS ESTADÍSTICOS DIXON-COLES
+// CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
 function dixonColesProbabilities(tH, tA, league) {
     console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
     
@@ -1016,7 +1046,7 @@ function dixonColesProbabilities(tH, tA, league) {
     };
 }
 
-// FUNCIONES AUXILIARES PARA INTERFAZ DE USUARIO
+// FUNCIÓN PARA TRUNCAR JUSTIFICACIONES LARGAS
 function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
@@ -1034,6 +1064,7 @@ function truncateText(text, maxWords = 20) {
     };
 }
 
+// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
 function toggleText(event) {
     const button = event.target;
     const parentSpan = button.closest('.rec-bet');
@@ -1057,6 +1088,7 @@ function toggleText(event) {
     }
 }
 
+// Función auxiliar para escapar HTML
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -1068,7 +1100,7 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-// FUSIÓN DE PREDICCIONES ESTADÍSTICAS E IA
+// FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
 function getIntegratedPrediction(stats, event, matchData) {
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
     const hasValidIA = ai && ai["1X2"] && !Object.values(ai["1X2"]).every(p => !p?.probabilidad || parseFloat(p.probabilidad) === 0);
@@ -1112,7 +1144,6 @@ function getIntegratedPrediction(stats, event, matchData) {
                         <li class="rec-item"><span class="rec-bet">Más de 2.5 Goles</span><span class="rec-prob">${formatPct(stats.pO25H)}</span></li>
                     </ul>
                     <h4>Apuesta Recomendada</h4>
-                    <div class="rec-item verdict-item">< Dogecoin HTML5 document format
                     <div class="rec-item verdict-item"><span class="rec-bet">Apuesta por la opción con mayor probabilidad (${formatPct(Math.max(stats.finalHome, stats.finalDraw, stats.finalAway))}) si supera el 50%.</span></div>
                 </div>
             `,
@@ -1152,8 +1183,8 @@ function getIntegratedPrediction(stats, event, matchData) {
         header = `Recomendación Segura: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
         verdictText = `Ambos análisis coinciden: la mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Apuesta si la cuota es menor a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
     } else {
-        header = `Apuesta Recomendada: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante`} (${formatPct(integratedProbs[integratedMaxKey])})`;
-        verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
+        header = `Apuesta Recomendada: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
+        verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
     }
 
     const bttsValue = ai.BTTS?.si?.probabilidad && parseFloat(ai.BTTS.si.probabilidad) > 0 ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH;
@@ -1216,7 +1247,7 @@ function getIntegratedPrediction(stats, event, matchData) {
     };
 }
 
-// CÁLCULO FINAL DE PREDICCIONES
+// CÁLCULO DE TODAS LAS PREDICCIONES
 async function calculateAll() {
     const leagueCode = $('leagueSelect').value;
     const teamHome = $('teamHome').value;

@@ -1,34 +1,54 @@
-// UTILIDADES
+// =============================================
+// UTILIDADES: FUNCIONES DE AYUDA GENERALES
+// =============================================
+
+// Función para obtener elementos del DOM con verificación de existencia
 const $ = id => {
     const element = document.getElementById(id);
     if (!element) console.error(`[Utilidades] Elemento con ID ${id} no encontrado en el DOM`);
     return element;
 };
+
+// Formatear porcentajes con 1 decimal
 const formatPct = x => (100 * (isFinite(x) ? x : 0)).toFixed(1) + '%';
+
+// Formatear números decimales con 2 decimales
 const formatDec = x => (isFinite(x) ? x.toFixed(2) : '0.00');
+
+// Convertir cadenas de texto a números, manejando comas y puntos decimales
 const parseNumberString = val => {
     const s = String(val || '').replace(/,/g, '.');
     const n = Number(s);
     return isFinite(n) ? n : 0;
 };
 
-// Normalización de nombres
+// =============================================
+// NORMALIZACIÓN DE DATOS: LIMPIEZA Y UNIFORMIDAD
+// =============================================
+
+// Normalizar nombres para comparaciones consistentes
 function normalizeName(name) {
     if (!name) return '';
     return name
         .trim()
         .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, ' ');
+        .normalize('NFD')  // Separar caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, '')  // Eliminar diacríticos
+        .replace(/[^a-z0-9\s]/g, '')  // Eliminar caracteres especiales
+        .replace(/\s+/g, ' ');  // Colapsar espacios múltiples
 }
 
-// Funciones auxiliares para Poisson y Dixon-Coles
+// =============================================
+// MODELO PREDICTIVO: DISTRIBUCIÓN DE POISSON
+// =============================================
+
+// Calcular probabilidad según distribución de Poisson
 function poissonProbability(lambda, k) {
     if (lambda <= 0 || k < 0) return 0;
     return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
 }
+
+// Calcular factorial para el modelo de Poisson
 function factorial(n) {
     if (n === 0 || n === 1) return 1;
     let res = 1;
@@ -36,11 +56,19 @@ function factorial(n) {
     return res;
 }
 
-// CONFIGURACIÓN DE LIGAS
+// =============================================
+// CONFIGURACIÓN DE LIGAS: DATOS Y ESTRUCTURAS
+// =============================================
+
+// URL de la API para obtener datos
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxMxspSR-2vpzbRjft59hAERHL-07gK3xFH9W_uew_ORcMdZGpWuPrav3q7MpkovDt2/exec";
+
+// Variables globales para almacenamiento de datos
 let teamsByLeague = {};
 let allData = {};
 let eventInterval;
+
+// Mapeo de códigos de liga a nombres legibles
 const leagueNames = {
     "esp.1": "LaLiga España",
     "esp.2": "Segunda España",
@@ -71,6 +99,8 @@ const leagueNames = {
     "fifa.worldq.concacaf": "Eliminatorias CONCACAF",
     "fifa.worldq.uefa": "Eliminatorias UEFA"
 };
+
+// Mapeo de códigos de liga a nombres internos
 const leagueCodeToName = {
     "esp.1": "España_LaLiga",
     "esp.2": "España_Segunda",
@@ -101,6 +131,8 @@ const leagueCodeToName = {
     "fifa.worldq.concacaf": "Eliminatorias_CONCACAF",
     "fifa.worldq.uefa": "Eliminatorias_UEFA"
 };
+
+// Agrupación de ligas por regiones geográficas
 const leagueRegions = {
     "esp.1": "Europa",
     "esp.2": "Europa",
@@ -132,12 +164,18 @@ const leagueRegions = {
     "fifa.worldq.uefa": "Eliminatorias Mundiales"
 };
 
-// NORMALIZACIÓN DE DATOS
+// =============================================
+// NORMALIZACIÓN DE EQUIPOS: ESTRUCTURA DE DATOS
+// =============================================
+
+// Crear estructura uniforme de datos para equipos
 function normalizeTeam(raw) {
     if (!raw) return null;
     const r = {};
     r.name = (raw.name || '').trim();
     if (!r.name) return null;
+    
+    // Parsear y normalizar todas las estadísticas numéricas
     r.pos = parseNumberString(raw.rank || 0);
     r.gf = parseNumberString(raw.goalsFor || 0);
     r.ga = parseNumberString(raw.goalsAgainst || 0);
@@ -159,10 +197,15 @@ function normalizeTeam(raw) {
     r.lossesHome = parseNumberString(raw.lossesHome || 0);
     r.lossesAway = parseNumberString(raw.lossesAway || 0);
     r.logoUrl = raw.logoUrl || '';
+    
     return r;
 }
 
-// PARSEO DE PRONÓSTICO DE TEXTO PLANO (RESPALDO)
+// =============================================
+// PROCESAMIENTO DE PRONÓSTICOS: ANÁLISIS DE TEXTO
+// =============================================
+
+// Analizar texto de pronóstico para extraer probabilidades y justificaciones
 function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Procesando texto para ${matchData.local} vs ${matchData.visitante}`);
     const aiProbs = { home: null, draw: null, away: null };
@@ -172,7 +215,7 @@ function parsePlainText(text, matchData) {
         away: "Sin justificación detallada."
     };
 
-    // Extraer probabilidades
+    // Extraer probabilidades del texto
     const probsMatch = text.match(/Probabilidades:\s*([\s\S]*?)(?:Ambos Anotan|$)/i);
     if (probsMatch && probsMatch[1]) {
         const probsText = probsMatch[1];
@@ -182,6 +225,8 @@ function parsePlainText(text, matchData) {
             aiProbs.draw = parseFloat(percentages[1]) / 100;
             aiProbs.away = parseFloat(percentages[2]) / 100;
             const total = aiProbs.home + aiProbs.draw + aiProbs.away;
+            
+            // Validar que las probabilidades sean coherentes
             if (total < 0.9 || total > 1.1 || (aiProbs.home === 0 && aiProbs.draw === 0 && aiProbs.away === 0)) {
                 console.warn(`[parsePlainText] Probabilidades de IA inválidas (suma=${total.toFixed(2)}): Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
                 aiProbs.home = null;
@@ -197,17 +242,17 @@ function parsePlainText(text, matchData) {
         console.warn(`[parsePlainText] No se encontró la sección de probabilidades en el texto: ${text}`);
     }
 
-    // Extraer análisis del partido con expresiones regulares más robustas
+    // Extraer análisis del partido
     const analysisMatch = text.match(/Análisis del Partido:([\s\S]*?)Probabilidades:/i);
     if (analysisMatch && analysisMatch[1]) {
         const analysisText = analysisMatch[1].trim();
         console.log(`[parsePlainText] Texto de análisis encontrado: ${analysisText}`);
 
-        // Normalizar nombres de equipos para coincidencias robustas
+        // Normalizar nombres para búsqueda robusta
         const normalizedLocal = normalizeName(matchData.local);
         const normalizedVisitante = normalizeName(matchData.visitante);
 
-        // Extraer justificaciones con expresiones más flexibles
+        // Extraer justificaciones con expresiones regulares flexibles
         const localJustification = analysisText.match(new RegExp(`${matchData.local}\\s*:([\\s\\S]*?)(?=(?:Empate\\s*:|${matchData.visitante}\\s*:|$))`, 'i'));
         const drawJustification = analysisText.match(/Empate\s*:([\s\S]*?)(?=(?:(?:[^:]+:)|$))/i);
         const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}\\s*:([\\s\\S]*?)(?=(?:Probabilidades:|$))`, 'i'));
@@ -236,10 +281,11 @@ function parsePlainText(text, matchData) {
         console.warn(`[parsePlainText] No se encontró la sección de análisis en el texto: ${text}`);
     }
 
-    // Extraer BTTS y Over 2.5
+    // Extraer probabilidades de BTTS y Over/Under
     const bttsProb = text.match(/BTTS.*Sí\s*:\s*(\d+\.?\d*)%/i)?.[1];
     const o25Prob = text.match(/Más de 2\.5\s*:\s*(\d+\.?\d*)%/i)?.[1];
 
+    // Estructurar resultado final
     const result = {
         "1X2": {
             victoria_local: {
@@ -276,101 +322,139 @@ function parsePlainText(text, matchData) {
             }
         }
     };
+    
     console.log(`[parsePlainText] Resultado final:`, JSON.stringify(result, null, 2));
     return result;
 }
 
-// FETCH DATOS COMPLETOS
+// =============================================
+// CONEXIÓN: OBTENCIÓN DE DATOS DESDE LA API
+// =============================================
+
+// Función principal para obtener todos los datos desde la API
 async function fetchAllData() {
     const leagueSelect = $('leagueSelect');
     if (leagueSelect) {
         leagueSelect.innerHTML = '<option value="">Cargando datos...</option>';
         leagueSelect.style.display = 'block';
     }
+    
     try {
         console.log('[fetchAllData] Solicitando datos desde:', WEBAPP_URL);
         const res = await fetch(`${WEBAPP_URL}?tipo=todo&update=false`);
+        
         if (!res.ok) {
             const errorText = await res.text();
             throw new Error(`Error HTTP ${res.status}: ${res.statusText}. Respuesta: ${errorText}`);
         }
+        
         allData = await res.json();
         console.log('[fetchAllData] Datos recibidos:', allData);
+        
         if (!allData || !allData.calendario || !allData.ligas) {
             throw new Error('Estructura de datos inválida: la respuesta está vacía o faltan "calendario" o "ligas".');
         }
+        
         if (!Object.keys(allData.ligas).length) {
             console.warn('[fetchAllData] allData.ligas está vacío');
             throw new Error('No se encontraron ligas en los datos de la API.');
         }
+        
+        // Normalizar datos de equipos para cada liga
         const normalized = {};
         for (const key in allData.ligas) {
             normalized[key] = (allData.ligas[key] || []).map(normalizeTeam).filter(t => t && t.name);
             console.log(`[fetchAllData] Liga ${key} normalizada con ${normalized[key].length} equipos`, normalized[key]);
         }
+        
         teamsByLeague = normalized;
         localStorage.setItem('allData', JSON.stringify(allData));
         console.log('[fetchAllData] Datos almacenados en localStorage');
         return allData;
+        
     } catch (err) {
         console.error('[fetchAllData] Error:', err);
         const errorMsg = `<div class="error"><strong>Error:</strong> No se pudieron cargar los datos de la API. Verifica la conexión a la hoja de Google Sheets o el endpoint de la API. Detalle: ${err.message}</div>`;
         const details = $('details');
         if (details) details.innerHTML = errorMsg;
+        
         if (leagueSelect) {
             leagueSelect.innerHTML = '<option value="">Error al cargar ligas</option>';
             leagueSelect.style.display = 'block';
         }
+        
         return {};
     }
 }
 
-// MUESTRA DE EVENTOS DE LA LIGA SELECCIONADA
+// =============================================
+// INTERFAZ: VISUALIZACIÓN DE EVENTOS DE LIGA
+// =============================================
+
+// Mostrar eventos de la liga seleccionada con animación
 function displaySelectedLeagueEvents(leagueCode) {
     const selectedEventsList = $('selected-league-events');
     if (!selectedEventsList) {
         console.warn('[displaySelectedLeagueEvents] Elemento selected-league-events no encontrado');
         return;
     }
+    
+    // Limpiar intervalo anterior si existe
     if (eventInterval) {
         clearInterval(eventInterval);
         eventInterval = null;
     }
+    
     selectedEventsList.innerHTML = '';
+    
     if (!allData.calendario) {
         selectedEventsList.innerHTML = '<div class="event-item placeholder"><span>Selecciona una liga para ver eventos próximos.</span></div>';
         console.log('[displaySelectedLeagueEvents] Sin allData.calendario');
         return;
     }
+    
+    // Obtener eventos según la liga seleccionada
     let events = [];
     if (!leagueCode) {
+        // Todas las ligas
         Object.keys(allData.calendario).forEach(ligaName => {
             events = events.concat(allData.calendario[ligaName] || []);
         });
     } else {
+        // Liga específica
         const ligaName = leagueCodeToName[leagueCode];
         events = allData.calendario[ligaName] || [];
     }
+    
     if (events.length === 0) {
         selectedEventsList.innerHTML = '<div class="event-item placeholder"><span>No hay eventos próximos para esta liga.</span></div>';
         console.log(`[displaySelectedLeagueEvents] No hay eventos para ${leagueCode || 'todas las ligas'}`);
         return;
     }
+    
+    // Configurar sistema de paginación para eventos
     const eventsPerPage = 1;
     const totalPages = Math.ceil(events.length / eventsPerPage);
     let currentPage = 0;
+    
+    // Función para mostrar la página actual de eventos
     function showCurrentPage() {
         const startIndex = currentPage * eventsPerPage;
         const eventsToShow = events.slice(startIndex, startIndex + eventsPerPage);
         const currentItems = selectedEventsList.querySelectorAll('.event-item');
+        
+        // Animación de desvanecimiento
         if (currentItems.length > 0) {
             currentItems.forEach(item => {
                 item.classList.remove('slide-in');
                 item.classList.add('slide-out');
             });
         }
+        
         setTimeout(() => {
             selectedEventsList.innerHTML = '';
+            
+            // Crear elementos para cada evento
             eventsToShow.forEach((event, index) => {
                 const div = document.createElement('div');
                 div.className = 'event-item slide-in';
@@ -378,34 +462,46 @@ function displaySelectedLeagueEvents(leagueCode) {
                 div.dataset.homeTeam = event.local.trim();
                 div.dataset.awayTeam = event.visitante.trim();
                 
+                // Buscar información de equipos
                 const homeTeam = findTeam(leagueCode, event.local.trim());
                 const awayTeam = findTeam(leagueCode, event.visitante.trim());
                 
                 const homeLogo = homeTeam?.logoUrl || '';
                 const awayLogo = awayTeam?.logoUrl || '';
                 
+                // Formatear fecha y hora del evento
                 let eventDateTime;
                 let isInProgress = false;
+                
                 try {
                     const parsedDate = new Date(event.fecha);
                     if (isNaN(parsedDate.getTime())) {
                         throw new Error("Fecha inválida");
                     }
+                    
                     const now = new Date();
-                    const matchDuration = 120 * 60 * 1000;
+                    const matchDuration = 120 * 60 * 1000; // 2 horas en milisegundos
+                    
+                    // Verificar si el evento está en curso
                     if (now >= parsedDate && now < new Date(parsedDate.getTime() + matchDuration)) {
                         isInProgress = true;
                     }
+                    
+                    // Formatear fecha y hora
                     const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Guatemala' };
                     const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Guatemala' };
                     const formattedDate = parsedDate.toLocaleDateString('es-ES', dateOptions);
                     const formattedTime = parsedDate.toLocaleTimeString('es-ES', timeOptions);
                     eventDateTime = `${formattedDate} ${formattedTime} (GT)`;
+                    
                 } catch (err) {
                     console.warn(`[displaySelectedLeagueEvents] Error parseando fecha para el evento: ${event.local} vs. ${event.visitante}`, err);
                     eventDateTime = `${event.fecha} (Hora no disponible)`;
                 }
+                
                 let statusText = isInProgress ? ' - Evento en Juego' : '';
+                
+                // Construir HTML del evento
                 div.innerHTML = `
                     <div class="event-content">
                         <div class="team-logo-container">
@@ -419,6 +515,8 @@ function displaySelectedLeagueEvents(leagueCode) {
                         <span class="event-details">Estadio: ${event.estadio || 'Por confirmar'}</span>
                     </div>
                 `;
+                
+                // Configurar comportamiento según estado del evento
                 if (isInProgress) {
                     div.classList.add('in-progress');
                     div.style.cursor = 'not-allowed';
@@ -428,24 +526,38 @@ function displaySelectedLeagueEvents(leagueCode) {
                         selectEvent(event.local.trim(), event.visitante.trim());
                     });
                 }
+                
                 selectedEventsList.appendChild(div);
             });
+            
+            // Avanzar a la siguiente página
             currentPage = (currentPage + 1) % totalPages;
         }, 800);
     }
+    
+    // Mostrar primera página e iniciar intervalo si hay múltiples páginas
     showCurrentPage();
     if (totalPages > 1) {
         eventInterval = setInterval(showCurrentPage, 10000);
     }
 }
 
-// INICIALIZACIÓN
+// =============================================
+// INICIALIZACIÓN: CONFIGURACIÓN INICIAL DE LA APLICACIÓN
+// =============================================
+
+// Función principal de inicialización
 async function init() {
     console.log('[init] Iniciando aplicación a las', new Date().toLocaleString('es-ES', { timeZone: 'America/Guatemala' }));
+    
+    // Limpiar interfaz
     clearAll();
+    
+    // Verificar elementos DOM necesarios
     const leagueSelect = $('leagueSelect');
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
+    
     if (!leagueSelect || !teamHomeSelect || !teamAwaySelect) {
         console.error('[init] Elementos DOM no encontrados: leagueSelect=', !!leagueSelect, 'teamHome=', !!teamHomeSelect, 'teamAway=', !!teamAwaySelect);
         const details = $('details');
@@ -454,14 +566,21 @@ async function init() {
         }
         return;
     }
+    
+    // Configurar interfaz inicial
     leagueSelect.style.display = 'block';
     leagueSelect.innerHTML = '<option value="">Cargando ligas...</option>';
+    
     const details = $('details');
     if (details) {
         details.innerHTML = '<div class="info"><strong>Instrucciones:</strong> Selecciona una liga y los equipos local y visitante para obtener el pronóstico.</div>';
     }
+    
+    // Obtener datos
     await fetchAllData();
     console.log('[init] Ligas recibidas en allData.ligas:', Object.keys(allData.ligas));
+    
+    // Verificar si hay datos disponibles
     if (!allData.ligas || !Object.keys(allData.ligas).length) {
         console.warn('[init] No hay ligas disponibles en allData.ligas');
         leagueSelect.innerHTML = '<option value="">No hay ligas disponibles</option>';
@@ -471,8 +590,12 @@ async function init() {
         }
         return;
     }
+    
+    // Configurar selector de ligas
     leagueSelect.innerHTML = '<option value="">-- Selecciona liga --</option>';
     const regionsMap = {};
+    
+    // Organizar ligas por regiones
     Object.keys(allData.ligas).forEach(code => {
         const region = leagueRegions[code] || 'Otras Ligas';
         if (!regionsMap[region]) {
@@ -481,8 +604,10 @@ async function init() {
         regionsMap[region].push(code);
         console.log(`[init] Asignando liga ${code} a la región ${region}`);
     });
+    
     console.log('[init] Regiones mapeadas:', regionsMap);
     
+    // Ordenar regiones según orden personalizado
     const customOrder = ["Europa", "Sudamérica", "Norteamérica", "Centroamérica", "Asia", "Copas Internacionales", "Eliminatorias Mundiales", "Otras Ligas"];
     const sortedRegions = Object.keys(regionsMap).sort((a, b) => {
         const aIndex = customOrder.indexOf(a);
@@ -492,10 +617,14 @@ async function init() {
         if (bIndex === -1) return -1;
         return aIndex - bIndex;
     });
+    
     console.log('[init] Regiones ordenadas:', sortedRegions);
+    
+    // Crear opciones agrupadas por región
     sortedRegions.forEach(regionName => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = regionName;
+        
         regionsMap[regionName].sort().forEach(code => {
             const opt = document.createElement('option');
             opt.value = code;
@@ -503,6 +632,7 @@ async function init() {
             optgroup.appendChild(opt);
             console.log(`[init] Añadiendo liga ${code} (${leagueNames[code] || code}) al optgroup ${regionName}`);
         });
+        
         if (optgroup.children.length > 0) {
             leagueSelect.appendChild(optgroup);
             console.log(`[init] Optgroup ${regionName} añadido con ${optgroup.children.length} ligas`);
@@ -510,6 +640,8 @@ async function init() {
             console.log(`[init] Optgroup ${regionName} vacío, no se añade`);
         }
     });
+    
+    // Verificar si se añadieron ligas
     if (leagueSelect.children.length <= 1) {
         console.warn('[init] No se añadieron ligas al select. Verifica allData.ligas y leagueRegions.');
         leagueSelect.innerHTML = '<option value="">No hay ligas disponibles</option>';
@@ -521,54 +653,74 @@ async function init() {
         console.log(`[init] Select llenado con ${leagueSelect.children.length} elementos (incluyendo opción por defecto)`);
         leagueSelect.style.display = 'block';
     }
+    
+    // Configurar event listeners
     leagueSelect.addEventListener('change', onLeagueChange);
+    
     teamHomeSelect.addEventListener('change', () => {
         if (restrictSameTeam()) {
             const leagueCode = $('leagueSelect').value;
             const teamHome = $('teamHome').value;
             const teamAway = $('teamAway').value;
             console.log('[teamHome change] Valores:', { leagueCode, teamHome, teamAway });
+            
             if (leagueCode && teamHome && teamAway) {
                 fillTeamData(teamHome, leagueCode, 'Home');
                 calculateAll();
             }
         }
     });
+    
     teamAwaySelect.addEventListener('change', () => {
         if (restrictSameTeam()) {
             const leagueCode = $('leagueSelect').value;
             const teamHome = $('teamHome').value;
             const teamAway = $('teamAway').value;
             console.log('[teamAway change] Valores:', { leagueCode, teamHome, teamAway });
+            
             if (leagueCode && teamHome && teamAway) {
                 fillTeamData(teamAway, leagueCode, 'Away');
                 calculateAll();
             }
         }
     });
+    
+    // Configurar botón de reset
     const resetButton = $('reset');
     if (resetButton) {
         resetButton.addEventListener('click', clearAll);
     } else {
         console.warn('[init] Botón reset no encontrado');
     }
+    
+    // Mostrar eventos iniciales
     displaySelectedLeagueEvents('');
 }
 
-// FUNCIONES AUXILIARES DE UI
+// =============================================
+// INTERFAZ: MANEJO DE CAMBIOS EN LA SELECCIÓN DE LIGA
+// =============================================
+
+// Manejar cambio de selección de liga
 function onLeagueChange() {
     const code = $('leagueSelect').value;
     console.log('[onLeagueChange] Liga seleccionada:', code);
+    
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
     teamHomeSelect.disabled = !code;
     teamAwaySelect.disabled = !code;
+    
     if (!teamHomeSelect || !teamAwaySelect) {
         console.error('[onLeagueChange] Elementos teamHome o teamAway no encontrados');
         return;
     }
+    
+    // Mostrar estado de carga
     teamHomeSelect.innerHTML = '<option value="">Cargando equipos...</option>';
     teamAwaySelect.innerHTML = '<option value="">Cargando equipos...</option>';
+    
+    // Verificar si hay datos para la liga seleccionada
     if (!code || !teamsByLeague[code] || teamsByLeague[code].length === 0) {
         clearTeamData('Home');
         clearTeamData('Away');
@@ -580,38 +732,59 @@ function onLeagueChange() {
         displaySelectedLeagueEvents('');
         return;
     }
+    
+    // Ordenar equipos alfabéticamente
     const teams = teamsByLeague[code].sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Crear opciones para equipo local
     const fragmentHome = document.createDocumentFragment();
     const defaultOptionHome = document.createElement('option');
     defaultOptionHome.value = '';
     defaultOptionHome.textContent = '-- Selecciona equipo --';
     fragmentHome.appendChild(defaultOptionHome);
+    
+    // Crear opciones para equipo visitante
     const fragmentAway = document.createDocumentFragment();
     const defaultOptionAway = document.createElement('option');
     defaultOptionAway.value = '';
     defaultOptionAway.textContent = '-- Selecciona equipo --';
     fragmentAway.appendChild(defaultOptionAway);
+    
+    // Añadir equipos a los selectores
     teams.forEach(t => {
         const opt1 = document.createElement('option');
         opt1.value = t.name;
         opt1.textContent = t.name;
         fragmentHome.appendChild(opt1);
+        
         const opt2 = document.createElement('option');
         opt2.value = t.name;
         opt2.textContent = t.name;
         fragmentAway.appendChild(opt2);
     });
+    
+    // Actualizar selectores
     teamHomeSelect.innerHTML = '';
     teamAwaySelect.innerHTML = '';
     teamHomeSelect.appendChild(fragmentHome);
     teamAwaySelect.appendChild(fragmentAway);
+    
+    // Limpiar datos anteriores
     clearTeamData('Home');
     clearTeamData('Away');
+    
+    // Mostrar eventos de la liga seleccionada
     displaySelectedLeagueEvents(code);
 }
 
+// =============================================
+// INTERFAZ: SELECCIÓN DE EVENTOS DESDE LA LISTA
+// =============================================
+
+// Seleccionar evento desde la lista de eventos
 function selectEvent(homeTeamName, awayTeamName) {
     console.log(`[selectEvent] Seleccionando evento: ${homeTeamName} vs ${awayTeamName}`);
+    
     const teamHomeSelect = $('teamHome');
     const teamAwaySelect = $('teamAway');
     const leagueSelect = $('leagueSelect');
@@ -625,6 +798,7 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
+    // Buscar la liga a la que pertenece este evento
     let eventLeagueCode = '';
     const ligaName = Object.keys(allData.calendario).find(liga =>
         (allData.calendario[liga] || []).some(e =>
@@ -632,6 +806,7 @@ function selectEvent(homeTeamName, awayTeamName) {
             normalizeName(e.visitante) === normalizeName(awayTeamName)
         )
     );
+    
     if (ligaName) {
         eventLeagueCode = Object.keys(leagueCodeToName).find(key => leagueCodeToName[key] === ligaName) || '';
         console.log(`[selectEvent] Liga encontrada: ${ligaName} (code: ${eventLeagueCode})`);
@@ -644,6 +819,7 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
+    // Si se encontró la liga, seleccionarla
     if (eventLeagueCode) {
         leagueSelect.value = eventLeagueCode;
         const changeEvent = new Event('change');
@@ -657,14 +833,17 @@ function selectEvent(homeTeamName, awayTeamName) {
         return;
     }
 
+    // Esperar a que se carguen los equipos en los selectores
     const waitForTeams = async () => {
         let attempts = 0;
         const maxAttempts = 10;
+        
         while (teamHomeSelect.options.length <= 1 && teamAwaySelect.options.length <= 1 && attempts < maxAttempts) {
             console.log(`[selectEvent] Esperando a que los selectores de equipos se llenen... (intento ${attempts + 1})`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
+        
         if (attempts >= maxAttempts) {
             console.error('[selectEvent] Tiempo de espera agotado para llenar los selectores de equipos.');
             const details = $('details');
@@ -673,15 +852,18 @@ function selectEvent(homeTeamName, awayTeamName) {
             }
             return false;
         }
+        
         return true;
     };
 
+    // Una vez cargados los equipos, seleccionarlos
     waitForTeams().then(success => {
         if (!success) return;
 
         const homeTeamNameNormalized = normalizeName(homeTeamName);
         const awayTeamNameNormalized = normalizeName(awayTeamName);
 
+        // Buscar opciones en los selectores
         const homeOption = Array.from(teamHomeSelect.options).find(opt => normalizeName(opt.text) === homeTeamNameNormalized);
         const awayOption = Array.from(teamAwaySelect.options).find(opt => normalizeName(opt.text) === awayTeamNameNormalized);
 
@@ -692,6 +874,7 @@ function selectEvent(homeTeamName, awayTeamName) {
             console.error('[selectEvent] Equipo visitante no encontrado en el selector:', awayTeamName, { normalized: awayTeamNameNormalized });
         }
 
+        // Si se encontraron ambos equipos, seleccionarlos
         if (homeOption && awayOption) {
             teamHomeSelect.value = homeOption.value;
             teamAwaySelect.value = awayOption.value;
@@ -717,9 +900,15 @@ function selectEvent(homeTeamName, awayTeamName) {
     });
 }
 
+// =============================================
+// INTERFAZ: VALIDACIÓN DE SELECCIÓN DE EQUIPOS
+// =============================================
+
+// Evitar que se seleccione el mismo equipo para local y visitante
 function restrictSameTeam() {
     const teamHome = $('teamHome').value;
     const teamAway = $('teamAway').value;
+    
     if (teamHome && teamAway && normalizeName(teamHome) === normalizeName(teamAway)) {
         const details = $('details');
         if (details) {
@@ -728,6 +917,8 @@ function restrictSameTeam() {
                 details.innerHTML = '<div class="info"><strong>Instrucciones:</strong> Selecciona una liga y los equipos local y visitante para obtener el pronóstico.</div>';
             }, 5000);
         }
+        
+        // Limpiar el selector que causó el conflicto
         if (document.activeElement === $('teamHome')) {
             $('teamHome').value = '';
             clearTeamData('Home');
@@ -735,17 +926,28 @@ function restrictSameTeam() {
             $('teamAway').value = '';
             clearTeamData('Away');
         }
+        
         return false;
     }
+    
     return true;
 }
 
+// =============================================
+// INTERFAZ: LIMPIEZA DE DATOS DE EQUIPOS
+// =============================================
+
+// Limpiar datos mostrados de un equipo
 function clearTeamData(type) {
     const typeLower = type.toLowerCase();
+    
+    // Limpiar estadísticas básicas
     $(`pos${type}`).textContent = '--';
     $(`gf${type}`).textContent = '--';
     $(`ga${type}`).textContent = '--';
     $(`winRate${type}`).textContent = '--';
+    
+    // Limpiar estadísticas detalladas
     const box = $(`form${type}Box`);
     if (box) {
         box.innerHTML = `
@@ -777,6 +979,8 @@ function clearTeamData(type) {
         </div>
         `;
     }
+    
+    // Remover logo del equipo
     const cardHeader = $(`card-${typeLower}`)?.querySelector('.card-header');
     const h3 = cardHeader ? cardHeader.querySelector('h3') : null;
     const logoImg = h3 ? cardHeader.querySelector('.team-logo') : null;
@@ -785,36 +989,62 @@ function clearTeamData(type) {
     }
 }
 
+// =============================================
+// INTERFAZ: LIMPIEZA COMPLETA DE LA INTERFAZ
+// =============================================
+
+// Restablecer toda la interfaz a su estado inicial
 function clearAll() {
+    // Limpiar valores estadísticos
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '--');
+    
+    // Restablecer selectores
     document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    
+    // Limpiar probabilidades
     ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25'].forEach(id => {
         const el = $(id);
         if (el) el.textContent = '--';
     });
+    
+    // Restablecer panel de detalles
     const details = $('details');
     if (details) {
         details.innerHTML = '<div class="info"><strong>Instrucciones:</strong> Selecciona una liga y los equipos local y visitante para obtener el pronóstico.</div>';
     }
+    
+    // Limpiar recomendaciones
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = '<p>Esperando datos...</p>';
     }
+    
+    // Limpiar predicción integrada
     const integratedPrediction = $('integrated-prediction');
     if (integratedPrediction) {
         integratedPrediction.innerHTML = '<p>Esperando análisis integrado...</p>';
     }
+    
+    // Limpiar datos de equipos
     clearTeamData('Home');
     clearTeamData('Away');
+    
+    // Mostrar eventos vacíos
     displaySelectedLeagueEvents('');
 }
 
-// BÚSQUEDA Y LLENADO DE EQUIPO
+// =============================================
+// DATOS: BÚSQUEDA Y OBTENCIÓN DE INFORMACIÓN DE EQUIPOS
+// =============================================
+
+// Buscar un equipo en los datos cargados
 function findTeam(leagueCode, teamName) {
     if (leagueCode) {
+        // Buscar en liga específica
         if (!teamsByLeague[leagueCode]) return null;
         return teamsByLeague[leagueCode].find(t => normalizeName(t.name) === normalizeName(teamName)) || null;
     } else {
+        // Buscar en todas las ligas
         if (!teamsByLeague) return null;
         for (const code in teamsByLeague) {
             const team = teamsByLeague[code].find(t => normalizeName(t.name) === normalizeName(teamName));
@@ -824,9 +1054,15 @@ function findTeam(leagueCode, teamName) {
     }
 }
 
+// =============================================
+// INTERFAZ: LLENADO DE DATOS DE EQUIPOS EN LA UI
+// =============================================
+
+// Mostrar datos de un equipo en la interfaz
 function fillTeamData(teamName, leagueCode, type) {
     const t = findTeam(leagueCode, teamName);
     const typeLower = type.toLowerCase();
+    
     if (!t) {
         console.error(`[fillTeamData] Equipo no encontrado: ${teamName} en liga ${leagueCode}`);
         const details = $('details');
@@ -835,13 +1071,19 @@ function fillTeamData(teamName, leagueCode, type) {
         }
         return;
     }
+    
+    // Actualizar estadísticas básicas
     $(`pos${type}`).textContent = t.pos || '--';
     $(`gf${type}`).textContent = formatDec(t.gf / (t.pj || 1));
     $(`ga${type}`).textContent = formatDec(t.ga / (t.pj || 1));
     $(`winRate${type}`).textContent = formatPct(t.pj ? t.g / t.pj : 0);
+    
+    // Calcular diferencias de goles
     const dg = t.gf - t.ga;
     const dgHome = t.gfHome - t.gaHome;
     const dgAway = t.gfAway - t.gaAway;
+    
+    // Actualizar estadísticas detalladas
     const box = $(`form${type}Box`);
     if (box) {
         box.innerHTML = `
@@ -873,6 +1115,8 @@ function fillTeamData(teamName, leagueCode, type) {
         </div>
         `;
     }
+    
+    // Actualizar logo del equipo
     const cardHeader = $(`card-${typeLower}`)?.querySelector('.card-header');
     if (cardHeader) {
         let logoImg = cardHeader.querySelector('.team-logo');
@@ -890,7 +1134,11 @@ function fillTeamData(teamName, leagueCode, type) {
     }
 }
 
-// CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
+// =============================================
+// MODELO PREDICTIVO: DIXON-COLES MEJORADO
+// =============================================
+
+// Calcular probabilidades usando el modelo Dixon-Coles mejorado
 function dixonColesProbabilities(tH, tA, league) {
     console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
     
@@ -903,10 +1151,13 @@ function dixonColesProbabilities(tH, tA, league) {
     // Calcular rho dinámicamente basado en la proporción de empates en la liga
     let rho = -0.1;
     const ligaName = leagueCodeToName[league];
+    
     if (allData.calendario && allData.calendario[ligaName]) {
         const matches = allData.calendario[ligaName];
         let totalMatches = 0;
         let totalDraws = 0;
+        
+        // Calcular tasa de empates en la liga
         matches.forEach(match => {
             if (match.resultado && match.resultado.includes('-')) {
                 const [homeGoals, awayGoals] = match.resultado.split('-').map(Number);
@@ -916,6 +1167,7 @@ function dixonColesProbabilities(tH, tA, league) {
                 }
             }
         });
+        
         const drawRate = totalMatches > 0 ? totalDraws / totalMatches : 0.25;
         const expectedDrawRate = 0.25; // Promedio típico de empates en fútbol
         rho = -0.1 * (drawRate / expectedDrawRate);
@@ -926,6 +1178,7 @@ function dixonColesProbabilities(tH, tA, league) {
     // Calcular promedios de la liga
     const teams = teamsByLeague[league];
     let totalGames = 0, totalGfHome = 0, totalGaHome = 0, totalGfAway = 0, totalGaAway = 0;
+    
     teams.forEach(t => {
         if (t.pjHome >= 3 && t.pjAway >= 3) { // Solo contar equipos con suficientes partidos
             totalGames += (t.pjHome || 0) + (t.pjAway || 0);
@@ -935,6 +1188,7 @@ function dixonColesProbabilities(tH, tA, league) {
             totalGaAway += t.gaAway || 0;
         }
     });
+    
     totalGames = Math.max(totalGames, 1); // Evitar división por cero
     const leagueAvgGfHome = totalGfHome / (totalGames / 2);
     const leagueAvgGaHome = totalGaHome / (totalGames / 2);
@@ -956,6 +1210,7 @@ function dixonColesProbabilities(tH, tA, league) {
     const awayDefenseRaw = tA.pjAway >= minGames ? (tA.gaAway / tA.pjAway) : leagueAvgGaAway;
     console.log(`[dixonColesProbabilities] Métricas crudas: homeAttack=${homeAttackRaw.toFixed(2)}, homeDefense=${homeDefenseRaw.toFixed(2)}, awayAttack=${awayAttackRaw.toFixed(2)}, awayDefense=${awayDefenseRaw.toFixed(2)}`);
 
+    // Ajustar métricas con shrinkage
     const homeAttack = leagueAvgGfHome > 0 ? (homeAttackRaw / leagueAvgGfHome) * shrinkageHome + (1 - shrinkageHome) : 1;
     const homeDefense = leagueAvgGaHome > 0 ? (homeDefenseRaw / leagueAvgGaHome) * shrinkageHome + (1 - shrinkageHome) : 1;
     const awayAttack = leagueAvgGfAway > 0 ? (awayAttackRaw / leagueAvgGfAway) * shrinkageAway + (1 - shrinkageAway) : 1;
@@ -970,6 +1225,7 @@ function dixonColesProbabilities(tH, tA, league) {
     // Calcular probabilidades iniciales con Poisson
     let homeWin = 0, draw = 0, awayWin = 0;
     const maxGoals = 10;
+    
     for (let i = 0; i <= maxGoals; i++) {
         for (let j = 0; j <= maxGoals; j++) {
             const prob = poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, j);
@@ -987,6 +1243,7 @@ function dixonColesProbabilities(tH, tA, league) {
         if (scoreH === 1 && scoreA === 1) return 1 - rho;
         return 1;
     };
+    
     let adjustedDraw = 0;
     for (let i = 0; i <= maxGoals; i++) {
         const prob = poissonProbability(expectedHomeGoals, i) * poissonProbability(expectedAwayGoals, i) * tau(i, i);
@@ -1001,16 +1258,19 @@ function dixonColesProbabilities(tH, tA, league) {
         draw *= scale;
         awayWin *= scale;
     }
+    
     const adjustedTotal = homeWin + adjustedDraw + awayWin;
     let finalHome = homeWin;
     let finalDraw = adjustedDraw;
     let finalAway = awayWin;
+    
     if (adjustedTotal > 0) {
         const scale = 1 / adjustedTotal;
         finalHome *= scale;
         finalDraw *= scale;
         finalAway *= scale;
     }
+    
     console.log(`[dixonColesProbabilities] Probabilidades iniciales: Home=${homeWin.toFixed(3)}, Draw=${draw.toFixed(3)}, Away=${awayWin.toFixed(3)}`);
     console.log(`[dixonColesProbabilities] Probabilidades ajustadas: Home=${finalHome.toFixed(3)}, Draw=${finalDraw.toFixed(3)}, Away=${finalAway.toFixed(3)}`);
 
@@ -1046,7 +1306,11 @@ function dixonColesProbabilities(tH, tA, league) {
     };
 }
 
-// FUNCIÓN PARA TRUNCAR JUSTIFICACIONES LARGAS
+// =============================================
+// INTERFAZ: MANEJO DE TEXTO TRUNCADO/EXPANDIDO
+// =============================================
+
+// Truncar texto largo con opción de expandir
 function truncateText(text, maxWords = 20) {
     const words = text.split(' ');
     if (words.length > maxWords) {
@@ -1064,7 +1328,7 @@ function truncateText(text, maxWords = 20) {
     };
 }
 
-// FUNCIÓN PARA ALTERNAR TEXTO TRUNCADO/EXPANDIDO
+// Alternar entre texto truncado y expandido
 function toggleText(event) {
     const button = event.target;
     const parentSpan = button.closest('.rec-bet');
@@ -1088,7 +1352,7 @@ function toggleText(event) {
     }
 }
 
-// Función auxiliar para escapar HTML
+// Función auxiliar para escapar HTML y prevenir XSS
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -1100,7 +1364,11 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-// FUNCIÓN INTEGRADA: Fusión lógica de Stats + IA
+// =============================================
+// PRONÓSTICO INTEGRADO: FUSIÓN DE ESTADÍSTICAS E IA
+// =============================================
+
+// Combinar análisis estadístico con IA para obtener pronóstico integrado
 function getIntegratedPrediction(stats, event, matchData) {
     const ai = event.pronostico_json || parsePlainText(event.pronostico || '', matchData);
     const hasValidIA = ai && ai["1X2"] && !Object.values(ai["1X2"]).every(p => !p?.probabilidad || parseFloat(p.probabilidad) === 0);
@@ -1108,6 +1376,7 @@ function getIntegratedPrediction(stats, event, matchData) {
     // Validar justificaciones para evitar "Sin datos de IA"
     const hasValidJustifications = ai && ai["1X2"] && Object.values(ai["1X2"]).every(p => p?.justificacion && p.justificacion !== "Sin justificación detallada.");
 
+    // Si no hay IA válida, usar solo estadísticas
     if (!hasValidIA || !hasValidJustifications) {
         console.warn(`[getIntegratedPrediction] Usando solo estadísticas. hasValidIA=${hasValidIA}, hasValidJustifications=${hasValidJustifications}`);
         return {
@@ -1151,11 +1420,14 @@ function getIntegratedPrediction(stats, event, matchData) {
         };
     }
 
+    // Extraer probabilidades de IA
     const aiProbs = {
         home: parseFloat(ai["1X2"].victoria_local.probabilidad) / 100 || stats.finalHome,
         draw: parseFloat(ai["1X2"].empate.probabilidad) / 100 || stats.finalDraw,
         away: parseFloat(ai["1X2"].victoria_visitante.probabilidad) / 100 || stats.finalAway,
     };
+    
+    // Validar probabilidades de IA
     const totalAiProbs = aiProbs.home + aiProbs.draw + aiProbs.away;
     if (totalAiProbs < 0.9 || totalAiProbs > 1.1) {
         console.warn(`[getIntegratedPrediction] Suma de probabilidades IA inválida (${totalAiProbs.toFixed(2)}), usando estadísticas como respaldo`);
@@ -1163,8 +1435,10 @@ function getIntegratedPrediction(stats, event, matchData) {
         aiProbs.draw = stats.finalDraw;
         aiProbs.away = stats.finalAway;
     }
+    
     const statProbs = { home: stats.finalHome, draw: stats.finalDraw, away: stats.finalAway };
 
+    // Combinar estadísticas e IA con pesos
     const weightStats = 0.6;
     const weightIA = 0.4;
     const integratedProbs = {
@@ -1173,12 +1447,16 @@ function getIntegratedPrediction(stats, event, matchData) {
         away: (statProbs.away * weightStats + aiProbs.away * weightIA)
     };
 
+    // Determinar las opciones más probables según cada método
     const statMaxKey = Object.keys(statProbs).reduce((a, b) => statProbs[a] > statProbs[b] ? a : b);
     const aiMaxKey = Object.keys(aiProbs).reduce((a, b) => aiProbs[a] > aiProbs[b] ? a : b);
     const integratedMaxKey = Object.keys(integratedProbs).reduce((a, b) => integratedProbs[a] > integratedProbs[b] ? a : b);
     const diff = Math.abs(statProbs[statMaxKey] - aiProbs[aiMaxKey]);
+    
     let header = '';
     let verdictText = '';
+    
+    // Generar veredicto según coincidencia de métodos
     if (statMaxKey === aiMaxKey && diff < 0.1) {
         header = `Recomendación Segura: ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} (${formatPct(integratedProbs[integratedMaxKey])})`;
         verdictText = `Ambos análisis coinciden: la mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Apuesta si la cuota es menor a ${(1 / integratedProbs[integratedMaxKey]).toFixed(1)}.`;
@@ -1187,8 +1465,10 @@ function getIntegratedPrediction(stats, event, matchData) {
         verdictText = `Las estadísticas (${formatPct(statProbs[statMaxKey])}) y la IA (${formatPct(aiProbs[aiMaxKey])}) difieren ligeramente. La mejor apuesta es ${integratedMaxKey === 'home' ? `Victoria ${matchData.local}` : integratedMaxKey === 'draw' ? 'Empate' : `Victoria ${matchData.visitante}`} con un ${formatPct(integratedProbs[integratedMaxKey])}. Revisa las cuotas y elige si supera el 55%.`;
     }
 
+    // Calcular probabilidades para otras apuestas
     const bttsValue = ai.BTTS?.si?.probabilidad && parseFloat(ai.BTTS.si.probabilidad) > 0 ? parseFloat(ai.BTTS.si.probabilidad) / 100 : stats.pBTTSH;
     const o25Value = ai.Goles?.mas_2_5?.probabilidad && parseFloat(ai.Goles.mas_2_5.probabilidad) > 0 ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : stats.pO25H;
+    
     const probabilities = [
         { id: 'pHome', value: integratedProbs.home, label: `Victoria ${matchData.local}`, stats: statProbs.home, ia: aiProbs.home },
         { id: 'pDraw', value: integratedProbs.draw, label: 'Empate', stats: statProbs.draw, ia: aiProbs.draw },
@@ -1197,6 +1477,7 @@ function getIntegratedPrediction(stats, event, matchData) {
         { id: 'pO25', value: o25Value, label: 'Más de 2.5 Goles', stats: stats.pO25H, ia: ai.Goles?.mas_2_5?.probabilidad ? parseFloat(ai.Goles.mas_2_5.probabilidad) / 100 : null }
     ];
 
+    // Generar recomendaciones
     const recs = Object.entries(integratedProbs)
         .filter(([key, val]) => val >= 0.3)
         .sort((a, b) => b[1] - a[1])
@@ -1220,6 +1501,7 @@ function getIntegratedPrediction(stats, event, matchData) {
         away: awayJust.fullText
     });
 
+    // Generar HTML de análisis
     const analysisHtml = `
         <div class="rec-suggestion">
             <h4>Análisis del Partido</h4>
@@ -1247,13 +1529,18 @@ function getIntegratedPrediction(stats, event, matchData) {
     };
 }
 
-// CÁLCULO DE TODAS LAS PREDICCIONES
+// =============================================
+// CÁLCULO PRINCIPAL: OBTENER TODAS LAS PREDICCIONES
+// =============================================
+
+// Función principal para calcular todas las predicciones
 async function calculateAll() {
     const leagueCode = $('leagueSelect').value;
     const teamHome = $('teamHome').value;
     const teamAway = $('teamAway').value;
     console.log('[calculateAll] Iniciando cálculo:', { leagueCode, teamHome, teamAway });
 
+    // Validar selección
     if (!leagueCode || !teamHome || !teamAway) {
         console.warn('[calculateAll] Faltan datos: leagueCode=', leagueCode, 'teamHome=', teamHome, 'teamAway=', teamAway);
         const details = $('details');
@@ -1263,8 +1550,10 @@ async function calculateAll() {
         return;
     }
 
+    // Buscar datos de equipos
     const tH = findTeam(leagueCode, teamHome);
     const tA = findTeam(leagueCode, teamAway);
+    
     if (!tH || !tA) {
         console.error('[calculateAll] Equipo(s) no encontrado(s):', { tH, tA });
         const details = $('details');
@@ -1274,6 +1563,7 @@ async function calculateAll() {
         return;
     }
 
+    // Calcular probabilidades estadísticas
     const stats = dixonColesProbabilities(tH, tA, leagueCode);
     console.log('[calculateAll] Probabilidades estadísticas:', stats);
 
@@ -1282,8 +1572,10 @@ async function calculateAll() {
         visitante: teamAway
     };
 
+    // Buscar evento correspondiente
     let event = null;
     const ligaName = leagueCodeToName[leagueCode];
+    
     if (allData.calendario && allData.calendario[ligaName]) {
         event = allData.calendario[ligaName].find(e =>
             normalizeName(e.local) === normalizeName(teamHome) &&
@@ -1292,8 +1584,10 @@ async function calculateAll() {
         console.log('[calculateAll] Evento encontrado:', event);
     }
 
+    // Obtener predicción integrada
     const integrated = getIntegratedPrediction(stats, event || {}, matchData);
 
+    // Actualizar interfaz con probabilidades
     ['pHome', 'pDraw', 'pAway', 'pBTTS', 'pO25'].forEach(id => {
         const el = $(id);
         if (el) {
@@ -1302,27 +1596,29 @@ async function calculateAll() {
         }
     });
 
+    // Actualizar recomendaciones
     const suggestion = $('suggestion');
     if (suggestion) {
         suggestion.innerHTML = integrated.recsHtml;
     }
 
+    // Actualizar predicción integrada
     const integratedPrediction = $('integrated-prediction');
     if (integratedPrediction) {
         integratedPrediction.innerHTML = `
             <h3>${integrated.header}</h3>
             ${integrated.analysisHtml}
         `;
+        
+        // Configurar botones para expandir/contraer texto
         integratedPrediction.querySelectorAll('.rec-bet.truncated button').forEach(button => {
             button.addEventListener('click', toggleText);
         });
     }
 
+    // Actualizar veredicto final
     const details = $('details');
     if (details) {
         details.innerHTML = `<div class="success"><strong>Veredicto:</strong> ${integrated.verdict}</div>`;
     }
 }
-
-// INICIAR LA APLICACIÓN
-document.addEventListener('DOMContentLoaded', init);

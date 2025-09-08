@@ -165,11 +165,11 @@ function normalizeTeam(raw) {
 // PARSEO DE PRONÓSTICO DE TEXTO PLANO (RESPALDO)
 function parsePlainText(text, matchData) {
     console.log(`[parsePlainText] Procesando texto para ${matchData.local} vs ${matchData.visitante}`);
-    const aiProbs = { home: 0, draw: 0, away: 0 };
+    const aiProbs = { home: null, draw: null, away: null };
     const aiJustification = {
-        home: "Análisis basado en estadísticas recientes del equipo local.",
-        draw: "Análisis basado en el equilibrio entre ambos equipos.",
-        away: "Análisis basado en estadísticas recientes del equipo visitante."
+        home: "Sin justificación detallada.",
+        draw: "Sin justificación detallada.",
+        away: "Sin justificación detallada."
     };
 
     // Extraer probabilidades
@@ -182,14 +182,14 @@ function parsePlainText(text, matchData) {
             aiProbs.draw = parseFloat(percentages[1]) / 100;
             aiProbs.away = parseFloat(percentages[2]) / 100;
             const total = aiProbs.home + aiProbs.draw + aiProbs.away;
-            if (total < 0.5 || total > 1.5) {
-                console.warn(`[parsePlainText] Probabilidades de IA inválidas (suma=${total.toFixed(2)}): Normalizando`);
-                const scale = total > 0 ? 1 / total : 1;
-                aiProbs.home *= scale;
-                aiProbs.draw *= scale;
-                aiProbs.away *= scale;
+            if (total < 0.9 || total > 1.1 || (aiProbs.home === 0 && aiProbs.draw === 0 && aiProbs.away === 0)) {
+                console.warn(`[parsePlainText] Probabilidades de IA inválidas (suma=${total.toFixed(2)}): Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
+                aiProbs.home = null;
+                aiProbs.draw = null;
+                aiProbs.away = null;
+            } else {
+                console.log(`[parsePlainText] Probabilidades extraídas: Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
             }
-            console.log(`[parsePlainText] Probabilidades extraídas: Local=${aiProbs.home}, Empate=${aiProbs.draw}, Visitante=${aiProbs.away}`);
         } else {
             console.warn(`[parsePlainText] No se encontraron suficientes probabilidades en el texto: ${probsText}`);
         }
@@ -197,39 +197,40 @@ function parsePlainText(text, matchData) {
         console.warn(`[parsePlainText] No se encontró la sección de probabilidades en el texto: ${text}`);
     }
 
-    // Extraer análisis del partido
-    const analysisMatch = text.match(/Análisis del Partido:([\s\S]*?)(?:Probabilidades:|$)/i);
+    // Extraer análisis del partido con expresiones regulares más robustas
+    const analysisMatch = text.match(/Análisis del Partido:([\s\S]*?)Probabilidades:/i);
     if (analysisMatch && analysisMatch[1]) {
         const analysisText = analysisMatch[1].trim();
         console.log(`[parsePlainText] Texto de análisis encontrado: ${analysisText}`);
 
+        // Normalizar nombres de equipos para coincidencias robustas
         const normalizedLocal = normalizeName(matchData.local);
         const normalizedVisitante = normalizeName(matchData.visitante);
 
         // Extraer justificaciones con expresiones más flexibles
-        const localJustification = analysisText.match(new RegExp(`(?:${matchData.local}|${normalizedLocal})\\s*:([\\s\\S]*?)(?=(?:Empate\\s*:|${matchData.visitante}\\s*:|${normalizedVisitante}\\s*:|$))`, 'i'));
+        const localJustification = analysisText.match(new RegExp(`${matchData.local}\\s*:([\\s\\S]*?)(?=(?:Empate\\s*:|${matchData.visitante}\\s*:|$))`, 'i'));
         const drawJustification = analysisText.match(/Empate\s*:([\s\S]*?)(?=(?:(?:[^:]+:)|$))/i);
-        const awayJustification = analysisText.match(new RegExp(`(?:${matchData.visitante}|${normalizedVisitante})\\s*:([\\s\\S]*?)(?=(?:Probabilidades:|$))`, 'i'));
+        const awayJustification = analysisText.match(new RegExp(`${matchData.visitante}\\s*:([\\s\\S]*?)(?=(?:Probabilidades:|$))`, 'i'));
 
         if (localJustification && localJustification[1].trim()) {
             aiJustification.home = localJustification[1].trim();
             console.log(`[parsePlainText] Justificación Local: ${aiJustification.home}`);
         } else {
-            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.local}, usando respaldo`);
+            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.local}`);
         }
 
         if (drawJustification && drawJustification[1].trim()) {
             aiJustification.draw = drawJustification[1].trim();
             console.log(`[parsePlainText] Justificación Empate: ${aiJustification.draw}`);
         } else {
-            console.warn(`[parsePlainText] No se encontró justificación para Empate, usando respaldo`);
+            console.warn(`[parsePlainText] No se encontró justificación para Empate`);
         }
 
         if (awayJustification && awayJustification[1].trim()) {
             aiJustification.away = awayJustification[1].trim();
             console.log(`[parsePlainText] Justificación Visitante: ${aiJustification.away}`);
         } else {
-            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.visitante}, usando respaldo`);
+            console.warn(`[parsePlainText] No se encontró justificación para ${matchData.visitante}`);
         }
     } else {
         console.warn(`[parsePlainText] No se encontró la sección de análisis en el texto: ${text}`);
@@ -242,15 +243,15 @@ function parsePlainText(text, matchData) {
     const result = {
         "1X2": {
             victoria_local: {
-                probabilidad: aiProbs.home > 0 ? (aiProbs.home * 100).toFixed(0) + '%' : '0%',
+                probabilidad: aiProbs.home != null ? (aiProbs.home * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.home
             },
             empate: {
-                probabilidad: aiProbs.draw > 0 ? (aiProbs.draw * 100).toFixed(0) + '%' : '0%',
+                probabilidad: aiProbs.draw != null ? (aiProbs.draw * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.draw
             },
             victoria_visitante: {
-                probabilidad: aiProbs.away > 0 ? (aiProbs.away * 100).toFixed(0) + '%' : '0%',
+                probabilidad: aiProbs.away != null ? (aiProbs.away * 100).toFixed(0) + '%' : '0%',
                 justificacion: aiJustification.away
             }
         },
@@ -888,7 +889,6 @@ function fillTeamData(teamName, leagueCode, type) {
         logoImg.style.display = t.logoUrl ? 'inline-block' : 'none';
     }
 }
-
 // CÁLCULO DE PROBABILIDADES CON DIXON-COLES Y SHRINKAGE MEJORADO
 function dixonColesProbabilities(tH, tA, league) {
     console.log(`[dixonColesProbabilities] Calculando para ${tH.name} vs ${tA.name} en liga ${league}`);
@@ -1463,6 +1463,7 @@ async function calculateAll() {
 
 // INICIAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
